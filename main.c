@@ -153,6 +153,9 @@ main(int argc, char *argv[])
 	if(!ltl_file && !add_ltl)
 		usage(1);
 
+	if (argc != optind)
+		usage(1);
+
 	if (ltl_file)
 	{
 		FILE *f;
@@ -170,9 +173,6 @@ main(int argc, char *argv[])
 		sprintf(inv_formula, "!(%s)", add_ltl);
 		add_ltl = inv_formula;
 	}
-
-	if (argc != optind)
-		usage(1);
 
 	return tl_main(add_ltl);
 }
@@ -322,5 +322,3 @@ fatal(const char *s1)
 	non_fatal(s1);
 	alldone(1);
 }
-
-
