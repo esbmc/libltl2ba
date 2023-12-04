@@ -14,8 +14,6 @@
 
 extern FILE *tl_out;
 extern ATrans **transition;
-extern struct rusage tr_debut, tr_fin;
-extern struct timeval t_diff;
 extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj,
   tl_simp_scc, *final_set, node_id;
 extern char **sym_table;
@@ -99,6 +97,8 @@ int simplify_gtrans() /* simplifies the transitions */
   int changed = 0;
   GState *s;
   GTrans *t, *t1;
+  struct rusage tr_debut, tr_fin;
+  struct timeval t_diff;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
@@ -200,6 +200,8 @@ int simplify_gstates() /* eliminates redundant states */
 {
   int changed = 0;
   GState *a, *b;
+  struct rusage tr_debut, tr_fin;
+  struct timeval t_diff;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
@@ -551,6 +553,8 @@ void mk_generalized()
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
   GState *s;
+  struct rusage tr_debut, tr_fin;
+  struct timeval t_diff;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 

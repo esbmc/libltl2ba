@@ -13,8 +13,6 @@
 \********************************************************************/
 
 extern GState **init, *gstates;
-extern struct rusage tr_debut, tr_fin;
-extern struct timeval t_diff;
 extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_simp_scc,
   init_size, *final;
 
@@ -76,6 +74,8 @@ int simplify_btrans() /* simplifies the transitions */
   BState *s;
   BTrans *t, *t1;
   int changed = 0;
+  struct rusage tr_debut, tr_fin;
+  struct timeval t_diff;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
@@ -200,6 +200,8 @@ int simplify_bstates() /* eliminates redundant states */
 {
   BState *s, *s1, *s2;
   int changed = 0;
+  struct rusage tr_debut, tr_fin;
+  struct timeval t_diff;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
@@ -660,6 +662,8 @@ void mk_buchi()
   GTrans *t;
   BTrans *t1;
   accept = final[0] - 1;
+  struct rusage tr_debut, tr_fin;
+  struct timeval t_diff;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
