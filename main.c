@@ -138,17 +138,15 @@ main(int argc, char *argv[])
 	int invert_formula = 0;
 	const char *binname = argv[0];
 	const char *ltl_fname;
-	char **ltl_file = (char **)0;
+	char *ltl_file = (char *)0;
 	char *add_ltl  = (char *)0;
 	char formula[4096], inv_formula[4100];
 	tl_out = stdout;
 
-	while (argc > 1 && argv[1][0] == '-')
-        {       switch (argv[1][1]) {
-                case 'F': ltl_file = (char **) (argv+2);
-                          argc--; argv++; break;
-                case 'f': add_ltl = *(argv+2);
-                          argc--; argv++; break;
+	for (int opt; (opt = getopt(argc, argv, ":F:f:acopldsO:Pi")) != -1;)
+                switch (opt) {
+                case 'F': ltl_file = optarg; break;
+                case 'f': add_ltl = optarg; break;
                 case 'a': tl_fjtofj = 0; break;
                 case 'c': tl_simp_scc = 0; break;
                 case 'o': tl_simp_fly = 0; break;
@@ -157,30 +155,28 @@ main(int argc, char *argv[])
                 case 'd': tl_verbose = 1; break;
                 case 's': tl_stats = 1; break;
 				case 'O':
-					if (strcmp("spin",argv[2])==0)
+					if (strcmp("spin", optarg)==0)
 						outmode=spin;
-					else if (strcmp("c",argv[2])==0)
+					else if (strcmp("c", optarg)==0)
 						outmode=c;
-					else if (strcmp("dot",argv[2])==0)
+					else if (strcmp("dot", optarg)==0)
 						outmode=dot;
 					else
 						usage();
-					argc--; argv++; break;
-                case 'P': c_sym_name_prefix = *(argv+2); argc--; argv++; break;
+					break;
+                case 'P': c_sym_name_prefix = optarg; break;
                 case 'i': invert_formula = 1; break;
                 default : usage(); break;
                 }
-                argc--, argv++;
-        }
 
 	if(!ltl_file && !add_ltl) usage();
 
         if (ltl_file)
         {
 		FILE *f;
-		ltl_fname = *ltl_file;
-                if (!(f = fopen(*ltl_file, "r")))
-                {       fprintf(stderr,"ltl2ba: cannot open %s\n", *ltl_file);
+		ltl_fname = ltl_file;
+                if (!(f = fopen(ltl_file, "r")))
+                {       fprintf(stderr,"ltl2ba: cannot open %s\n", ltl_file);
                         alldone(1);
                 }
                 fgets(formula, 4096, f);
@@ -193,7 +189,7 @@ main(int argc, char *argv[])
 		add_ltl = inv_formula;
 	}
 
-	if (argc == 1)
+	if (argc == optind)
 		i = tl_main(add_ltl);
 	else
 		usage();
