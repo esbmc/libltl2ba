@@ -44,16 +44,18 @@ int	tl_errs      = 0;
 int	tl_verbose   = 0;
 int	tl_terse     = 0;
 unsigned long	All_Mem = 0;
+const char *c_sym_name_prefix = "_ltl2ba";
 
 static char	uform[4096];
 static int	hasuform=0, cnt=0;
 static char     **ltl_file = (char **)0;
-static char     **add_ltl  = (char **)0;
+static char     *add_ltl  = (char *)0;
 static char     out1[64];
 
 static void	tl_endstats(void);
 static void	non_fatal(char *, char *);
-
+int	invert_formula = 0;
+enum outmodes outmode=spin;
 void
 alldone(int estatus)
 {
@@ -70,7 +72,7 @@ cpyfile(char *src, char *tgt)
         inp = fopen(src, "r");
         out = fopen(tgt, "w");
         if (!inp || !out)
-        {       printf("ltl2ba: cannot cp %s to %s\n", src, tgt);
+        {       fprintf(stderr,"ltl2ba: cannot cp %s to %s\n", src, tgt);
                 alldone(1);
         }
         while (fgets(buf, 1024, inp))
@@ -119,6 +121,8 @@ usage(void)
         printf("into never claim\n");
         printf(" -F file\tlike -f, but with the LTL ");
         printf("formula stored in a 1-line file\n");
+        printf(" -P\t\tSpecify ltl2c symbol prefixes\n");
+        printf(" -i\t\tInvert formula once read\n");
         printf(" -d\t\tdisplay automata (D)escription at each step\n");
         printf(" -s\t\tcomputing time and automata sizes (S)tatistics\n");
         printf(" -l\t\tdisable (L)ogic formula simplification\n");
@@ -126,30 +130,24 @@ usage(void)
         printf(" -o\t\tdisable (O)n-the-fly simplification\n");
         printf(" -c\t\tdisable strongly (C)onnected components simplification\n");
         printf(" -a\t\tdisable trick in (A)ccepting conditions\n");
+		printf(" -O mode\toutput mode. One of spin, c or dot\n");
 	
         alldone(1);
 }
 
 int
-tl_main(int argc, char *argv[])
+tl_main(char  *formula)
 {       int i;
-	while (argc > 1 && argv[1][0] == '-')
-	{	switch (argv[1][1]) {
-		case 'f':	argc--; argv++;
-				for (i = 0; i < argv[1][i]; i++)
-				{	if (argv[1][i] == '\t'
-					||  argv[1][i] == '\"'
-					||  argv[1][i] == '\n')
-						argv[1][i] = ' ';
-				}
-				strcpy(uform, argv[1]);
-				hasuform = strlen(uform);
-				break;
-		default :	usage();
-		}
-		argc--; argv++;
+
+	for (i = 0; formula[i]; i++)
+	{	if (formula[i] == '\t'
+		||  formula[i] == '\"'
+		||  formula[i] == '\n')
+			formula[i] = ' ';
 	}
-	if (hasuform == 0) usage();
+
+	strcpy(uform, formula);
+	hasuform = strlen(uform);
 	tl_parse();
 	if (tl_stats) tl_endstats();
 	return tl_errs;
@@ -158,13 +156,16 @@ tl_main(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {	int i;
+	const char *binname = argv[0];
+	const char *ltl_fname;
+	char formula[4096], inv_formula[4100];
 	tl_out = stdout;
 
 	while (argc > 1 && argv[1][0] == '-')
         {       switch (argv[1][1]) {
                 case 'F': ltl_file = (char **) (argv+2);
                           argc--; argv++; break;
-                case 'f': add_ltl = (char **) argv;
+                case 'f': add_ltl = (char **) *(argv+2);
                           argc--; argv++; break;
                 case 'a': tl_fjtofj = 0; break;
                 case 'c': tl_simp_scc = 0; break;
@@ -173,6 +174,18 @@ main(int argc, char *argv[])
                 case 'l': tl_simp_log = 0; break;
                 case 'd': tl_verbose = 1; break;
                 case 's': tl_stats = 1; break;
+				case 'O': 
+					if (strcmp("spin",argv[2])==0)
+						outmode=spin;
+					else if (strcmp("c",argv[2])==0)
+						outmode=c;
+					else if (strcmp("dot",argv[2])==0)
+						outmode=dot;
+					else
+						usage();
+					argc--; argv++; break;
+                case 'P': c_sym_name_prefix = *(argv+2); argc--; argv++; break;
+                case 'i': invert_formula = 1; break;
                 default : usage(); break;
                 }
                 argc--, argv++;
@@ -181,28 +194,39 @@ main(int argc, char *argv[])
 	if(!ltl_file && !add_ltl) usage();
 
         if (ltl_file)
-        {       char formula[4096];
-                add_ltl = ltl_file-2; add_ltl[1][1] = 'f';
+        {
+		ltl_fname = *ltl_file;
                 if (!(tl_out = fopen(*ltl_file, "r")))
-                {       printf("ltl2ba: cannot open %s\n", *ltl_file);
+                {       fprintf(stderr,"ltl2ba: cannot open %s\n", *ltl_file);
                         alldone(1);
                 }
                 fgets(formula, 4096, tl_out);
                 fclose(tl_out);
                 tl_out = stdout;
                 *ltl_file = (char *) formula;
+		add_ltl = formula;
         }
+
+	if (invert_formula) {
+		if (ltl_file) {
+			sprintf(inv_formula, "!(%s)", formula);
+		} else {
+			sprintf(inv_formula, "!(%s)", add_ltl);
+		}
+		add_ltl = inv_formula;
+	}
+
         if (argc > 1)
         {       char cmd[128], out2[64];
                 strcpy(out1, "_tmp1_");
                 strcpy(out2, "_tmp2_");
                 tl_out = cpyfile(argv[1], out2);
-                tl_main(2, add_ltl);  
+                tl_main(add_ltl);
                 fclose(tl_out);
         } else 
 	{
                 if (argc > 0)
-                        exit(tl_main(2, add_ltl));
+                        exit(tl_main(add_ltl));
 		usage();
 	}
 }
@@ -280,7 +304,7 @@ dump(Node *n)
 		fprintf(tl_out, " D ");
 		break;
 	default:
-		printf("Unknown token: ");
+		fprintf(stderr,"Unknown token: ");
 		tl_explain(n->ntyp);
 		break;
 	}
@@ -290,23 +314,23 @@ void
 tl_explain(int n)
 {
 	switch (n) {
-	case ALWAYS:	printf("[]"); break;
-	case EVENTUALLY: printf("<>"); break;
-	case IMPLIES:	printf("->"); break;
-	case EQUIV:	printf("<->"); break;
-	case PREDICATE:	printf("predicate"); break;
-	case OR:	printf("||"); break;
-	case AND:	printf("&&"); break;
-	case NOT:	printf("!"); break;
-	case U_OPER:	printf("U"); break;
-	case V_OPER:	printf("V"); break;
+	case ALWAYS:	fprintf(stderr,"[]"); break;
+	case EVENTUALLY: fprintf(stderr,"<>"); break;
+	case IMPLIES:	fprintf(stderr,"->"); break;
+	case EQUIV:	fprintf(stderr,"<->"); break;
+	case PREDICATE:	fprintf(stderr,"predicate"); break;
+	case OR:	fprintf(stderr,"||"); break;
+	case AND:	fprintf(stderr,"&&"); break;
+	case NOT:	fprintf(stderr,"!"); break;
+	case U_OPER:	fprintf(stderr,"U"); break;
+	case V_OPER:	fprintf(stderr,"V"); break;
 #ifdef NXT
-	case NEXT:	printf("X"); break;
+	case NEXT:	fprintf(stderr,"X"); break;
 #endif
-	case TRUE:	printf("true"); break;
-	case FALSE:	printf("false"); break;
-	case ';':	printf("end of formula"); break;
-	default:	printf("%c", n); break;
+	case TRUE:	fprintf(stderr,"true"); break;
+	case FALSE:	fprintf(stderr,"false"); break;
+	case ';':	fprintf(stderr,"end of formula"); break;
+	default:	fprintf(stderr,"%c", n); break;
 	}
 }
 
@@ -315,21 +339,21 @@ non_fatal(char *s1, char *s2)
 {	extern int tl_yychar;
 	int i;
 
-	printf("ltl2ba: ");
+	fprintf(stderr,"ltl2ba: ");
 	if (s2)
-		printf(s1, s2);
+		fprintf(stderr,s1, s2);
 	else
-		printf(s1);
+		fprintf(stderr,s1);
 	if (tl_yychar != -1 && tl_yychar != 0)
-	{	printf(", saw '");
+	{	fprintf(stderr,", saw '");
 		tl_explain(tl_yychar);
-		printf("'");
+		fprintf(stderr,"'");
 	}
-	printf("\nltl2ba: %s\n---------", uform);
+	fprintf(stderr,"\nltl2ba: %s\n---------", uform);
 	for (i = 0; i < cnt; i++)
-		printf("-");
-	printf("^\n");
-	fflush(stdout);
+		fprintf(stderr,"-");
+	fprintf(stderr,"^\n");
+	fflush(stderr);
 	tl_errs++;
 }
 

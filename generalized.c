@@ -41,6 +41,8 @@ extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj,
   tl_simp_scc, *final_set, node_id;
 extern char **sym_table;
 
+extern int node_size, sym_size;
+
 GState *gstack, *gremoved, *gstates, **init;
 GScc *scc_stack;
 int init_size = 0, gstate_id = 1, gstate_count = 0, gtrans_count = 0;
@@ -80,18 +82,18 @@ GState *remove_gstate(GState *s, GState *s1) /* removes a state */
 void copy_gtrans(GTrans *from, GTrans *to) /* copies a transition */
 {
   to->to = from->to;
-  copy_set(from->pos,   to->pos,   1);
-  copy_set(from->neg,   to->neg,   1);
-  copy_set(from->final, to->final, 0);
+  copy_set(from->pos,   to->pos,   sym_size);
+  copy_set(from->neg,   to->neg,   sym_size);
+  copy_set(from->final, to->final, node_size);
 }
 
 int same_gtrans(GState *a, GTrans *s, GState *b, GTrans *t, int use_scc) 
 { /* returns 1 if the transitions are identical */
   if((s->to != t->to) ||
-     ! same_sets(s->pos, t->pos, 1) ||
-     ! same_sets(s->neg, t->neg, 1))
+     ! same_sets(s->pos, t->pos, sym_size) ||
+     ! same_sets(s->neg, t->neg, sym_size))
     return 0; /* transitions differ */
-  if(same_sets(s->final, t->final, 0))
+  if(same_sets(s->final, t->final, node_size))
     return 1; /* same transitions exactly */
   /* next we check whether acceptance conditions may be ignored */
   if( use_scc &&
@@ -127,17 +129,17 @@ int simplify_gtrans() /* simplifies the transitions */
       t1 = s->trans->nxt;
       while ( !((t != t1) 
           && (t1->to == t->to) 
-          && included_set(t1->pos, t->pos, 1) 
-          && included_set(t1->neg, t->neg, 1) 
-          && (included_set(t->final, t1->final, 0)  /* acceptance conditions of t are also in t1 or may be ignored */
+          && included_set(t1->pos, t->pos, sym_size) 
+          && included_set(t1->neg, t->neg, sym_size) 
+          && (included_set(t->final, t1->final, node_size)  /* acceptance conditions of t are also in t1 or may be ignored */
               || (tl_simp_scc && ((s->incoming != t->to->incoming) || in_set(bad_scc, s->incoming))))) )
         t1 = t1->nxt;
       if(t1 != s->trans) { /* remove transition t */
         GTrans *free = t->nxt;
         t->to = free->to;
-        copy_set(free->pos, t->pos, 1);
-        copy_set(free->neg, t->neg, 1);
-        copy_set(free->final, t->final, 0);
+        copy_set(free->pos, t->pos, sym_size);
+        copy_set(free->neg, t->neg, sym_size);
+        copy_set(free->final, t->final, node_size);
         t->nxt = free->nxt;
         if(free == s->trans) s->trans = t;
         free_gtrans(free, 0, 0);
@@ -174,9 +176,9 @@ void retarget_all_gtrans()
 	if(!t->to) { /* t->to has no transitions */
 	  GTrans *free = t->nxt;
 	  t->to = free->to;
-	  copy_set(free->pos, t->pos, 1);
-	  copy_set(free->neg, t->neg, 1);
-	  copy_set(free->final, t->final, 0);
+	  copy_set(free->pos, t->pos, sym_size);
+	  copy_set(free->neg, t->neg, sym_size);
+	  copy_set(free->final, t->final, node_size);
 	  t->nxt   = free->nxt;
 	  if(free == s->trans) s->trans = t;
 	  free_gtrans(free, 0, 0);
@@ -307,7 +309,7 @@ void simplify_gscc() {
 
   scc_final = (int **)tl_emalloc(scc_id * sizeof(int *));
   for(i = 0; i < scc_id; i++)
-    scc_final[i] = make_set(-1,0);
+    scc_final[i] = make_set(-1,node_size);
 
   for(s = gstates->nxt; s != gstates; s = s->nxt)
     if(s->incoming == 0)
@@ -315,13 +317,13 @@ void simplify_gscc() {
     else
       for (t = s->trans->nxt; t != s->trans; t = t->nxt)
         if(t->to->incoming == s->incoming)
-          merge_sets(scc_final[s->incoming], t->final, 0);
+          merge_sets(scc_final[s->incoming], t->final, node_size);
 
-  scc_size = (scc_id + 1) / (8 * sizeof(int)) + 1;
-  bad_scc=make_set(-1,2);
+  scc_size = SET_SIZE(scc_id + 1);
+  bad_scc=make_set(-1,scc_size);
 
   for(i = 0; i < scc_id; i++)
-    if(!included_set(final_set, scc_final[i], 0))
+    if(!included_set(final_set, scc_final[i], node_size))
        add_set(bad_scc, i);
 
   for(i = 0; i < scc_id; i++)
@@ -342,9 +344,9 @@ int is_final(int *from, ATrans *at, int i) /*is the transition final for i ?*/
   in_to = in_set(at->to, i);
   rem_set(at->to, i);
   for(t = transition[i]; t; t = t->nxt)
-    if(included_set(t->to, at->to, 0) &&
-       included_set(t->pos, at->pos, 1) &&
-       included_set(t->neg, at->neg, 1)) {
+    if(included_set(t->to, at->to, node_size) &&
+       included_set(t->pos, at->pos, sym_size) &&
+       included_set(t->neg, at->neg, sym_size)) {
       if(in_to) add_set(at->to, i);
       return 1;
     }
@@ -355,30 +357,30 @@ int is_final(int *from, ATrans *at, int i) /*is the transition final for i ?*/
 GState *find_gstate(int *set, GState *s) 
 { /* finds the corresponding state, or creates it */
 
-  if(same_sets(set, s->nodes_set, 0)) return s; /* same state */
+  if(same_sets(set, s->nodes_set, node_size)) return s; /* same state */
 
   s = gstack->nxt; /* in the stack */
   gstack->nodes_set = set;
-  while(!same_sets(set, s->nodes_set, 0))
+  while(!same_sets(set, s->nodes_set, node_size))
     s = s->nxt;
   if(s != gstack) return s;
 
   s = gstates->nxt; /* in the solved states */
   gstates->nodes_set = set;
-  while(!same_sets(set, s->nodes_set, 0))
+  while(!same_sets(set, s->nodes_set, node_size))
     s = s->nxt;
   if(s != gstates) return s;
 
   s = gremoved->nxt; /* in the removed states */
   gremoved->nodes_set = set;
-  while(!same_sets(set, s->nodes_set, 0))
+  while(!same_sets(set, s->nodes_set, node_size))
     s = s->nxt;
   if(s != gremoved) return s;
 
   s = (GState *)tl_emalloc(sizeof(GState)); /* creates a new state */
-  s->id = (empty_set(set, 0)) ? 0 : gstate_id++;
+  s->id = (empty_set(set, node_size)) ? 0 : gstate_id++;
   s->incoming = 0;
-  s->nodes_set = dup_set(set, 0);
+  s->nodes_set = dup_set(set, node_size);
   s->trans = emalloc_gtrans(); /* sentinel */
   s->trans->nxt = s->trans;
   s->nxt = gstack->nxt;
@@ -395,12 +397,12 @@ void make_gtrans(GState *s) { /* creates all the transitions from a state */
   prod->nxt = prod;
   prod->prv = prod;
   prod->prod = emalloc_atrans();
-  clear_set(prod->prod->to,  0);
-  clear_set(prod->prod->pos, 1);
-  clear_set(prod->prod->neg, 1);
+  clear_set(prod->prod->to,  node_size);
+  clear_set(prod->prod->pos, sym_size);
+  clear_set(prod->prod->neg, sym_size);
   prod->trans = prod->prod;
   prod->trans->nxt = prod->prod;
-  list = list_set(s->nodes_set, 0);
+  list = list_set(s->nodes_set, node_size);
 
   for(i = 1; i < list[0]; i++) {
     AProd *p = (AProd *)tl_emalloc(sizeof(AProd));
@@ -419,32 +421,32 @@ void make_gtrans(GState *s) { /* creates all the transitions from a state */
     t1 = p->prod;
     if(t1) { /* solves the current transition */
       GTrans *trans, *t2;
-      clear_set(fin, 0);
+      clear_set(fin, node_size);
       for(i = 1; i < final[0]; i++)
 	if(is_final(s->nodes_set, t1, final[i]))
 	  add_set(fin, final[i]);
       for(t2 = s->trans->nxt; t2 != s->trans;) {
 	if(tl_simp_fly &&
-	   included_set(t1->to, t2->to->nodes_set, 0) &&
-	   included_set(t1->pos, t2->pos, 1) &&
-	   included_set(t1->neg, t2->neg, 1) &&
-	   same_sets(fin, t2->final, 0)) { /* t2 is redondant */
+	   included_set(t1->to, t2->to->nodes_set, node_size) &&
+	   included_set(t1->pos, t2->pos, sym_size) &&
+	   included_set(t1->neg, t2->neg, sym_size) &&
+	   same_sets(fin, t2->final, node_size)) { /* t2 is redondant */
 	  GTrans *free = t2->nxt;
 	  t2->to->incoming--;
 	  t2->to = free->to;
-	  copy_set(free->pos, t2->pos, 1);
-	  copy_set(free->neg, t2->neg, 1);
-	  copy_set(free->final, t2->final, 0);
+	  copy_set(free->pos, t2->pos, sym_size);
+	  copy_set(free->neg, t2->neg, sym_size);
+	  copy_set(free->final, t2->final, node_size);
 	  t2->nxt   = free->nxt;
 	  if(free == s->trans) s->trans = t2;
 	  free_gtrans(free, 0, 0);
 	  state_trans--;
 	}
 	else if(tl_simp_fly &&
-		included_set(t2->to->nodes_set, t1->to, 0) &&
-		included_set(t2->pos, t1->pos, 1) &&
-		included_set(t2->neg, t1->neg, 1) &&
-		same_sets(t2->final, fin, 0)) {/* t1 is redondant */
+		included_set(t2->to->nodes_set, t1->to, node_size) &&
+		included_set(t2->pos, t1->pos, sym_size) &&
+		included_set(t2->neg, t1->neg, sym_size) &&
+		same_sets(t2->final, fin, node_size)) {/* t1 is redondant */
 	  break;
 	}
 	else {
@@ -455,9 +457,9 @@ void make_gtrans(GState *s) { /* creates all the transitions from a state */
 	trans = emalloc_gtrans();
 	trans->to = find_gstate(t1->to, s);
 	trans->to->incoming++;
-	copy_set(t1->pos, trans->pos, 1);
-	copy_set(t1->neg, trans->neg, 1);
-	copy_set(fin,   trans->final, 0);
+	copy_set(t1->pos, trans->pos, sym_size);
+	copy_set(t1->neg, trans->neg, sym_size);
+	copy_set(fin,   trans->final, node_size);
 	trans->nxt = s->trans->nxt;
 	s->trans->nxt = trans;
 	state_trans++;
@@ -539,16 +541,16 @@ void reverse_print_generalized(GState *s) /* dumps the generalized Buchi automat
   reverse_print_generalized(s->nxt); /* begins with the last state */
 
   fprintf(tl_out, "state %i (", s->id);
-  print_set(s->nodes_set, 0);
+  print_set(s->nodes_set, node_size);
   fprintf(tl_out, ") : %i\n", s->incoming);
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
-    if (empty_set(t->pos, 1) && empty_set(t->neg, 1))
+    if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
       fprintf(tl_out, "1");
-    print_set(t->pos, 1);
-    if (!empty_set(t->pos, 1) && !empty_set(t->neg, 1)) fprintf(tl_out, " & ");
-    print_set(t->neg, 1);
+    print_set(t->pos, sym_size);
+    if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(tl_out, " & ");
+    print_set(t->neg, sym_size);
     fprintf(tl_out, " -> %i : ", t->to->id);
-    print_set(t->final, 0);
+    print_set(t->final, node_size);
     fprintf(tl_out, "\n");
   }
 }
@@ -574,9 +576,9 @@ void mk_generalized()
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
-  fin = new_set(0);
+  fin = new_set(node_size);
   bad_scc = 0; /* will be initialized in simplify_gscc */
-  final = list_set(final_set, 0);
+  final = list_set(final_set, node_size);
 
   gstack        = (GState *)tl_emalloc(sizeof(GState)); /* sentinel */
   gstack->nxt   = gstack;
@@ -588,9 +590,9 @@ void mk_generalized()
 
   for(t = transition[0]; t; t = t->nxt) { /* puts initial states in the stack */
     s = (GState *)tl_emalloc(sizeof(GState));
-    s->id = (empty_set(t->to, 0)) ? 0 : gstate_id++;
+    s->id = (empty_set(t->to, node_size)) ? 0 : gstate_id++;
     s->incoming = 1;
-    s->nodes_set = dup_set(t->to, 0);
+    s->nodes_set = dup_set(t->to, node_size);
     s->trans = emalloc_gtrans(); /* sentinel */
     s->trans->nxt = s->trans;
     s->nxt = gstack->nxt;

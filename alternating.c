@@ -42,6 +42,7 @@ ATrans **transition;
 struct rusage tr_debut, tr_fin;
 struct timeval t_diff;
 int *final_set, node_id = 1, sym_id = 0, node_size, sym_size;
+extern int scc_size;
 int astate_count = 0, atrans_count = 0;
 
 ATrans *build_alternating(Node *p);
@@ -93,9 +94,9 @@ ATrans *dup_trans(ATrans *trans)  /* returns the copy of a transition */
   ATrans *result;
   if(!trans) return trans;
   result = emalloc_atrans();
-  copy_set(trans->to,  result->to,  0);
-  copy_set(trans->pos, result->pos, 1);
-  copy_set(trans->neg, result->neg, 1);
+  copy_set(trans->to,  result->to,  node_size);
+  copy_set(trans->pos, result->pos, sym_size);
+  copy_set(trans->neg, result->neg, sym_size);
   return result;
 }
 
@@ -108,10 +109,10 @@ void do_merge_trans(ATrans **result, ATrans *trans1, ATrans *trans2)
   }
   if(!*result)
     *result = emalloc_atrans();
-  do_merge_sets((*result)->to, trans1->to,  trans2->to,  0);
-  do_merge_sets((*result)->pos, trans1->pos, trans2->pos, 1);
-  do_merge_sets((*result)->neg, trans1->neg, trans2->neg, 1);
-  if(!empty_intersect_sets((*result)->pos, (*result)->neg, 1)) {
+  do_merge_sets((*result)->to, trans1->to,  trans2->to,  node_size);
+  do_merge_sets((*result)->pos, trans1->pos, trans2->pos, sym_size);
+  do_merge_sets((*result)->neg, trans1->neg, trans2->neg, sym_size);
+  if(!empty_intersect_sets((*result)->pos, (*result)->neg, sym_size)) {
     free_atrans(*result, 0);
     *result = (ATrans *)0;
   }
@@ -150,9 +151,9 @@ ATrans *boolean(Node *p) /* computes the transitions to boolean nodes -> next & 
   switch(p->ntyp) {
   case TRUE:
     result = emalloc_atrans();
-    clear_set(result->to,  0);
-    clear_set(result->pos, 1);
-    clear_set(result->neg, 1);
+    clear_set(result->to,  node_size);
+    clear_set(result->pos, sym_size);
+    clear_set(result->neg, sym_size);
   case FALSE:
     break;
   case AND:
@@ -189,9 +190,9 @@ ATrans *boolean(Node *p) /* computes the transitions to boolean nodes -> next & 
   default:
     build_alternating(p);
     result = emalloc_atrans();
-    clear_set(result->to,  0);
-    clear_set(result->pos, 1);
-    clear_set(result->neg, 1);
+    clear_set(result->to,  node_size);
+    clear_set(result->pos, sym_size);
+    clear_set(result->neg, sym_size);
     add_set(result->to, already_done(p));
   }
   return result;
@@ -207,25 +208,25 @@ ATrans *build_alternating(Node *p) /* builds an alternating automaton for p */
 
   case TRUE:
     t = emalloc_atrans();
-    clear_set(t->to,  0);
-    clear_set(t->pos, 1);
-    clear_set(t->neg, 1);
+    clear_set(t->to,  node_size);
+    clear_set(t->pos, sym_size);
+    clear_set(t->neg, sym_size);
   case FALSE:
     break;
 
   case PREDICATE:
     t = emalloc_atrans();
-    clear_set(t->to,  0);
-    clear_set(t->pos, 1);
-    clear_set(t->neg, 1);
+    clear_set(t->to,  node_size);
+    clear_set(t->pos, sym_size);
+    clear_set(t->neg, sym_size);
     add_set(t->pos, get_sym_id(p->sym->name));
     break;
 
   case NOT:
     t = emalloc_atrans();
-    clear_set(t->to,  0);
-    clear_set(t->pos, 1);
-    clear_set(t->neg, 1);
+    clear_set(t->to,  node_size);
+    clear_set(t->pos, sym_size);
+    clear_set(t->neg, sym_size);
     add_set(t->neg, get_sym_id(p->lft->sym->name));
     break;
 
@@ -316,9 +317,9 @@ void simplify_atrans(ATrans **trans) /* simplifies the transitions */
     ATrans *t1;
     for(t1 = *trans; t1; t1 = t1->nxt) {
       if((t1 != t) && 
-	 included_set(t1->to,  t->to,  0) &&
-	 included_set(t1->pos, t->pos, 1) &&
-	 included_set(t1->neg, t->neg, 1))
+	 included_set(t1->to,  t->to,  node_size) &&
+	 included_set(t1->pos, t->pos, sym_size) &&
+	 included_set(t1->neg, t->neg, sym_size))
 	break;
     }
     if(t1) {
@@ -342,10 +343,10 @@ void simplify_atrans(ATrans **trans) /* simplifies the transitions */
 void simplify_astates() /* simplifies the alternating automaton */
 {
   ATrans *t;
-  int i, *acc = make_set(-1, 0); /* no state is accessible initially */
+  int i, *acc = make_set(-1, node_size); /* no state is accessible initially */
 
   for(t = transition[0]; t; t = t->nxt, i = 0)
-    merge_sets(acc, t->to, 0); /* all initial states are accessible */
+    merge_sets(acc, t->to, node_size); /* all initial states are accessible */
 
   for(i = node_id - 1; i > 0; i--) {
     if (!in_set(acc, i)) { /* frees unaccessible states */
@@ -357,7 +358,7 @@ void simplify_astates() /* simplifies the alternating automaton */
     astate_count++;
     simplify_atrans(&transition[i]);
     for(t = transition[i]; t; t = t->nxt)
-      merge_sets(acc, t->to, 0);
+      merge_sets(acc, t->to, node_size);
   }
 
   tfree(acc);
@@ -374,7 +375,7 @@ void print_alternating() /* dumps the alternating automaton */
 
   fprintf(tl_out, "init :\n");
   for(t = transition[0]; t; t = t->nxt) {
-    print_set(t->to, 0);
+    print_set(t->to, node_size);
     fprintf(tl_out, "\n");
   }
   
@@ -385,13 +386,13 @@ void print_alternating() /* dumps the alternating automaton */
     dump(label[i]);
     fprintf(tl_out, "\n");
     for(t = transition[i]; t; t = t->nxt) {
-      if (empty_set(t->pos, 1) && empty_set(t->neg, 1))
+      if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
 	fprintf(tl_out, "1");
-      print_set(t->pos, 1);
-      if (!empty_set(t->pos,1) && !empty_set(t->neg,1)) fprintf(tl_out, " & ");
-      print_set(t->neg, 2);
+      print_sym_set(t->pos, sym_size);
+      if (!empty_set(t->pos,sym_size) && !empty_set(t->neg,sym_size)) fprintf(tl_out, " & ");
+      print_set(t->neg, scc_size);
       fprintf(tl_out, " -> ");
-      print_set(t->to, 0);
+      print_set(t->to, node_size);
       fprintf(tl_out, "\n");
     }
   }
@@ -408,13 +409,13 @@ void mk_alternating(Node *p) /* generates an alternating automaton for p */
   node_size = calculate_node_size(p) + 1; /* number of states in the automaton */
   label = (Node **) tl_emalloc(node_size * sizeof(Node *));
   transition = (ATrans **) tl_emalloc(node_size * sizeof(ATrans *));
-  node_size = node_size / (8 * sizeof(int)) + 1;
+  node_size = SET_SIZE(node_size);
 
   sym_size = calculate_sym_size(p); /* number of predicates */
   if(sym_size) sym_table = (char **) tl_emalloc(sym_size * sizeof(char *));
-  sym_size = sym_size / (8 * sizeof(int)) + 1;
+  sym_size = SET_SIZE(sym_size);
   
-  final_set = make_set(-1, 0);
+  final_set = make_set(-1, node_size);
   transition[0] = boolean(p); /* generates the alternating automaton */
 
   if(tl_verbose) {

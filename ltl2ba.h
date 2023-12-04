@@ -35,6 +35,11 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <assert.h>
+
+/* EMPTY_SET is passed to make_set() to create empty */
+#define EMPTY_SET (-1)
+#define SET_SIZE(elements) (elements/(8 * sizeof(int)) + 1)
 
 typedef struct Symbol {
 char		*name;
@@ -119,6 +124,7 @@ typedef struct BState {
   struct BTrans *trans;
   struct BState *nxt;
   struct BState *prv;
+  int label;  /* DAN */
 } BState;
 
 typedef struct GScc {
@@ -152,6 +158,8 @@ enum {
 	, NEXT		/* 269 */
 #endif
 };
+
+enum outmodes {spin, c, dot, none};
 
 Node	*Canonical(Node *);
 Node	*canonical(Node *);
@@ -217,6 +225,7 @@ int  *intersect_sets(int *, int *, int);
 void add_set(int *, int);
 void rem_set(int *, int);
 void spin_print_set(int *, int*);
+void dot_print_set(int *, int*, int);
 void print_set(int *, int);
 int  empty_set(int *, int);
 int  empty_intersect_sets(int *, int *, int);

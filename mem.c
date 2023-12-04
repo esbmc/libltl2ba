@@ -50,6 +50,8 @@
 extern	unsigned long All_Mem;
 extern	int tl_verbose;
 
+extern int sym_size, node_size;
+
 ATrans *atrans_list = (ATrans *)0;
 GTrans *gtrans_list = (GTrans *)0;
 BTrans *btrans_list = (BTrans *)0;
@@ -132,9 +134,9 @@ ATrans* emalloc_atrans() {
   ATrans *result;
   if(!atrans_list) {
     result = (ATrans *)tl_emalloc(sizeof(GTrans));
-    result->pos = new_set(1);
-    result->neg = new_set(1);
-    result->to  = new_set(0);
+    result->pos = new_set(sym_size);
+    result->neg = new_set(sym_size);
+    result->to  = new_set(node_size);
     apool++;
   }
   else {
@@ -170,9 +172,9 @@ GTrans* emalloc_gtrans() {
   GTrans *result;
   if(!gtrans_list) {
     result = (GTrans *)tl_emalloc(sizeof(GTrans));
-    result->pos   = new_set(1);
-    result->neg   = new_set(1);
-    result->final = new_set(0);
+    result->pos   = new_set(sym_size);
+    result->neg   = new_set(sym_size);
+    result->final = new_set(node_size);
     gpool++;
   }
   else {
@@ -197,8 +199,8 @@ BTrans* emalloc_btrans() {
   BTrans *result;
   if(!btrans_list) {
     result = (BTrans *)tl_emalloc(sizeof(BTrans));
-    result->pos = new_set(1);
-    result->neg = new_set(1);
+    result->pos = new_set(sym_size);
+    result->neg = new_set(sym_size);
     bpool++;
   }
   else {

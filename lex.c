@@ -31,6 +31,7 @@
 /* Written by Gerard J. Holzmann, Bell Laboratories, U.S.A.               */
 
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include "ltl2ba.h"
 
@@ -39,6 +40,9 @@ static int	tl_lex(void);
 
 extern YYSTYPE	tl_yylval;
 char	yytext[2048];
+
+int cexpr_idx = 0;
+char *cexpr_expr_table[256];
 
 #define Token(y)        tl_yylval = tl_nn(y,ZN,ZN); return y
 
@@ -110,6 +114,51 @@ tl_lex(void)
 
 	} while (c == ' ');	/* '\t' is removed in tl_main.c */
 
+	if (c == '{') {
+		char buffer[256];
+		int idx = 0;
+
+		do {
+			c = tl_Getchar();
+			if (c == '}')
+				break;
+
+			if (c <= 0) {
+				fprintf(stderr, "Unexpected end of file during C expression\n");
+				exit(1);
+			}
+
+			yytext[idx++] = c;
+			if (idx == 2048) {
+				fprintf(stderr, "Your C expression is too long\n");
+				exit(1);
+			}
+		} while (1);
+
+		yytext[idx++] = '\0';
+		cexpr_expr_table[cexpr_idx] = (char *)strdup(yytext);
+
+		for (idx = 0; idx < cexpr_idx; idx++) {
+			if (!strcmp(cexpr_expr_table[cexpr_idx], cexpr_expr_table[idx])) {
+				sprintf(buffer, "_ltl2ba_cexpr_%d_status",idx);
+				break;
+			}
+		}
+
+		if (idx == cexpr_idx)
+			sprintf(buffer, "_ltl2ba_cexpr_%d_status", cexpr_idx++);
+
+		if (cexpr_idx == 256) {
+			fprintf(stderr, "You have too many C expressions\n");
+			exit(1);
+		}
+
+		tl_yylval = tl_nn(PREDICATE,ZN,ZN);
+		tl_yylval->sym = tl_lookup(buffer);
+		return PREDICATE;
+	}
+
+
 	if (islower(c))
 	{	getword(c, isalnum_);
 		if (strcmp("true", yytext) == 0)
@@ -149,6 +198,8 @@ tl_lex(void)
 	case '!' : c = NOT; break;
 	case 'U' : c = U_OPER; break;
 	case 'V' : c = V_OPER; break;
+	case 'F' : c = EVENTUALLY; break;
+	case 'G' : c = ALWAYS; break;
 #ifdef NXT
 	case 'X' : c = NEXT; break;
 #endif
