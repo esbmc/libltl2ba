@@ -95,26 +95,6 @@ usage: ltl2ba [-flag] -f 'formula'\n\
 	alldone(code);
 }
 
-static void trans(Node *p)
-{
-  if (!p || tl_errs) return;
-
-  if (tl_verbose || tl_terse) {
-    FILE *f = tl_out;
-    tl_out = stderr;
-    fprintf(tl_out, "\t/* Normlzd: ");
-    dump(p);
-    fprintf(tl_out, " */\n");
-    tl_out = f;
-  }
-  if (tl_terse)
-    return;
-
-  mk_alternating(p);
-  mk_generalized();
-  mk_buchi();
-}
-
 static void
 tl_main(char  *formula)
 {
@@ -127,7 +107,7 @@ tl_main(char  *formula)
 	strcpy(uform, formula);
 	hasuform = strlen(uform);
 
-	Node *n = tl_formula();
+	Node *p = tl_formula();
 	if (tl_verbose)
 	{
 		fprintf(stderr, "formula: ");
@@ -138,7 +118,23 @@ tl_main(char  *formula)
 		fprintf(stderr, "\n");
 	}
 
-	trans(n);
+	if (!p || tl_errs)
+		return;
+
+	if (tl_verbose || tl_terse) {
+		FILE *f = tl_out;
+		tl_out = stderr;
+		fprintf(tl_out, "\t/* Normlzd: ");
+		dump(p);
+		fprintf(tl_out, " */\n");
+		tl_out = f;
+	}
+	if (tl_terse)
+		return;
+
+	mk_alternating(p);
+	mk_generalized();
+	mk_buchi();
 
 	if (tl_stats)
 		tl_endstats();
