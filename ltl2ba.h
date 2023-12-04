@@ -152,7 +152,6 @@ Node	*tl_nn(int, Node *, Node *);
 
 Symbol	*tl_lookup(char *);
 Symbol	*getsym(Symbol *);
-Symbol	*DoDump(Node *);
 
 char	*emalloc(int);
 

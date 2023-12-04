@@ -15,6 +15,52 @@ extern int	tl_verbose;
 
 static Node	*can = ZN;
 
+static char	dumpbuf[2048];
+
+static void
+sdump(Node *n)
+{
+	switch (n->ntyp) {
+	case PREDICATE:	strcat(dumpbuf, n->sym->name);
+			break;
+	case U_OPER:	strcat(dumpbuf, "U");
+			goto common2;
+	case V_OPER:	strcat(dumpbuf, "V");
+			goto common2;
+	case OR:	strcat(dumpbuf, "|");
+			goto common2;
+	case AND:	strcat(dumpbuf, "&");
+common2:		sdump(n->rgt);
+common1:		sdump(n->lft);
+			break;
+#ifdef NXT
+	case NEXT:	strcat(dumpbuf, "X");
+			goto common1;
+#endif
+	case NOT:	strcat(dumpbuf, "!");
+			goto common1;
+	case TRUE:	strcat(dumpbuf, "T");
+			break;
+	case FALSE:	strcat(dumpbuf, "F");
+			break;
+	default:	strcat(dumpbuf, "?");
+			break;
+	}
+}
+
+static Symbol *
+DoDump(Node *n)
+{
+	if (!n) return ZS;
+
+	if (n->ntyp == PREDICATE)
+		return n->sym;
+
+	dumpbuf[0] = '\0';
+	sdump(n);
+	return tl_lookup(dumpbuf);
+}
+
 Node *
 right_linked(Node *n)
 {
