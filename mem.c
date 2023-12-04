@@ -80,7 +80,7 @@ tl_emalloc(int U)
 	if (u >= A_LARGE)
 	{	log(ALLOC, 0, 1);
 		if (tl_verbose)
-		printf("tl_spin: memalloc %ld bytes\n", u);
+		fprintf(stderr, "tl_spin: memalloc %ld bytes\n", u);
 		m = (union M *) emalloc((int) u*sizeof(union M));
 		All_Mem += (unsigned long) u*sizeof(union M);
 	} else
@@ -226,7 +226,7 @@ a_stats(void)
 {	long	p, a, f;
 	int	i;
 
-	printf(" size\t  pool\tallocs\t frees\n");
+	fprintf(stderr, " size\t  pool\tallocs\t frees\n");
 
 	for (i = 0; i < A_LARGE; i++)
 	{	p = event[POOL][i];
@@ -234,14 +234,14 @@ a_stats(void)
 		f = event[FREE][i];
 
 		if(p|a|f)
-		printf("%5d\t%6ld\t%6ld\t%6ld\n",
+		fprintf(stderr, "%5d\t%6ld\t%6ld\t%6ld\n",
 			i, p, a, f);
 	}
 
-	printf("atrans\t%6d\t%6d\t%6d\n",
+	fprintf(stderr, "atrans\t%6d\t%6d\t%6d\n",
 	       apool, aallocs, afrees);
-	printf("gtrans\t%6d\t%6d\t%6d\n",
+	fprintf(stderr, "gtrans\t%6d\t%6d\t%6d\n",
 	       gpool, gallocs, gfrees);
-	printf("btrans\t%6d\t%6d\t%6d\n",
+	fprintf(stderr, "btrans\t%6d\t%6d\t%6d\n",
 	       bpool, ballocs, bfrees);
 }

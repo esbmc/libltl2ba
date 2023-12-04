@@ -224,8 +224,8 @@ struct timeval *result, *x, *y;
 static void
 tl_endstats(void)
 {	/*extern int Stack_mx;*/
-	printf("\ntotal memory used: %9ld\n", All_Mem);
-	/*printf("largest stack sze: %9d\n", Stack_mx);*/
+	fprintf(stderr, "\ntotal memory used: %9ld\n", All_Mem);
+	/*fprintf(stderr, "largest stack sze: %9d\n", Stack_mx);*/
 	/*cache_stats();*/
 	a_stats();
 }

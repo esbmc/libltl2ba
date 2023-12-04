@@ -253,8 +253,8 @@ void put_uform(void);
 typedef Node	*Nodeptr;
 #define YYSTYPE	 Nodeptr
 
-#define Debug(x)	{ if (0) printf(x); }
-#define Debug2(x,y)	{ if (tl_verbose) printf(x,y); }
+#define Debug(x)	{ if (0) fprintf(stderr, x); }
+#define Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
 #define Dump(x)		{ if (0) dump(x); }
 #define Explain(x)	{ if (tl_verbose) tl_explain(x); }
 

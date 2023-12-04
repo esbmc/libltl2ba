@@ -34,6 +34,7 @@
 
 extern int	tl_yylex(void);
 extern int	tl_verbose, tl_simp_log;
+extern FILE	*tl_out;
 
 int	tl_yychar = 0;
 YYSTYPE	tl_yylval;
@@ -564,9 +565,12 @@ void
 tl_parse(void)
 {       Node *n = tl_formula();
         if (tl_verbose)
-	{	printf("formula: ");
+	{	fprintf(stderr, "formula: ");
+		FILE *f = tl_out;
+		tl_out = stderr;
 		put_uform();
-		printf("\n");
+		tl_out = f;
+		fprintf(stderr, "\n");
 	}
 	trans(n);
 }

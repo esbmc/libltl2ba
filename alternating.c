@@ -417,6 +417,9 @@ void mk_alternating(Node *p) /* generates an alternating automaton for p */
   final_set = make_set(-1, node_size);
   transition[0] = boolean(p); /* generates the alternating automaton */
 
+  FILE *f = tl_out;
+  tl_out = stderr;
+
   if(tl_verbose) {
     fprintf(tl_out, "\nAlternating automaton before simplification\n");
     print_alternating();
@@ -437,6 +440,8 @@ void mk_alternating(Node *p) /* generates an alternating automaton for p */
 		t_diff.tv_sec, t_diff.tv_usec);
     fprintf(tl_out, "\n%i states, %i transitions\n", astate_count, atrans_count);
   }
+
+  tl_out = f;
 
   releasenode(1, p);
   tfree(label);

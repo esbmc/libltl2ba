@@ -616,6 +616,9 @@ void mk_generalized()
 
   retarget_all_gtrans();
 
+  FILE *f = tl_out;
+  tl_out = stderr;
+
   if(tl_stats) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
@@ -650,5 +653,7 @@ void mk_generalized()
       print_generalized();
     }
   }
+
+  tl_out = f;
 }
 

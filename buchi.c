@@ -751,6 +751,9 @@ void mk_buchi()
 
   retarget_all_btrans();
 
+  FILE *f = tl_out;
+  tl_out = stderr;
+
   if(tl_stats) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
@@ -782,6 +785,8 @@ void mk_buchi()
       fprintf(tl_out, "\n");
     }
   }
+
+  tl_out = f;
 
 switch (outmode) {
 	case none:	break;
@@ -1202,7 +1207,7 @@ print_behaviours()
     fprintf(tl_out,"\n");
 */
     for(i=0; i<sym_id; i++) {
-      printf("%d\t%s",i,sym_table[i]?sym_table[i]:"");
+      fprintf(tl_out, "%d\t%s",i,sym_table[i]?sym_table[i]:"");
       if (sym_table[i] && sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
         /* Yes, scanning for a match here is horrid DAN */
         fprintf(tl_out, "\t{ %s }\n", cexpr_expr_table[cex]);

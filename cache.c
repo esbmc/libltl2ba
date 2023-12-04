@@ -39,6 +39,8 @@ typedef struct Cache {
 	struct Cache *nxt;
 } Cache;
 
+extern FILE	*tl_out;
+
 static Cache	*stored = (Cache *) 0;
 static unsigned long	Caches, CacheHits;
 
@@ -49,13 +51,16 @@ void
 cache_dump(void)
 {	Cache *d; int nr=0;
 
-	printf("\nCACHE DUMP:\n");
+	fprintf(stderr, "\nCACHE DUMP:\n");
+	FILE *f = tl_out;
+	tl_out = stderr;
 	for (d = stored; d; d = d->nxt, nr++)
 	{	if (d->same) continue;
-		printf("B%3d: ", nr); dump(d->before); printf("\n");
-		printf("A%3d: ", nr); dump(d->after); printf("\n");
+		fprintf(stderr, "B%3d: ", nr); dump(d->before); fprintf(stderr, "\n");
+		fprintf(stderr, "A%3d: ", nr); dump(d->after); fprintf(stderr, "\n");
 	}
-	printf("============\n");
+	tl_out = f;
+	fprintf(stderr, "============\n");
 }
 
 Node *
@@ -98,8 +103,8 @@ cached(Node *n)
 void
 cache_stats(void)
 {
-	printf("cache stores     : %9ld\n", Caches);
-	printf("cache hits       : %9ld\n", CacheHits);
+	fprintf(stderr, "cache stores     : %9ld\n", Caches);
+	fprintf(stderr, "cache hits       : %9ld\n", CacheHits);
 }
 
 void
@@ -235,7 +240,7 @@ sameform(Node *a, Node *b)
 		return sametrees(a->ntyp, a, b);
 
 	default:
-		printf("type: %d\n", a->ntyp);
+		fprintf(stderr, "type: %d\n", a->ntyp);
 		fatal("cannot happen, sameform");
 	}
 
