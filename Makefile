@@ -31,7 +31,7 @@ CC = gcc
 CFLAGS = -DNXT $(WARNS)
 WARNS  = -Wall -Wextra -Wno-unused
 
-LTL2C =	parse.o lex.o main.o trans.o buchi.o set.o \
+LTL2C =	parse.o lex.o main.o buchi.o set.o \
 	mem.o rewrt.o cache.o alternating.o generalized.o
 
 ltl2c:	$(LTL2C)
