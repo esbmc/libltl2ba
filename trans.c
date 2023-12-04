@@ -14,7 +14,6 @@
 extern int tl_verbose, tl_terse, tl_errs;
 extern FILE	*tl_out;
 
-int	Stack_mx=0, Max_Red=0, Total=0;
 static char	dumpbuf[2048];
 
 #ifdef NXT
