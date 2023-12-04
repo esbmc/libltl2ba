@@ -238,10 +238,10 @@ a_stats(void)
 			i, p, a, f);
 	}
 
-	printf("atrans\t%6d\t%6d\t%6d\n", 
+	printf("atrans\t%6d\t%6d\t%6d\n",
 	       apool, aallocs, afrees);
-	printf("gtrans\t%6d\t%6d\t%6d\n", 
+	printf("gtrans\t%6d\t%6d\t%6d\n",
 	       gpool, gallocs, gfrees);
-	printf("btrans\t%6d\t%6d\t%6d\n", 
+	printf("btrans\t%6d\t%6d\t%6d\n",
 	       bpool, ballocs, bfrees);
 }

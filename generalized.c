@@ -78,7 +78,7 @@ GState *remove_gstate(GState *s, GState *s1) /* removes a state */
     if(s1->prv == s)
       s1->prv = s->prv;
   return prv;
-} 
+}
 
 void copy_gtrans(GTrans *from, GTrans *to) /* copies a transition */
 {
@@ -88,7 +88,7 @@ void copy_gtrans(GTrans *from, GTrans *to) /* copies a transition */
   copy_set(from->final, to->final, node_size);
 }
 
-int same_gtrans(GState *a, GTrans *s, GState *b, GTrans *t, int use_scc) 
+int same_gtrans(GState *a, GTrans *s, GState *b, GTrans *t, int use_scc)
 { /* returns 1 if the transitions are identical */
   if((s->to != t->to) ||
      ! same_sets(s->pos, t->pos, sym_size) ||
@@ -128,10 +128,10 @@ int simplify_gtrans() /* simplifies the transitions */
     while(t != s->trans) { /* tries to remove t */
       copy_gtrans(t, s->trans);
       t1 = s->trans->nxt;
-      while ( !((t != t1) 
-          && (t1->to == t->to) 
-          && included_set(t1->pos, t->pos, sym_size) 
-          && included_set(t1->neg, t->neg, sym_size) 
+      while ( !((t != t1)
+          && (t1->to == t->to)
+          && included_set(t1->pos, t->pos, sym_size)
+          && included_set(t1->neg, t->neg, sym_size)
           && (included_set(t->final, t1->final, node_size)  /* acceptance conditions of t are also in t1 or may be ignored */
               || (tl_simp_scc && ((s->incoming != t->to->incoming) || in_set(bad_scc, s->incoming))))) )
         t1 = t1->nxt;
@@ -150,7 +150,7 @@ int simplify_gtrans() /* simplifies the transitions */
         t = t->nxt;
     }
   }
-  
+
   if(tl_stats) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
@@ -197,17 +197,17 @@ void retarget_all_gtrans()
   }
 }
 
-int all_gtrans_match(GState *a, GState *b, int use_scc) 
+int all_gtrans_match(GState *a, GState *b, int use_scc)
 { /* decides if the states are equivalent */
   GTrans *s, *t;
-  for (s = a->trans->nxt; s != a->trans; s = s->nxt) { 
+  for (s = a->trans->nxt; s != a->trans; s = s->nxt) {
                                 /* all transitions from a appear in b */
     copy_gtrans(s, b->trans);
     t = b->trans->nxt;
     while(!same_gtrans(a, s, b, t, use_scc)) t = t->nxt;
     if(t == b->trans) return 0;
   }
-  for (t = b->trans->nxt; t != b->trans; t = t->nxt) { 
+  for (t = b->trans->nxt; t != b->trans; t = t->nxt) {
                                 /* all transitions from b appear in a */
     copy_gtrans(t, a->trans);
     s = a->trans->nxt;
@@ -237,7 +237,7 @@ int simplify_gstates() /* eliminates redundant states */
       /* if scc(a)>scc(b) and scc(a) is non-trivial then all_gtrans_match(a,b,use_scc) must fail */
       if(a->incoming > b->incoming) /* scc(a) is trivial */
         a = remove_gstate(a, b);
-      else /* either scc(a)=scc(b) or scc(b) is trivial */ 
+      else /* either scc(a)=scc(b) or scc(b) is trivial */
         remove_gstate(b, a);
       changed++;
     }
@@ -355,7 +355,7 @@ int is_final(int *from, ATrans *at, int i) /*is the transition final for i ?*/
   return 0;
 }
 
-GState *find_gstate(int *set, GState *s) 
+GState *find_gstate(int *set, GState *s)
 { /* finds the corresponding state, or creates it */
 
   if(same_sets(set, s->nodes_set, node_size)) return s; /* same state */
@@ -480,7 +480,7 @@ void make_gtrans(GState *s) { /* creates all the transitions from a state */
       p = p->prv;
     }
   }
-  
+
   tfree(list); /* free memory */
   while(prod->nxt != prod) {
     AProd *p = prod->nxt;
@@ -503,7 +503,7 @@ void make_gtrans(GState *s) { /* creates all the transitions from a state */
 	s1->prv = (GState *)0;
       return;
     }
-    
+
     gstates->trans = s->trans;
     s1 = gstates->nxt;
     while(!all_gtrans_match(s, s1, 0))
@@ -568,7 +568,7 @@ void print_generalized() { /* prints intial states and calls 'reverse_print' */
 |*                       Main method                                *|
 \********************************************************************/
 
-void mk_generalized() 
+void mk_generalized()
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
   GState *s;
@@ -644,11 +644,11 @@ void mk_generalized()
       simplify_gtrans();
       if (tl_simp_scc) simplify_gscc();
     }
-    
+
     if(tl_verbose) {
       fprintf(tl_out, "\nGeneralized Buchi automaton after simplification\n");
       print_generalized();
     }
   }
 }
-  
+

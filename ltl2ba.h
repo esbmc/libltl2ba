@@ -175,7 +175,7 @@ Symbol	*tl_lookup(char *);
 Symbol	*getsym(Symbol *);
 Symbol	*DoDump(Node *);
 
-char	*emalloc(int);	
+char	*emalloc(int);
 
 int	anywhere(int, Node *, Node *);
 int	dump_cond(Node *, Node *, int);
@@ -244,7 +244,7 @@ void put_uform(void);
 
 #define ZN	(Node *)0
 #define ZS	(Symbol *)0
-#define Nhash	255    	
+#define Nhash	255
 #define True	tl_nn(TRUE,  ZN, ZN)
 #define False	tl_nn(FALSE, ZN, ZN)
 #define Not(a)	push_negation(tl_nn(NOT, a, ZN))

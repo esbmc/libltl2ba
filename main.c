@@ -35,7 +35,7 @@
 
 FILE	*tl_out;
 
-int	tl_stats     = 0; /* time and size stats */	
+int	tl_stats     = 0; /* time and size stats */
 int tl_simp_log  = 1; /* logical simplification */
 int tl_simp_diff = 1; /* automata simplification */
 int tl_simp_fly  = 1; /* on the fly simplification */
@@ -134,7 +134,7 @@ usage(void)
         printf(" -c\t\tdisable strongly (C)onnected components simplification\n");
         printf(" -a\t\tdisable trick in (A)ccepting conditions\n");
 		printf(" -O mode\toutput mode. One of spin, c or dot\n");
-	
+
         alldone(1);
 }
 
@@ -177,7 +177,7 @@ main(int argc, char *argv[])
                 case 'l': tl_simp_log = 0; break;
                 case 'd': tl_verbose = 1; break;
                 case 's': tl_stats = 1; break;
-				case 'O': 
+				case 'O':
 					if (strcmp("spin",argv[2])==0)
 						outmode=spin;
 					else if (strcmp("c",argv[2])==0)
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
                 tl_out = cpyfile(argv[1], out2);
                 i = tl_main(add_ltl);
                 fclose(tl_out);
-        } else 
+        } else
 	{
                 if (argc > 0)
                         i = tl_main(add_ltl);
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 
 /* Subtract the `struct timeval' values X and Y, storing the result X-Y in RESULT.
    Return 1 if the difference is negative, otherwise 0.  */
- 
+
 int
 timeval_subtract (result, x, y)
 struct timeval *result, *x, *y;
@@ -247,11 +247,11 @@ struct timeval *result, *x, *y;
 		x->tv_usec += 1000000;
 		x->tv_sec--;
 	}
-	
+
 	/* Compute the time remaining to wait. tv_usec is certainly positive. */
 	result->tv_sec = x->tv_sec - y->tv_sec;
 	result->tv_usec = x->tv_usec - y->tv_usec;
-	
+
 	/* Return 1 if result is negative. */
 	return x->tv_sec < y->tv_sec;
 }

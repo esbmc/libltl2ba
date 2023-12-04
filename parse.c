@@ -62,7 +62,7 @@ implies(Node *a, Node *b)
      (a->ntyp == V_OPER && implies(a->rgt, b)) ||
      (a->ntyp == U_OPER && implies(a->lft, b) && implies(a->rgt, b)) ||
      (b->ntyp == V_OPER && implies(a, b->lft) && implies(a, b->rgt)) ||
-     ((a->ntyp == U_OPER || a->ntyp == V_OPER) && a->ntyp == b->ntyp && 
+     ((a->ntyp == U_OPER || a->ntyp == V_OPER) && a->ntyp == b->ntyp &&
          implies(a->lft, b->lft) && implies(a->rgt, b->rgt)));
 }
 
@@ -126,8 +126,8 @@ bin_simpler(Node *ptr)
 		}
 
 		/* NEW */
-		if (ptr->lft->ntyp != TRUE && 
-		    implies(push_negation(tl_nn(NOT, dupnode(ptr->rgt), ZN)), 
+		if (ptr->lft->ntyp != TRUE &&
+		    implies(push_negation(tl_nn(NOT, dupnode(ptr->rgt), ZN)),
 			    ptr->lft))
 		{       ptr->lft = True;
 		        break;
@@ -141,7 +141,7 @@ bin_simpler(Node *ptr)
 			break;
 		}
 		if (implies(ptr->rgt, ptr->lft))
-		{	/* p V p = p */	
+		{	/* p V p = p */
 			ptr = ptr->rgt;
 			break;
 		}
@@ -177,8 +177,8 @@ bin_simpler(Node *ptr)
 		}
 
 		/* NEW */
-		if (ptr->lft->ntyp != FALSE && 
-		    implies(ptr->lft, 
+		if (ptr->lft->ntyp != FALSE &&
+		    implies(ptr->lft,
 			    push_negation(tl_nn(NOT, dupnode(ptr->rgt), ZN))))
 		{       ptr->lft = False;
 		        break;
@@ -297,14 +297,14 @@ bin_simpler(Node *ptr)
 		||  implies(ptr->rgt, ptr->lft))/* NEW */
 		{	ptr = ptr->rgt;
 			break;
-		}	
+		}
 		if (ptr->rgt->ntyp == TRUE	/* (p && T) == p */
 		||  ptr->lft->ntyp == FALSE	/* (F && p) == F */
 		||  implies(ptr->lft, ptr->rgt))/* NEW */
 		{	ptr = ptr->lft;
 			break;
 		}
-		
+
 		/* NEW : F G p && F G q == F G (p && q) */
 		if (ptr->lft->ntyp == U_OPER &&
 		    ptr->lft->lft->ntyp == TRUE &&
@@ -323,9 +323,9 @@ bin_simpler(Node *ptr)
 		  }
 
 		/* NEW */
-		if (implies(ptr->lft, 
+		if (implies(ptr->lft,
 			    push_negation(tl_nn(NOT, dupnode(ptr->rgt), ZN)))
-		 || implies(ptr->rgt, 
+		 || implies(ptr->rgt,
 			    push_negation(tl_nn(NOT, dupnode(ptr->lft), ZN))))
 		{       ptr = False;
 		        break;
@@ -363,7 +363,7 @@ bin_simpler(Node *ptr)
 		||  implies(ptr->rgt, ptr->lft))/* NEW */
 		{	ptr = ptr->lft;
 			break;
-		}	
+		}
 		if (ptr->rgt->ntyp == TRUE	/* (p || T) == T */
 		||  ptr->lft->ntyp == FALSE	/* (F || p) == p */
 		||  implies(ptr->lft, ptr->rgt))/* NEW */
@@ -387,8 +387,8 @@ bin_simpler(Node *ptr)
 		&&  isequal(ptr->lft->rgt, ptr->rgt->rgt))
 		{	ptr = ptr->rgt;
 			break;
-		}		
-		
+		}
+
 		/* NEW : G F p || G F q == G F (p || q) */
 		if (ptr->lft->ntyp == V_OPER &&
 		    ptr->lft->lft->ntyp == FALSE &&
@@ -426,7 +426,7 @@ bin_minimal(Node *ptr)
 	case IMPLIES:
 		return tl_nn(OR, Not(ptr->lft), ptr->rgt);
 	case EQUIV:
-		return tl_nn(OR, 
+		return tl_nn(OR,
 			     tl_nn(AND,dupnode(ptr->lft),dupnode(ptr->rgt)),
 			     tl_nn(AND,Not(ptr->lft),Not(ptr->rgt)));
 	}
@@ -459,11 +459,11 @@ tl_factor(void)
 		  if (ptr->ntyp == FALSE
 		      ||  ptr->ntyp == TRUE)
 		    break;	/* [] false == false */
-		  
+
 		  if (ptr->ntyp == V_OPER)
 		    {	if (ptr->lft->ntyp == FALSE)
 		      break;	/* [][]p = []p */
-		    
+
 		    ptr = ptr->rgt;	/* [] (p V q) = [] q */
 		    }
 		}
@@ -505,7 +505,7 @@ tl_factor(void)
 
 		ptr = tl_nn(U_OPER, True, ptr);
 	simpl:
-		if (tl_simp_log) 
+		if (tl_simp_log)
 		  ptr = bin_simpler(ptr);
 		break;
 	case PREDICATE:
@@ -557,7 +557,7 @@ again:
 static Node *
 tl_formula(void)
 {	tl_yychar = tl_yylex();
-	return tl_level(1);	/* 2 precedence levels, 1 and 0 */	
+	return tl_level(1);	/* 2 precedence levels, 1 and 0 */
 }
 
 void

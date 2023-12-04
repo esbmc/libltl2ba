@@ -145,7 +145,7 @@ addcan(int tok, Node *n)
 		return;
 #endif
 	N = dupnode(n);
-	if (!can)	
+	if (!can)
 	{	can = N;
 		return;
 	}
@@ -209,7 +209,7 @@ Canonical(Node *n)
 	can = ZN;
 	addcan(tok, n);
 #if 1
-	Debug("\nA0: "); Dump(can); 
+	Debug("\nA0: "); Dump(can);
 	Debug("\nA1: "); Dump(n); Debug("\n");
 #endif
 	releasenode(1, n);

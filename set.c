@@ -72,7 +72,7 @@ int *dup_set(int *l, int size) /* duplicates a set */
     m[i] = l[i];
   return m;
 }
-  
+
 void merge_sets(int *l1, int *l2, int size) /* puts the union of the two sets in l1 */
 {
   int i;
@@ -125,7 +125,7 @@ void rem_set(int *l, int n) /* removes an element from a set */
 void spin_print_set(int *pos, int *neg) /* prints the content of a set for spin */
 {
   int i, j, start = 1;
-  for(i = 0; i < sym_size; i++) 
+  for(i = 0; i < sym_size; i++)
     for(j = 0; j < mod; j++) {
       if(pos && pos[i] & (1 << j)) {
 	if(!start)
@@ -148,13 +148,13 @@ void dot_print_set(int *pos, int *neg,int need_parens) /* prints the content of 
 {
   int i, j, start = 1;
   int count = 0, cex;
-  for(i = 0; i < sym_size; i++) 
+  for(i = 0; i < sym_size; i++)
     for(j = 0; j < mod; j++) {
 	  if(pos[i] & (1 << j)) count++;
 	  if(neg[i] & (1 << j)) count++;
   }
   if (count>1 && need_parens) fprintf(tl_out,"(");
-  for(i = 0; i < sym_size; i++) 
+  for(i = 0; i < sym_size; i++)
     for(j = 0; j < mod; j++) {
       if(pos[i] & (1 << j)) {
 	if(!start)
@@ -186,7 +186,7 @@ void print_set(int *l, int size) /* prints the content of a set */
 {
   int i, j, start = 1;;
   fprintf(tl_out, "{");
-  for(i = 0; i < size; i++) 
+  for(i = 0; i < size; i++)
     for(j = 0; j < mod; j++)
       if(l[i] & (1 << j)) {
         if(!start) fprintf(tl_out, ",");
@@ -229,7 +229,7 @@ int same_sets(int *l1, int *l2, int size) /* tests if two sets are identical */
   return test;
 }
 
-int included_set(int *l1, int *l2, int size) 
+int included_set(int *l1, int *l2, int size)
 {                    /* tests if the first set is included in the second one */
   int i, test = 0;
   for(i = 0; i < size; i++)
@@ -246,16 +246,16 @@ int *list_set(int *l, int size) /* transforms a set into a list */
 {
   int i, j, list_size = 1, *list;
   for(i = 0; i < size; i++)
-    for(j = 0; j < mod; j++) 
+    for(j = 0; j < mod; j++)
       if(l[i] & (1 << j))
 	list_size++;
   list = (int *)tl_emalloc(list_size * sizeof(int));
   list[0] = list_size;
   list_size = 1;
   for(i = 0; i < size; i++)
-    for(j = 0; j < mod; j++) 
+    for(j = 0; j < mod; j++)
       if(l[i] & (1 << j))
 	list[list_size++] = mod * i + j;
   return list;
 }
-  
+

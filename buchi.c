@@ -43,7 +43,7 @@ extern int sym_size, scc_size;
 
 extern int gstate_id;
 
-extern FILE *tl_out;	
+extern FILE *tl_out;
 BState *bstack, *bstates, *bremoved;
 static BScc *scc_stack;
 int accept, bstate_count = 0, btrans_count = 0;
@@ -84,7 +84,7 @@ BState *remove_bstate(BState *s, BState *s1) /* removes a state */
     if(s1->prv == s)
       s1->prv = s->prv;
   return prv;
-} 
+}
 
 void copy_btrans(BTrans *from, BTrans *to) {
   to->to    = from->to;
@@ -121,7 +121,7 @@ int simplify_btrans() /* simplifies the transitions */
       else
         t = t->nxt;
     }
-      
+
   if(tl_stats) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
@@ -140,7 +140,7 @@ int same_btrans(BTrans *s, BTrans *t) /* returns 1 if the transitions are identi
 	 same_sets(s->neg, t->neg, sym_size));
 }
 
-void remove_btrans(BState *to) 
+void remove_btrans(BState *to)
 {             /* redirects transitions before removing a state from the automaton */
   BState *s;
   BTrans *t;
@@ -183,7 +183,7 @@ void retarget_all_btrans()
 }
 
 int all_btrans_match(BState *a, BState *b) /* decides if the states are equivalent */
-{	
+{
   BTrans *s, *t;
 
   /* the states have to be both final or both non final,
@@ -198,7 +198,7 @@ int all_btrans_match(BState *a, BState *b) /* decides if the states are equivale
       && b->incoming >=0)  /* b is not in a trivial SCC */
     return 0;  /* states can not be matched */
 
-  for (s = a->trans->nxt; s != a->trans; s = s->nxt) { 
+  for (s = a->trans->nxt; s != a->trans; s = s->nxt) {
                                 /* all transitions from a appear in b */
     copy_btrans(s, b->trans);
     t = b->trans->nxt;
@@ -206,7 +206,7 @@ int all_btrans_match(BState *a, BState *b) /* decides if the states are equivale
       t = t->nxt;
     if(t == b->trans) return 0;
   }
-  for (s = b->trans->nxt; s != b->trans; s = s->nxt) { 
+  for (s = b->trans->nxt; s != b->trans; s = s->nxt) {
                                 /* all transitions from b appear in a */
     copy_btrans(s, a->trans);
     t = a->trans->nxt;
@@ -413,9 +413,9 @@ void make_btrans(BState *s) /* creates all the transitions from a state */
     for(t = s->gstate->trans->nxt; t != s->gstate->trans; t = t->nxt) {
       int fin = next_final(t->final, (s->final == accept) ? 0 : s->final);
       BState *to = find_bstate(&t->to, fin, s);
-      
+
       for(t1 = s->trans->nxt; t1 != s->trans;) {
-	if(tl_simp_fly && 
+	if(tl_simp_fly &&
 	   (to == t1->to) &&
 	   included_set(t->pos, t1->pos, sym_size) &&
 	   included_set(t->neg, t1->neg, sym_size)) { /* t1 is redondant */
@@ -448,7 +448,7 @@ void make_btrans(BState *s) /* creates all the transitions from a state */
 	state_trans++;
       }
     }
-  
+
   if(tl_simp_fly) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
       free_btrans(s->trans->nxt, s->trans, 1);
@@ -515,7 +515,7 @@ void print_buchi(BState *s) /* dumps the Buchi automaton */
     if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(tl_out, " & ");
     print_set(t->neg, scc_size);
     fprintf(tl_out, " -> ");
-    if(t->to->id == -1) 
+    if(t->to->id == -1)
       fprintf(tl_out, "init\n");
     else {
       if(t->to->final == accept)
@@ -581,7 +581,7 @@ void print_spin_buchi() {
 	    t1->nxt->to->final == t->to->final) {
 	  fprintf(tl_out, ") || (");
 	  spin_print_set(t1->nxt->pos, t1->nxt->neg);
-	  t1->nxt = t1->nxt->nxt; 
+	  t1->nxt = t1->nxt->nxt;
 	}
 	else  t1 = t1->nxt;
       fprintf(tl_out, ") -> goto ");
@@ -660,9 +660,9 @@ void print_dot_buchi() {
 	        t1->nxt->to->final == t->to->final) {
 	      fprintf(tl_out, "||");
 	      dot_print_set(t1->nxt->pos, t1->nxt->neg,sym_size);
-	      t1->nxt = t1->nxt->nxt; 
+	      t1->nxt = t1->nxt->nxt;
 	    }
-	    else  
+	    else
 		  t1 = t1->nxt;
         fprintf(tl_out, "\", fontname=\"Courier\", fontcolor=blue]\n");
 
@@ -675,14 +675,14 @@ void print_dot_buchi() {
 |*                       Main method                                *|
 \********************************************************************/
 
-void mk_buchi() 
+void mk_buchi()
 {/* generates a Buchi automaton from the generalized Buchi automaton */
   int i;
   BState *s = (BState *)tl_emalloc(sizeof(BState));
   GTrans *t;
   BTrans *t1;
   accept = final[0] - 1;
-  
+
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
   bstack        = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
@@ -701,13 +701,13 @@ void mk_buchi()
   s->gstate = 0;
   s->trans = emalloc_btrans(); /* sentinel */
   s->trans->nxt = s->trans;
-  for(i = 0; i < init_size; i++) 
+  for(i = 0; i < init_size; i++)
     if(init[i])
       for(t = init[i]->trans->nxt; t != init[i]->trans; t = t->nxt) {
 	int fin = next_final(t->final, 0);
 	BState *to = find_bstate(&t->to, fin, s);
 	for(t1 = s->trans->nxt; t1 != s->trans;) {
-	  if(tl_simp_fly && 
+	  if(tl_simp_fly &&
 	     (to == t1->to) &&
 	     included_set(t->pos, t1->pos, sym_size) &&
 	     included_set(t->neg, t1->neg, sym_size)) { /* t1 is redondant */
@@ -738,7 +738,7 @@ void mk_buchi()
 	  s->trans->nxt = trans;
 	}
       }
-  
+
   while(bstack->nxt != bstack) { /* solves all states in the stack until it is empty */
     s = bstack->nxt;
     bstack->nxt = bstack->nxt->nxt;
@@ -762,8 +762,8 @@ void mk_buchi()
   if(tl_verbose) {
     fprintf(tl_out, "\nBuchi automaton before simplification\n");
     print_buchi(bstates->nxt);
-    if(bstates == bstates->nxt) 
-      fprintf(tl_out, "empty automaton, refuses all words\n");  
+    if(bstates == bstates->nxt)
+      fprintf(tl_out, "empty automaton, refuses all words\n");
   }
 
   if(tl_simp_diff) {
@@ -773,11 +773,11 @@ void mk_buchi()
       simplify_btrans();
       if(tl_simp_scc) simplify_bscc();
     }
-    
+
     if(tl_verbose) {
       fprintf(tl_out, "\nBuchi automaton after simplification\n");
       print_buchi(bstates->nxt);
-      if(bstates == bstates->nxt) 
+      if(bstates == bstates->nxt)
 	fprintf(tl_out, "empty automaton, refuses all words\n");
       fprintf(tl_out, "\n");
     }
@@ -1008,19 +1008,19 @@ print_c_buchi_util_funcs(const char *prefix)
 
 int state_count=0;
 
-int increment_symbol_set(int *s) 
+int increment_symbol_set(int *s)
 {
   int i,j;
   for(i=0; i< sym_id && in_set(s, i); i++);
   if (i==sym_id)
     return 0;
-  for(j=0;j<i;j++) 
+  for(j=0;j<i;j++)
     rem_set(s,j);
-  add_set(s,i); 
+  add_set(s,i);
   return !0;
 }
-    
-  
+
+
 
 typedef struct Slist {
   int * set;
@@ -1031,7 +1031,7 @@ int * reachability(int * m, int rows)
 /* This function takes a rows * cols integer array and repeatedly applies the transformation
  * M <- M*M + M to a fixed point, where the elementwise + operator is boolean OR and the * is
  * boolean AND. The idea is that the original matrix is a transition matrix, and the reachability
- * matrix gives the set of states reachable from a given initial (row) state. 
+ * matrix gives the set of states reachable from a given initial (row) state.
  */
   int *t1 = (int*)tl_emalloc(rows*rows*sizeof(int));
   int *t2 = (int*)tl_emalloc(rows*rows*sizeof(int));
@@ -1053,7 +1053,7 @@ int * reachability(int * m, int rows)
     m2 = (m1==t1)?t2:t1; }
   tfree(m2);
   return m1; }
-  
+
 int state_size;
 int *full_state_set;
 
@@ -1063,7 +1063,7 @@ int* pess_recurse3(Slist **tr, int i, int depth) {
 /* Okay, we've now pessimistically picked a set and optimistically picked
  * an element within it. So we just have to iterate the depth */
   depth--;
-  if (depth == 0) 
+  if (depth == 0)
     return make_set(i, state_size);
   return pess_recurse1(tr, tr[i], depth);
 }
@@ -1081,7 +1081,7 @@ int* pess_recurse2(Slist **tr, int * s, int depth) {
   return reach;
 }
 
-  
+
 
 int *pess_recurse1(Slist **tr, Slist* sl, int depth) {
 /* Pessimistically pick a set out of p->slist */
@@ -1090,16 +1090,16 @@ int *pess_recurse1(Slist **tr, Slist* sl, int depth) {
   while (sl) {
     reach = intersect_sets(t1=reach, t=pess_recurse2(tr, sl->set, depth), state_size);
     tfree(t);
-    tfree(t1); 
+    tfree(t1);
     sl = sl->nxt; }
   return reach;
 }
 
 
 int * pess_reach(Slist **tr, int st, int depth) {
-/* We are looking for states which are reachable down _all_ the imposed Slist elements 
+/* We are looking for states which are reachable down _all_ the imposed Slist elements
  * So, the one-step reachable states are simply the intersection of all the Slist elements.
- * The two-step reachable states are those for which we can pick an element of each slist element and replace it 
+ * The two-step reachable states are those for which we can pick an element of each slist element and replace it
  * with with the target slist, such that the state is in the intersection of all of the new slists. */
   int i;
   full_state_set = make_set(EMPTY_SET,state_size);
@@ -1128,9 +1128,9 @@ print_behaviours()
 
 /*    if (bstates->nxt == bstates) {
       fprintf(tl_out,"\nEmpty automaton---accepts nothing\n");
-      return; 
+      return;
     } */
-    /* Horribly, if there is a state with id == 0, it can has a TRUE transition to itself, 
+    /* Horribly, if there is a state with id == 0, it can has a TRUE transition to itself,
      * which may not be explicit . So we jam this in. It is also (magically) an
      * accepting state                                                           */
     {
@@ -1226,7 +1226,7 @@ print_behaviours()
       for (s = bstates -> prv; s != bstates; s = s -> prv) {   /* Loop over states */
         (void)clear_set(working_set,sym_size);                    /* clear transition targets for this state and character */
         for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {       /* Loop over transitions */
-#if 0 
+#if 0
 	  fprintf(tl_out,"%d--[+",s->label);
 	  if(t->pos) print_sym_set(t->pos, sym_size);
 	   fprintf(tl_out," -");
@@ -1240,7 +1240,7 @@ print_behaviours()
 	    add_set(working_set,t->to->label);                                  /* update working set of transition targets enabled for this character on this state */
 	    transition_matrix[(s->label)*state_count + (t->to->label)] = 1;     /* update per-character transition matrix */
             optimistic_transition[(s->label)*state_count + (t->to->label)] = 1; /* update optimistic (any character) transition matrix */
-	    }  
+	    }
           }                                                     /* END Lop over transitions */
           {                                                                     /* update pessimistic transition list for this state */
 	  set_list=pessimistic_transition[s->label];
@@ -1254,7 +1254,7 @@ print_behaviours()
 	      add = 0;                                                              /* our new set is bigger than this set already in the list -> ignore */
 	      }
 	    prev_set = set_list;
-	    set_list = set_list->nxt; } 
+	    set_list = set_list->nxt; }
 	    if (add) {                                                              /* Our new set overlaps all existing sets, so add it */
 	      prev_set->nxt = (Slist*)tl_emalloc(sizeof(Slist));
 	      prev_set->nxt->set = dup_set(working_set, state_size);
@@ -1284,7 +1284,7 @@ print_behaviours()
         for(j=0;j<state_count; j++)
 	  fprintf(tl_out,"%d\t",transition_matrix[i*state_count + j]);
 	fprintf(tl_out,"\n"); }
-      fprintf(tl_out,"\n"); 
+      fprintf(tl_out,"\n");
 
       int * reach = reachability(transition_matrix, state_count);
 
@@ -1294,17 +1294,17 @@ print_behaviours()
           fprintf(tl_out,"%d\t",reach[i*state_count + j]);
         fprintf(tl_out,"\n"); }
       fprintf(tl_out,"\n");
-      { 
+      {
         BState *s2;
         int r, c;
         int * accepting_cycles=make_set(EMPTY_SET,state_size);
-        for (s2 = bstates -> prv; s2 != bstates; s2 = s2 -> prv) 
-          if((s2->final == accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)]) 
+        for (s2 = bstates -> prv; s2 != bstates; s2 = s2 -> prv)
+          if((s2->final == accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)])
             add_set(accepting_cycles,s2->label);
         fprintf(tl_out,"Accepting cycles: ");
         print_set(accepting_cycles,state_size);
         int * accepting_states=make_set(EMPTY_SET,state_size);
-        for (r=0;r<state_count;r++) 
+        for (r=0;r<state_count;r++)
           for (c=0; c<state_count;c++) {
 	    /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
             if(reach[r*state_count+c] && in_set(accepting_cycles,c))
@@ -1317,13 +1317,13 @@ print_behaviours()
 
         tfree(accepting_cycles);
       }
-      tfree (reach); 
+      tfree (reach);
        } while (increment_symbol_set(a));       /* END Loop over alphabet */
 
     fprintf(tl_out,"\n\nOptimistic transitions:\n");
     for(i=0; i<state_count; i++) {
       for(j=0;j<state_count; j++)
-        fprintf(tl_out,"%d\t",optimistic_transition[i*state_count + j]); 
+        fprintf(tl_out,"%d\t",optimistic_transition[i*state_count + j]);
       fprintf(tl_out,"\n"); }
 
     int * optimistic_reach = reachability(optimistic_transition, state_count);
@@ -1366,7 +1366,7 @@ print_behaviours()
       fprintf(tl_out,"\n"); }
     int* pessimistic_reachable[state_count];
     fprintf(tl_out,"\n\nPessimistic reachable:\n");
-    for(i=0; i<state_count; i++) { 
+    for(i=0; i<state_count; i++) {
       fprintf(tl_out,"%2d: ",i);
       pessimistic_reachable[i] = pess_reach(pessimistic_transition, i, state_count);
       print_set(pessimistic_reachable[i],state_size);

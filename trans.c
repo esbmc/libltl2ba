@@ -156,11 +156,11 @@ DoDump(Node *n)
 	return tl_lookup(dumpbuf);
 }
 
-void trans(Node *p) 
-{	
+void trans(Node *p)
+{
   if (!p || tl_errs) return;
-  
-  if (tl_verbose || tl_terse) {	
+
+  if (tl_verbose || tl_terse) {
     fprintf(tl_out, "\t/* Normlzd: ");
     dump(p);
     fprintf(tl_out, " */\n");

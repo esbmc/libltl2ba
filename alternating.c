@@ -100,7 +100,7 @@ ATrans *dup_trans(ATrans *trans)  /* returns the copy of a transition */
   return result;
 }
 
-void do_merge_trans(ATrans **result, ATrans *trans1, ATrans *trans2) 
+void do_merge_trans(ATrans **result, ATrans *trans1, ATrans *trans2)
 { /* merges two transitions */
   if(!trans1 || !trans2) {
     free_atrans(*result, 0);
@@ -128,8 +128,8 @@ ATrans *merge_trans(ATrans *trans1, ATrans *trans2) /* merges two transitions */
 int already_done(Node *p) /* finds the id of the node, if already explored */
 {
   int i;
-  for(i = 1; i<node_id; i++) 
-    if (isequal(p, label[i])) 
+  for(i = 1; i<node_id; i++)
+    if (isequal(p, label[i]))
       return i;
   return -1;
 }
@@ -137,8 +137,8 @@ int already_done(Node *p) /* finds the id of the node, if already explored */
 int get_sym_id(char *s) /* finds the id of a predicate, or attributes one */
 {
   int i;
-  for(i=0; i<sym_id; i++) 
-    if (!strcmp(s, sym_table[i])) 
+  for(i=0; i<sym_id; i++)
+    if (!strcmp(s, sym_table[i]))
       return i;
   sym_table[sym_id] = s;
   return sym_id++;
@@ -230,7 +230,7 @@ ATrans *build_alternating(Node *p) /* builds an alternating automaton for p */
     break;
 
 #ifdef NXT
-  case NEXT:                                            
+  case NEXT:
     t = boolean(p->lft);
     break;
 #endif
@@ -315,7 +315,7 @@ void simplify_atrans(ATrans **trans) /* simplifies the transitions */
   for(t = *trans; t;) {
     ATrans *t1;
     for(t1 = *trans; t1; t1 = t1->nxt) {
-      if((t1 != t) && 
+      if((t1 != t) &&
 	 included_set(t1->to,  t->to,  node_size) &&
 	 included_set(t1->pos, t->pos, sym_size) &&
 	 included_set(t1->neg, t->neg, sym_size))
@@ -377,7 +377,7 @@ void print_alternating() /* dumps the alternating automaton */
     print_set(t->to, node_size);
     fprintf(tl_out, "\n");
   }
-  
+
   for(i = node_id - 1; i > 0; i--) {
     if(!label[i])
       continue;
@@ -413,7 +413,7 @@ void mk_alternating(Node *p) /* generates an alternating automaton for p */
   sym_size = calculate_sym_size(p); /* number of predicates */
   if(sym_size) sym_table = (char **) tl_emalloc(sym_size * sizeof(char *));
   sym_size = SET_SIZE(sym_size);
-  
+
   final_set = make_set(-1, node_size);
   transition[0] = boolean(p); /* generates the alternating automaton */
 
@@ -429,7 +429,7 @@ void mk_alternating(Node *p) /* generates an alternating automaton for p */
       print_alternating();
     }
   }
-  
+
   if(tl_stats) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
