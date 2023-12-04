@@ -857,10 +857,6 @@ print_buchi_statevars(const char *prefix, int num_states)
 
   fprintf(tl_out, "unsigned int %s_visited_states[%d];\n\n",
 		  prefix, num_states);
-
-  fprintf(tl_out, "#include <stdbool.h>\n", prefix);
-
-  return;
 }
 
 void
@@ -992,8 +988,11 @@ print_c_buchi_util_funcs(const char *prefix)
   fprintf(tl_out, "#define LTL_PREFIX_BOUND 2147483648\n");
   fprintf(tl_out, "#endif\n\n");
   fprintf(tl_out, "#define max(x,y) ((x) < (y) ? (y) : (x))\n\n");
-  fprintf(tl_out, "int\nltl2ba_thread(int *dummy)\n{\n\n");
-  fprintf(tl_out, "\tltl2ba_fsm(false, LTL_PREFIX_BOUND);\n\treturn 0;\n}\n\n");
+  fprintf(tl_out, "void *\nltl2ba_thread(void *dummy)\n{\n\n");
+  fprintf(tl_out, "\tltl2ba_fsm(false, LTL_PREFIX_BOUND);\n");
+  fprintf(tl_out, "\treturn 0;\n");
+  fprintf(tl_out, "\t(void)dummy;\n");
+  fprintf(tl_out, "}\n\n");
 
   fprintf(tl_out, "pthread_t\nltl2ba_start_monitor(void)\n{\n");
   fprintf(tl_out, "\tpthread_t t;\n\n");
@@ -1002,7 +1001,8 @@ print_c_buchi_util_funcs(const char *prefix)
   fprintf(tl_out, "\t__ESBMC_register_monitor(t);\n");
   fprintf(tl_out, "\t__ESBMC_atomic_end();\n");
   fprintf(tl_out, "\t__ESBMC_switch_to_monitor();\n");
-  fprintf(tl_out, "\treturn t;\n}\n\n");
+  fprintf(tl_out, "\treturn t;\n");
+  fprintf(tl_out, "}\n\n");
   return;
 }
 
@@ -1391,7 +1391,6 @@ print_behaviours()
 void
 print_c_buchi()
 {
-
   BTrans *t, *t1;
   BState *s;
   int i, num_states;
@@ -1501,7 +1500,7 @@ print_c_epilog(void)
 		  c_sym_name_prefix);
 
   /* Assert whether we're in a succeeding state */
-  fprintf(tl_out, "\t__ESBMC_assert(!_ltl2ba_good_prefix_excluded_states[_ltl2ba_statevar],"
+  fprintf(tl_out, "\t__ESBMC_assert(!%s_good_prefix_excluded_states[%s_statevar],"
 		  "\"LTL_SUCCEEDING\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
 
