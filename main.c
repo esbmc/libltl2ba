@@ -58,17 +58,18 @@ static void	non_fatal(const char *);
 static void
 alldone(int estatus)
 {
-        exit(estatus);
+	exit(estatus);
 }
 
 char *
 emalloc(int n)
-{       char *tmp;
+{
+	char *tmp;
 
-        if (!(tmp = (char *) malloc(n)))
-                fatal("not enough memory");
-        memset(tmp, 0, n);
-        return tmp;
+	if (!(tmp = (char *) malloc(n)))
+		fatal("not enough memory");
+	memset(tmp, 0, n);
+	return tmp;
 }
 
 int
@@ -96,7 +97,7 @@ static void
 usage(int code)
 {
 	FILE *f = code ? stderr : stdout;
-        fprintf(f, "\
+	fprintf(f, "\
 usage: ltl2ba [-flag] -f 'formula'\n\
                    or -F file\n\
  -f 'formula'  translate LTL formula into never claim\n\
@@ -112,30 +113,30 @@ usage: ltl2ba [-flag] -f 'formula'\n\
  -a            disable trick in (A)ccepting conditions\n\
  -O mode       output mode; one of spin, c or dot\n\
 ");
-        alldone(code);
+	alldone(code);
 }
 
 int
 tl_main(char  *formula)
-{       int i;
-
-	for (i = 0; formula[i]; i++)
-	{	if (formula[i] == '\t'
+{
+	for (int i = 0; formula[i]; i++)
+		if (formula[i] == '\t'
 		||  formula[i] == '\"'
 		||  formula[i] == '\n')
 			formula[i] = ' ';
-	}
 
 	strcpy(uform, formula);
 	hasuform = strlen(uform);
 	tl_parse();
-	if (tl_stats) tl_endstats();
+	if (tl_stats)
+		tl_endstats();
 	return tl_errs;
 }
 
 int
 main(int argc, char *argv[])
-{	int i;
+{
+	int i;
 	int invert_formula = 0;
 	char *ltl_file = (char *)0;
 	char *add_ltl  = (char *)0;
@@ -143,46 +144,48 @@ main(int argc, char *argv[])
 	tl_out = stdout;
 
 	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:Pi")) != -1;)
-                switch (opt) {
-                case 'h': usage(0); break;
-                case 'F': ltl_file = optarg; break;
-                case 'f': add_ltl = optarg; break;
-                case 'a': tl_fjtofj = 0; break;
-                case 'c': tl_simp_scc = 0; break;
-                case 'o': tl_simp_fly = 0; break;
-                case 'p': tl_simp_diff = 0; break;
-                case 'l': tl_simp_log = 0; break;
-                case 'd': tl_verbose = 1; break;
-                case 's': tl_stats = 1; break;
-				case 'O':
-					if (strcmp("spin", optarg)==0)
-						outmode=spin;
-					else if (strcmp("c", optarg)==0)
-						outmode=c;
-					else if (strcmp("dot", optarg)==0)
-						outmode=dot;
-					else
-						usage(1);
-					break;
-                case 'P': c_sym_name_prefix = optarg; break;
-                case 'i': invert_formula = 1; break;
-                case ':':
-                case '?': usage(1); break;
-                }
+		switch (opt) {
+		case 'h': usage(0); break;
+		case 'F': ltl_file = optarg; break;
+		case 'f': add_ltl = optarg; break;
+		case 'a': tl_fjtofj = 0; break;
+		case 'c': tl_simp_scc = 0; break;
+		case 'o': tl_simp_fly = 0; break;
+		case 'p': tl_simp_diff = 0; break;
+		case 'l': tl_simp_log = 0; break;
+		case 'd': tl_verbose = 1; break;
+		case 's': tl_stats = 1; break;
+		case 'O':
+			if (strcmp("spin", optarg) == 0)
+				outmode=spin;
+			else if (strcmp("c", optarg) == 0)
+				outmode=c;
+			else if (strcmp("dot", optarg) == 0)
+				outmode=dot;
+			else
+				usage(1);
+			break;
+		case 'P': c_sym_name_prefix = optarg; break;
+		case 'i': invert_formula = 1; break;
+		case ':':
+		case '?': usage(1); break;
+		}
 
-	if(!ltl_file && !add_ltl) usage(1);
+	if(!ltl_file && !add_ltl)
+		usage(1);
 
-        if (ltl_file)
-        {
+	if (ltl_file)
+	{
 		FILE *f;
-                if (!(f = fopen(ltl_file, "r")))
-                {       fprintf(stderr,"ltl2ba: cannot open %s\n", ltl_file);
-                        alldone(1);
-                }
-                fgets(formula, 4096, f);
-                fclose(f);
+		if (!(f = fopen(ltl_file, "r")))
+		{
+			fprintf(stderr,"ltl2ba: cannot open %s\n", ltl_file);
+			alldone(1);
+		}
+		fgets(formula, 4096, f);
+		fclose(f);
 		add_ltl = formula;
-        }
+	}
 
 	if (invert_formula) {
 		sprintf(inv_formula, "!(%s)", add_ltl);
@@ -217,7 +220,8 @@ struct timeval *result, *x, *y;
 
 static void
 tl_endstats(void)
-{	/*extern int Stack_mx;*/
+{
+	/*extern int Stack_mx;*/
 	fprintf(stderr, "\ntotal memory used: %9ld\n", All_Mem);
 	/*fprintf(stderr, "largest stack sze: %9d\n", Stack_mx);*/
 	/*cache_stats();*/
@@ -225,16 +229,17 @@ tl_endstats(void)
 }
 
 #define Binop(a)		\
-		fprintf(tl_out, "(");	\
-		dump(n->lft);		\
-		fprintf(tl_out, a);	\
-		dump(n->rgt);		\
-		fprintf(tl_out, ")")
+	fprintf(tl_out, "(");	\
+	dump(n->lft);		\
+	fprintf(tl_out, a);	\
+	dump(n->rgt);		\
+	fprintf(tl_out, ")")
 
 void
 dump(Node *n)
 {
-	if (!n) return;
+	if (!n)
+		return;
 
 	switch(n->ntyp) {
 	case OR:	Binop(" || "); break;
@@ -300,7 +305,8 @@ tl_explain(int n)
 
 static void
 non_fatal(const char *s1)
-{	extern int tl_yychar;
+{
+	extern int tl_yychar;
 	int i;
 
 	fprintf(stderr,"ltl2ba: ");
@@ -327,15 +333,15 @@ tl_yyerror(char *s1)
 void
 Fatal(const char *s1)
 {
-  non_fatal(s1);
-  alldone(1);
+	non_fatal(s1);
+	alldone(1);
 }
 
 void
 fatal(const char *s1)
 {
-        non_fatal(s1);
-        alldone(1);
+	non_fatal(s1);
+	alldone(1);
 }
 
 
