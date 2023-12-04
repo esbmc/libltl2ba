@@ -187,6 +187,19 @@ tl_lex(void)
 		tl_UnGetchar();
 		tl_yyerror("expected '<->'");
 	}
+	if (c == 'N')
+	{	c = tl_Getchar();
+		if (c != 'O')
+		{	tl_UnGetchar();
+			tl_yyerror("expected 'NOT'");
+		}
+		c = tl_Getchar();
+		if (c == 'T')
+		{	Token(NOT);
+		}
+		tl_UnGetchar();
+		tl_yyerror("expected 'NOT'");
+	}
 
 	switch (c) {
 	case '/' : c = follow('\\', AND, '/'); break;
