@@ -52,7 +52,6 @@ static int	hasuform=0, cnt=0;
 static char     **ltl_file = (char **)0;
 static char     *add_ltl  = (char *)0;
 
-int	invert_formula = 0;
 enum outmodes outmode=spin;
 
 static void	tl_endstats(void);
@@ -139,6 +138,7 @@ tl_main(char  *formula)
 int
 main(int argc, char *argv[])
 {	int i;
+	int invert_formula = 0;
 	const char *binname = argv[0];
 	const char *ltl_fname;
 	char formula[4096], inv_formula[4100];
