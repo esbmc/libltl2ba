@@ -6,14 +6,6 @@
 /* Modified by Paul Gastin, LSV, France                                   */
 /* Copyright (c) 2007  Paul Gastin                                        */
 /*                                                                        */
-/* Based on the translation algorithm by Gastin and Oddoux,               */
-/* presented at the 13th International Conference on Computer Aided       */
-/* Verification, CAV 2001, Paris, France.                                 */
-/* Proceedings - LNCS 2102, pp. 53-65                                     */
-/*                                                                        */
-/* Send bug-reports and/or questions to Paul Gastin                       */
-/* http://www.lsv.ens-cachan.fr/~gastin                                   */
-/*                                                                        */
 /* Some of the code in this file was taken from the Spin software         */
 /* Written by Gerard J. Holzmann, Bell Laboratories, U.S.A.               */
 
