@@ -186,9 +186,8 @@ void	a_stats(void);
 void	addtrans(Graph *, char *, Node *, char *);
 void	cache_stats(void);
 void	dump(Node *);
-void	exit(int);
-void	Fatal(char *, char *);
-void	fatal(char *, char *);
+void	Fatal(const char *);
+void	fatal(const char *);
 void	fsm_print(void);
 void	releasenode(int, Node *);
 void	tfree(void *);
@@ -227,6 +226,8 @@ int  *list_set(int *, int);
 
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);
 
+void put_uform(void);
+
 #define ZN	(Node *)0
 #define ZS	(Symbol *)0
 #define Nhash	255    	
@@ -244,5 +245,5 @@ typedef Node	*Nodeptr;
 #define Explain(x)	{ if (tl_verbose) tl_explain(x); }
 
 #define Assert(x, y)	{ if (!(x)) { tl_explain(y); \
-			  Fatal(": assertion failed\n",(char *)0); } }
+			  Fatal(": assertion failed\n"); } }
 #define min(x,y)        ((x<y)?x:y)

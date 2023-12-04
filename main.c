@@ -30,6 +30,7 @@
 /* Some of the code in this file was taken from the Spin software         */
 /* Written by Gerard J. Holzmann, Bell Laboratories, U.S.A.               */
 
+#include <unistd.h>
 #include "ltl2ba.h"
 
 FILE	*tl_out;
@@ -52,9 +53,9 @@ static char     **add_ltl  = (char **)0;
 static char     out1[64];
 
 static void	tl_endstats(void);
-static void	non_fatal(char *, char *);
+static void	non_fatal(const char *);
 
-void
+static void
 alldone(int estatus)
 {
         if (strlen(out1) > 0)
@@ -84,7 +85,7 @@ emalloc(int n)
 {       char *tmp;
 
         if (!(tmp = (char *) malloc(n)))
-                fatal("not enough memory", (char *)0);
+                fatal("not enough memory");
         memset(tmp, 0, n);
         return tmp;
 }
@@ -110,7 +111,7 @@ tl_UnGetchar(void)
 	if (cnt > 0) cnt--;
 }
 
-void
+static void
 usage(void)
 {
         printf("usage: ltl2ba [-flag] -f 'formula'\n");
@@ -193,18 +194,20 @@ main(int argc, char *argv[])
                 *ltl_file = (char *) formula;
         }
         if (argc > 1)
-        {       char cmd[128], out2[64];
+        {       char out2[64];
                 strcpy(out1, "_tmp1_");
                 strcpy(out2, "_tmp2_");
                 tl_out = cpyfile(argv[1], out2);
-                tl_main(2, add_ltl);  
+                i = tl_main(2, add_ltl);  
                 fclose(tl_out);
         } else 
 	{
                 if (argc > 0)
-                        exit(tl_main(2, add_ltl));
-		usage();
+                        i = tl_main(2, add_ltl);
+		else
+			usage();
 	}
+	return i;
 }
 
 /* Subtract the `struct timeval' values X and Y, storing the result X-Y in RESULT.
@@ -229,7 +232,7 @@ struct timeval *result, *x, *y;
 
 static void
 tl_endstats(void)
-{	extern int Stack_mx;
+{	/*extern int Stack_mx;*/
 	printf("\ntotal memory used: %9ld\n", All_Mem);
 	/*printf("largest stack sze: %9d\n", Stack_mx);*/
 	/*cache_stats();*/
@@ -311,15 +314,12 @@ tl_explain(int n)
 }
 
 static void
-non_fatal(char *s1, char *s2)
+non_fatal(const char *s1)
 {	extern int tl_yychar;
 	int i;
 
 	printf("ltl2ba: ");
-	if (s2)
-		printf(s1, s2);
-	else
-		printf("%s", s1);
+	fputs(s1, stdout);
 	if (tl_yychar != -1 && tl_yychar != 0)
 	{	printf(", saw '");
 		tl_explain(tl_yychar);
@@ -336,20 +336,20 @@ non_fatal(char *s1, char *s2)
 void
 tl_yyerror(char *s1)
 {
-	Fatal(s1, (char *) 0);
+	Fatal(s1);
 }
 
 void
-Fatal(char *s1, char *s2)
+Fatal(const char *s1)
 {
-  non_fatal(s1, s2);
+  non_fatal(s1);
   alldone(1);
 }
 
 void
-fatal(char *s1, char *s2)
+fatal(const char *s1)
 {
-        non_fatal(s1, s2);
+        non_fatal(s1);
         alldone(1);
 }
 
