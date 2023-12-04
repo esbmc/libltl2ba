@@ -184,13 +184,14 @@ typedef struct {
   ATrans **transition;
   int *final_set;
   int node_id; /* really the number of nodes */
+  int sym_id; /* number of symbols */
 } Alternating;
 
 Alternating mk_alternating(Node *);
 void    mk_generalized(Alternating *);
 void    mk_buchi();
 
-void print_c_buchi(void);
+void print_c_buchi(int sym_id);
 void print_dot_buchi(void);
 void print_spin_buchi(void);
 
@@ -220,7 +221,7 @@ int  in_set(int *, int);
 int  *list_set(int *, int);
 
 void print_sym_set(int *l, int size);
-void print_c_accept_tables(void);
+void print_c_accept_tables(int sym_id);
 void print_c_epilog(void);
 
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);

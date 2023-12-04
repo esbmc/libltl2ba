@@ -16,7 +16,7 @@ extern FILE *tl_out;
 extern int tl_verbose, tl_stats, tl_simp_diff;
 
 char **sym_table;
-int sym_id = 0, node_size, sym_size;
+int node_size, sym_size;
 extern int scc_size;
 static int astate_count = 0, atrans_count = 0;
 
@@ -110,7 +110,8 @@ int already_done(Node *p, Node **label, int node_id)
   return -1;
 }
 
-int get_sym_id(char *s) /* finds the id of a predicate, or attributes one */
+/* finds the id of a predicate, or attributes one */
+int get_sym_id(char *s, int sym_id)
 {
   int i;
   for(i=0; i<sym_id; i++)
@@ -196,7 +197,7 @@ ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
     clear_set(t->to,  node_size);
     clear_set(t->pos, sym_size);
     clear_set(t->neg, sym_size);
-    add_set(t->pos, get_sym_id(p->sym->name));
+    add_set(t->pos, get_sym_id(p->sym->name, alt->sym_id));
     break;
 
   case NOT:
@@ -204,7 +205,7 @@ ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
     clear_set(t->to,  node_size);
     clear_set(t->pos, sym_size);
     clear_set(t->neg, sym_size);
-    add_set(t->neg, get_sym_id(p->lft->sym->name));
+    add_set(t->neg, get_sym_id(p->lft->sym->name, alt->sym_id));
     break;
 
 #ifdef NXT
@@ -388,6 +389,7 @@ Alternating mk_alternating(Node *p)
   struct timeval t_diff;
   Alternating alt;
   alt.node_id = 1;
+  alt.sym_id = 0;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 

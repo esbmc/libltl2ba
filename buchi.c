@@ -34,7 +34,6 @@ static int g_num_states = 0;
 
 extern char **sym_table;
 extern const char *c_sym_name_prefix;
-extern int sym_id;
 extern enum outmodes outmode;
 
 /********************************************************************\
@@ -996,7 +995,7 @@ pthread_t ltl2ba_start_monitor(void)\n\
 
 int state_count=0;
 
-int increment_symbol_set(int *s)
+int increment_symbol_set(int *s, int sym_id)
 {
   int i,j;
   for(i=0; i< sym_id && in_set(s, i); i++);
@@ -1097,7 +1096,7 @@ int * pess_reach(Slist **tr, int st, int depth) {
 }
 
 void
-print_behaviours()
+print_behaviours(int sym_id)
 {
     BState *s;
     BTrans *t;
@@ -1306,7 +1305,7 @@ print_behaviours()
         tfree(accepting_cycles);
       }
       tfree (reach);
-       } while (increment_symbol_set(a));       /* END Loop over alphabet */
+       } while (increment_symbol_set(a, sym_id));       /* END Loop over alphabet */
 
     fprintf(tl_out,"\n\nOptimistic transitions:\n");
     for(i=0; i<state_count; i++) {
@@ -1377,7 +1376,7 @@ print_behaviours()
 }
 
 void
-print_c_buchi(void)
+print_c_buchi(int sym_id)
 {
   BTrans *t, *t1;
   BState *s;
@@ -1392,7 +1391,7 @@ print_c_buchi(void)
   }
 
   fprintf(tl_out, "#if 0\n/* Precomputed transition data */\n");
-  print_behaviours();
+  print_behaviours(sym_id);
   fprintf(tl_out, "#endif\n");
 
   print_c_headers();
@@ -1412,14 +1411,14 @@ print_c_buchi(void)
   /* Some things vaguely in the shape of a modelling api */
   print_c_buchi_util_funcs(c_sym_name_prefix);
 
-  print_c_accept_tables();
+  print_c_accept_tables(sym_id);
 
   print_c_epilog();
   return;
 }
 
 void
-print_c_accept_tables(void)
+print_c_accept_tables(int sym_id)
 {
   int sym_comb, state, i;
 

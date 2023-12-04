@@ -135,7 +135,7 @@ tl_main(char  *formula)
 
 	switch (outmode) {
 	case none:	break;
-	case c: 	print_c_buchi(); break;
+	case c: 	print_c_buchi(alt.sym_id); break;
 	case dot: 	print_dot_buchi(); break;
 	case spin:
 	default:	print_spin_buchi(); break;
