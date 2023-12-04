@@ -181,7 +181,6 @@ void	tl_explain(int);
 void	tl_UnGetchar(void);
 Node *	tl_formula(void);
 void	tl_yyerror(char *);
-void	trans(Node *);
 
 void    mk_alternating(Node *);
 void    mk_generalized();

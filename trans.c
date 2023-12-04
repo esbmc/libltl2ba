@@ -13,24 +13,3 @@
 
 extern int tl_verbose, tl_terse, tl_errs;
 extern FILE	*tl_out;
-
-void trans(Node *p)
-{
-  if (!p || tl_errs) return;
-
-  if (tl_verbose || tl_terse) {
-    FILE *f = tl_out;
-    tl_out = stderr;
-    fprintf(tl_out, "\t/* Normlzd: ");
-    dump(p);
-    fprintf(tl_out, " */\n");
-    tl_out = f;
-  }
-  if (tl_terse)
-    return;
-
-  mk_alternating(p);
-  mk_generalized();
-  mk_buchi();
-}
-
