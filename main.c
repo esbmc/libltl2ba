@@ -95,23 +95,22 @@ tl_UnGetchar(void)
 static void
 usage(void)
 {
-        printf("usage: ltl2ba [-flag] -f 'formula'\n");
-        printf("                   or -F file\n");
-        printf(" -f 'formula'\ttranslate LTL ");
-        printf("into never claim\n");
-        printf(" -F file\tlike -f, but with the LTL ");
-        printf("formula stored in a 1-line file\n");
-        printf(" -P\t\tSpecify ltl2c symbol prefixes\n");
-        printf(" -i\t\tInvert formula once read\n");
-        printf(" -d\t\tdisplay automata (D)escription at each step\n");
-        printf(" -s\t\tcomputing time and automata sizes (S)tatistics\n");
-        printf(" -l\t\tdisable (L)ogic formula simplification\n");
-        printf(" -p\t\tdisable a-(P)osteriori simplification\n");
-        printf(" -o\t\tdisable (O)n-the-fly simplification\n");
-        printf(" -c\t\tdisable strongly (C)onnected components simplification\n");
-        printf(" -a\t\tdisable trick in (A)ccepting conditions\n");
-		printf(" -O mode\toutput mode. One of spin, c or dot\n");
-
+        printf("\
+usage: ltl2ba [-flag] -f 'formula'\n\
+                   or -F file\n\
+ -f 'formula'  translate LTL formula into never claim\n\
+ -F file       like -f, but with the LTL formula stored in a 1-line file\n\
+ -P            Specify ltl2c symbol prefixes\n\
+ -i            Invert formula once read\n\
+ -d            display automata (D)escription at each step\n\
+ -s            computing time and automata sizes (S)tatistics\n\
+ -l            disable (L)ogic formula simplification\n\
+ -p            disable a-(P)osteriori simplification\n\
+ -o            disable (O)n-the-fly simplification\n\
+ -c            disable strongly (C)onnected components simplification\n\
+ -a            disable trick in (A)ccepting conditions\n\
+ -O mode       output mode; one of spin, c or dot\n\
+");
         alldone(1);
 }
 
