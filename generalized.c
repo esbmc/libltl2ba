@@ -2,6 +2,8 @@
 
 /* Written by Denis Oddoux, LIAFA, France                                 */
 /* Copyright (c) 2001  Denis Oddoux                                       */
+/* Modified by Paul Gastin, LSV, France                                   */
+/* Copyright (c) 2007  Paul Gastin                                        */
 /*                                                                        */
 /* This program is free software; you can redistribute it and/or modify   */
 /* it under the terms of the GNU General Public License as published by   */
@@ -18,14 +20,12 @@
 /* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA*/
 /*                                                                        */
 /* Based on the translation algorithm by Gastin and Oddoux,               */
-/* presented at the CAV Conference, held in 2001, Paris, France 2001.     */
-/* Send bug-reports and/or questions to: Denis.Oddoux@liafa.jussieu.fr    */
-/* or to Denis Oddoux                                                     */
-/*       LIAFA, UMR 7089, case 7014                                       */
-/*       Universite Paris 7                                               */
-/*       2, place Jussieu                                                 */
-/*       F-75251 Paris Cedex 05                                           */
-/*       FRANCE                                                           */    
+/* presented at the 13th International Conference on Computer Aided       */
+/* Verification, CAV 2001, Paris, France.                                 */
+/* Proceedings - LNCS 2102, pp. 53-65                                     */
+/*                                                                        */
+/* Send bug-reports and/or questions to Paul Gastin                       */
+/* http://www.lsv.ens-cachan.fr/~gastin                                   */
 
 #include "ltl2ba.h"
 
@@ -35,7 +35,8 @@
 
 extern FILE *tl_out;
 extern ATrans **transition;
-extern struct tms t_debut, t_fin;
+extern struct rusage tr_debut, tr_fin;
+extern struct timeval t_diff;
 extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj,
   tl_simp_scc, *final_set, node_id;
 extern char **sym_table;
@@ -43,7 +44,7 @@ extern char **sym_table;
 GState *gstack, *gremoved, *gstates, **init;
 GScc *scc_stack;
 int init_size = 0, gstate_id = 1, gstate_count = 0, gtrans_count = 0;
-int *fin, *final, rank, scc_id, *bad_scc;
+int *fin, *final, rank, scc_id, scc_size, *bad_scc;
 
 void print_generalized();
 
@@ -84,70 +85,75 @@ void copy_gtrans(GTrans *from, GTrans *to) /* copies a transition */
   copy_set(from->final, to->final, 0);
 }
 
-int same_final(GState *a, GTrans *s, GState *b, GTrans *t, int use_scc) {
-  return (same_sets(s->final, t->final, 0) || 
-	  (use_scc && 
-	   ((a->incoming != s->to->incoming) ||
-	    (b->incoming != t->to->incoming) ||
-	    in_set(bad_scc, a->incoming) ||
-	    in_set(bad_scc, b->incoming))));
-}
-
-
 int same_gtrans(GState *a, GTrans *s, GState *b, GTrans *t, int use_scc) 
 { /* returns 1 if the transitions are identical */
   if((s->to != t->to) ||
-     ! same_sets(s->pos,   t->pos,   1) ||
-     ! same_sets(s->neg,   t->neg,   1))
+     ! same_sets(s->pos, t->pos, 1) ||
+     ! same_sets(s->neg, t->neg, 1))
     return 0; /* transitions differ */
-  if(same_final(a, s, b, t, 0))
-    return 3; /* same transitions exactly : any state can be removed */
+  if(same_sets(s->final, t->final, 0))
+    return 1; /* same transitions exactly */
+  /* next we check whether acceptance conditions may be ignored */
+  if( use_scc &&
+      ( in_set(bad_scc, a->incoming) ||
+        in_set(bad_scc, b->incoming) ||
+        (a->incoming != s->to->incoming) ||
+        (b->incoming != t->to->incoming) ) )
+    return 1;
+  return 0;
+  /* below is the old test to check whether acceptance conditions may be ignored */
   if(!use_scc)
     return 0; /* transitions differ */
-  if(a->incoming == b->incoming)
-    return 3; /* any state can be removed */
-  if(a->incoming > b->incoming) /* b can be a son of a */
-    return 2; /* do not remove state b */
-  return 1; /* do not remove state a */
+  if( (a->incoming == b->incoming) && (a->incoming == s->to->incoming) )
+    return 0; /* same scc: acceptance conditions must be taken into account */
+  /* if scc(a)=scc(b)>scc(s->to) then acceptance conditions need not be taken into account */
+  /* if scc(a)>scc(b) and scc(a) is non-trivial then all_gtrans_match(a,b,use_scc) will fail */
+  /* if scc(a) is trivial then acceptance conditions of transitions from a need not be taken into account */
+  return 1; /* same transitions up to acceptance conditions */
 }
 
 int simplify_gtrans() /* simplifies the transitions */
 {
   int changed = 0;
   GState *s;
-  GTrans *t;
+  GTrans *t, *t1;
 
-  if(tl_stats) times(&t_debut);
+  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
-  for(s = gstates->nxt; s != gstates; s = s->nxt)
-    for(t = s->trans->nxt; t != s->trans;) {
-      GTrans *t1 = s->trans->nxt;
+  for(s = gstates->nxt; s != gstates; s = s->nxt) {
+    t = s->trans->nxt;
+    while(t != s->trans) { /* tries to remove t */
       copy_gtrans(t, s->trans);
-      while ((t == t1) || (t1->to != t->to) ||
-	     !included_set(t1->pos, t->pos, 1) ||
-	     !included_set(t1->neg, t->neg, 1) ||
-	     !same_final(s, t, s, t1, tl_simp_scc))
-	t1 = t1->nxt;
-      if(t1 != s->trans) {
-	GTrans *free = t->nxt;
-	t->to = free->to;
-	copy_set(free->pos, t->pos, 1);
-	copy_set(free->neg, t->neg, 1);
-	copy_set(free->final, t->final, 0);
-	t->nxt   = free->nxt;
-	if(free == s->trans) s->trans = t;
-	free_gtrans(free, 0, 0);
-	changed++;
+      t1 = s->trans->nxt;
+      while ( !((t != t1) 
+          && (t1->to == t->to) 
+          && included_set(t1->pos, t->pos, 1) 
+          && included_set(t1->neg, t->neg, 1) 
+          && (included_set(t->final, t1->final, 0)  /* acceptance conditions of t are also in t1 or may be ignored */
+              || (tl_simp_scc && ((s->incoming != t->to->incoming) || in_set(bad_scc, s->incoming))))) )
+        t1 = t1->nxt;
+      if(t1 != s->trans) { /* remove transition t */
+        GTrans *free = t->nxt;
+        t->to = free->to;
+        copy_set(free->pos, t->pos, 1);
+        copy_set(free->neg, t->neg, 1);
+        copy_set(free->final, t->final, 0);
+        t->nxt = free->nxt;
+        if(free == s->trans) s->trans = t;
+        free_gtrans(free, 0, 0);
+        changed++;
       }
       else
-	t = t->nxt;
+        t = t->nxt;
     }
-
+  }
+  
   if(tl_stats) {
-    times(&t_fin);
-    fprintf(tl_out, "\nSimplification of the generalized Buchi automaton - transitions: %.2fs");
-    fprintf(tl_out, "\n%i transitions removed\n", 
-	   ((float)(t_fin.tms_utime - t_debut.tms_utime))/100, changed);
+    getrusage(RUSAGE_SELF, &tr_fin);
+    timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
+    fprintf(tl_out, "\nSimplification of the generalized Buchi automaton - transitions: %i.%06is",
+		t_diff.tv_sec, t_diff.tv_usec);
+    fprintf(tl_out, "\n%i transitions removed\n", changed);
   }
 
   return changed;
@@ -191,61 +197,56 @@ void retarget_all_gtrans()
 int all_gtrans_match(GState *a, GState *b, int use_scc) 
 { /* decides if the states are equivalent */
   GTrans *s, *t;
-  int i;
-  int which_remove = 3; /* any state can be removed */
   for (s = a->trans->nxt; s != a->trans; s = s->nxt) { 
                                 /* all transitions from a appear in b */
     copy_gtrans(s, b->trans);
     t = b->trans->nxt;
-    while(! (i = same_gtrans(a, s, b, t, use_scc)))/* = and not == */
-      t = t->nxt;
+    while(!same_gtrans(a, s, b, t, use_scc)) t = t->nxt;
     if(t == b->trans) return 0;
-    which_remove &= i;
-    
   }
   for (t = b->trans->nxt; t != b->trans; t = t->nxt) { 
                                 /* all transitions from b appear in a */
     copy_gtrans(t, a->trans);
     s = a->trans->nxt;
-    while(! (i = same_gtrans(a, s, b, t, use_scc)))/* = and not == */
-      s = s->nxt;
+    while(!same_gtrans(a, s, b, t, use_scc)) s = s->nxt;
     if(s == a->trans) return 0;
-    which_remove &= i;
   }
-  return which_remove;
+  return 1;
 }
 
 int simplify_gstates() /* eliminates redundant states */
 {
   int changed = 0;
-  GState *s, *s1;
-  int i;
+  GState *a, *b;
 
-  if(tl_stats) times(&t_debut);
+  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
-  for(s = gstates->nxt; s != gstates; s = s->nxt) {
-    if(s->trans == s->trans->nxt) { /* s has no transitions */
-      s = remove_gstate(s, (GState *)0);
+  for(a = gstates->nxt; a != gstates; a = a->nxt) {
+    if(a->trans == a->trans->nxt) { /* a has no transitions */
+      a = remove_gstate(a, (GState *)0);
       changed++;
       continue;
     }
-    gstates->trans = s->trans;
-    s1 = s->nxt;
-    while(!(i = all_gtrans_match(s, s1, tl_simp_scc))) /* = and not == */
-      s1 = s1->nxt;
-    if(s1 != gstates) { /* s and s1 are equivalent */
-      if(i & 2) s = remove_gstate(s, s1);
-      else remove_gstate(s1, s);
+    gstates->trans = a->trans;
+    b = a->nxt;
+    while(!all_gtrans_match(a, b, tl_simp_scc)) b = b->nxt;
+    if(b != gstates) { /* a and b are equivalent */
+      /* if scc(a)>scc(b) and scc(a) is non-trivial then all_gtrans_match(a,b,use_scc) must fail */
+      if(a->incoming > b->incoming) /* scc(a) is trivial */
+        a = remove_gstate(a, b);
+      else /* either scc(a)=scc(b) or scc(b) is trivial */ 
+        remove_gstate(b, a);
       changed++;
     }
   }
   retarget_all_gtrans();
 
   if(tl_stats) {
-    times(&t_fin);
-    fprintf(tl_out, "\nSimplification of the generalized Buchi automaton - states: %.2fs");
-    fprintf(tl_out, "\n%i states removed\n", 
-	   ((float)(t_fin.tms_utime - t_debut.tms_utime))/100, changed);
+    getrusage(RUSAGE_SELF, &tr_fin);
+    timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
+    fprintf(tl_out, "\nSimplification of the generalized Buchi automaton - states: %i.%06is",
+		t_diff.tv_sec, t_diff.tv_usec);
+    fprintf(tl_out, "\n%i states removed\n", changed);
   }
 
   return changed;
@@ -313,10 +314,11 @@ void simplify_gscc() {
       s = remove_gstate(s, 0);
     else
       for (t = s->trans->nxt; t != s->trans; t = t->nxt)
-	if(t->to->incoming == s->incoming)
-	  merge_sets(scc_final[s->incoming], t->final, 0);
+        if(t->to->incoming == s->incoming)
+          merge_sets(scc_final[s->incoming], t->final, 0);
 
-  clear_set(bad_scc, 0);
+  scc_size = (scc_id + 1) / (8 * sizeof(int)) + 1;
+  bad_scc=make_set(-1,2);
 
   for(i = 0; i < scc_id; i++)
     if(!included_set(final_set, scc_final[i], 0))
@@ -544,7 +546,7 @@ void reverse_print_generalized(GState *s) /* dumps the generalized Buchi automat
       fprintf(tl_out, "1");
     print_set(t->pos, 1);
     if (!empty_set(t->pos, 1) && !empty_set(t->neg, 1)) fprintf(tl_out, " & ");
-    print_set(t->neg, 2);
+    print_set(t->neg, 1);
     fprintf(tl_out, " -> %i : ", t->to->id);
     print_set(t->final, 0);
     fprintf(tl_out, "\n");
@@ -570,11 +572,11 @@ void mk_generalized()
   GState *s;
   int i;
 
-  fin = new_set(0);
-  bad_scc = new_set(0);
-  final = list_set(final_set, 0);
+  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
-  if(tl_stats) times(&t_debut);
+  fin = new_set(0);
+  bad_scc = 0; /* will be initialized in simplify_gscc */
+  final = list_set(final_set, 0);
 
   gstack        = (GState *)tl_emalloc(sizeof(GState)); /* sentinel */
   gstack->nxt   = gstack;
@@ -614,11 +616,11 @@ void mk_generalized()
   retarget_all_gtrans();
 
   if(tl_stats) {
-    times(&t_fin);
-    fprintf(tl_out, "\nBuilding of the generalized Buchi automaton : %.2fs");
-    fprintf(tl_out, "%i states, %i transitions\n", 
-	    ((float)(t_fin.tms_utime - t_debut.tms_utime))/100, 
-	    gstate_count, gtrans_count);
+    getrusage(RUSAGE_SELF, &tr_fin);
+    timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
+    fprintf(tl_out, "\nBuilding the generalized Buchi automaton : %i.%06is",
+		t_diff.tv_sec, t_diff.tv_usec);
+    fprintf(tl_out, "\n%i states, %i transitions\n", gstate_count, gtrans_count);
   }
 
   tfree(gstack);

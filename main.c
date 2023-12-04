@@ -2,6 +2,8 @@
 
 /* Written by Denis Oddoux, LIAFA, France                                 */
 /* Copyright (c) 2001  Denis Oddoux                                       */
+/* Modified by Paul Gastin, LSV, France                                   */
+/* Copyright (c) 2007  Paul Gastin                                        */
 /*                                                                        */
 /* This program is free software; you can redistribute it and/or modify   */
 /* it under the terms of the GNU General Public License as published by   */
@@ -18,28 +20,26 @@
 /* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA*/
 /*                                                                        */
 /* Based on the translation algorithm by Gastin and Oddoux,               */
-/* presented at the CAV Conference, held in 2001, Paris, France 2001.     */
-/* Send bug-reports and/or questions to: Denis.Oddoux@liafa.jussieu.fr    */
-/* or to Denis Oddoux                                                     */
-/*       LIAFA, UMR 7089, case 7014                                       */
-/*       Universite Paris 7                                               */
-/*       2, place Jussieu                                                 */
-/*       F-75251 Paris Cedex 05                                           */
-/*       FRANCE                                                           */    
-
+/* presented at the 13th International Conference on Computer Aided       */
+/* Verification, CAV 2001, Paris, France.                                 */
+/* Proceedings - LNCS 2102, pp. 53-65                                     */
+/*                                                                        */
+/* Send bug-reports and/or questions to Paul Gastin                       */
+/* http://www.lsv.ens-cachan.fr/~gastin                                   */
+/*                                                                        */
 /* Some of the code in this file was taken from the Spin software         */
 /* Written by Gerard J. Holzmann, Bell Laboratories, U.S.A.               */
 
 #include "ltl2ba.h"
 
-FILE	*tl_out = stdout;
+FILE	*tl_out;
 
 int	tl_stats     = 0; /* time and size stats */	
-int     tl_simp_log  = 1; /* logical simplification */
-int     tl_simp_diff = 1; /* automata simplification */
-int     tl_simp_fly  = 1; /* on the fly simplification */
-int     tl_simp_scc  = 1; /* use scc simplification */
-int     tl_fjtofj    = 1; /* 2eme fj */
+int tl_simp_log  = 1; /* logical simplification */
+int tl_simp_diff = 1; /* automata simplification */
+int tl_simp_fly  = 1; /* on the fly simplification */
+int tl_simp_scc  = 1; /* use scc simplification */
+int tl_fjtofj    = 1; /* 2eme fj */
 int	tl_errs      = 0;
 int	tl_verbose   = 0;
 int	tl_terse     = 0;
@@ -114,7 +114,7 @@ void
 usage(void)
 {
         printf("usage: ltl2ba [-flag] -f formula\n");
-	printf("                   or -F file\n");
+        printf("                   or -F file\n");
         printf(" -f \"formula\"\ttranslate LTL ");
         printf("into never claim\n");
         printf(" -F file\tlike -f, but with the LTL ");
@@ -158,6 +158,7 @@ tl_main(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {	int i;
+	tl_out = stdout;
 
 	while (argc > 1 && argv[1][0] == '-')
         {       switch (argv[1][1]) {
@@ -204,6 +205,26 @@ main(int argc, char *argv[])
                         exit(tl_main(2, add_ltl));
 		usage();
 	}
+}
+
+/* Subtract the `struct timeval' values X and Y, storing the result X-Y in RESULT.
+   Return 1 if the difference is negative, otherwise 0.  */
+ 
+int
+timeval_subtract (result, x, y)
+struct timeval *result, *x, *y;
+{
+	if (x->tv_usec < y->tv_usec) {
+		x->tv_usec += 1000000;
+		x->tv_sec--;
+	}
+	
+	/* Compute the time remaining to wait. tv_usec is certainly positive. */
+	result->tv_sec = x->tv_sec - y->tv_sec;
+	result->tv_usec = x->tv_usec - y->tv_usec;
+	
+	/* Return 1 if result is negative. */
+	return x->tv_sec < y->tv_sec;
 }
 
 static void

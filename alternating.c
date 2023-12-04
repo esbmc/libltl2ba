@@ -1,31 +1,31 @@
 /***** ltl2ba : alternating.c *****/
 
 /* Written by Denis Oddoux, LIAFA, France                                 */
-/* Copyright (c) 2001  Denis Oddoux					  */
-/*									  */
+/* Copyright (c) 2001  Denis Oddoux                                       */
+/* Modified by Paul Gastin, LSV, France                                   */
+/* Copyright (c) 2007  Paul Gastin                                        */
+/*                                                                        */
 /* This program is free software; you can redistribute it and/or modify   */
 /* it under the terms of the GNU General Public License as published by   */
-/* the Free Software Foundation; either version 2 of the License, or	  */
-/* (at your option) any later version.					  */
-/*									  */
-/* This program is distributed in the hope that it will be useful,	  */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of	  */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the	  */
-/* GNU General Public License for more details.				  */
-/*									  */
-/* You should have received a copy of the GNU General Public License	  */
-/* along with this program; if not, write to the Free Software		  */
+/* the Free Software Foundation; either version 2 of the License, or      */
+/* (at your option) any later version.                                    */
+/*                                                                        */
+/* This program is distributed in the hope that it will be useful,        */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of         */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          */
+/* GNU General Public License for more details.                           */
+/*                                                                        */
+/* You should have received a copy of the GNU General Public License      */
+/* along with this program; if not, write to the Free Software            */
 /* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA*/
-/*									  */
-/* Based on the translation algorithm by Gastin and Oddoux,               */ 
-/* presented at the CAV Conference, held in 2001, Paris, France 2001.     */
-/* Send bug-reports and/or questions to: Denis.Oddoux@liafa.jussieu.fr    */
-/* or to Denis Oddoux 							  */
-/*	 LIAFA, UMR 7089, case 7014					  */
-/*	 Universite Paris 7						  */
-/*	 2, place Jussieu						  */
-/*	 F-75251 Paris Cedex 05						  */
-/*	 FRANCE								  */
+/*                                                                        */
+/* Based on the translation algorithm by Gastin and Oddoux,               */
+/* presented at the 13th International Conference on Computer Aided       */
+/* Verification, CAV 2001, Paris, France.                                 */
+/* Proceedings - LNCS 2102, pp. 53-65                                     */
+/*                                                                        */
+/* Send bug-reports and/or questions to Paul Gastin                       */
+/* http://www.lsv.ens-cachan.fr/~gastin                                   */
 
 #include "ltl2ba.h"
 
@@ -39,7 +39,8 @@ extern int tl_verbose, tl_stats, tl_simp_diff;
 Node **label;
 char **sym_table;
 ATrans **transition;
-struct tms t_debut, t_fin;
+struct rusage tr_debut, tr_fin;
+struct timeval t_diff;
 int *final_set, node_id = 1, sym_id = 0, node_size, sym_size;
 int astate_count = 0, atrans_count = 0;
 
@@ -293,8 +294,10 @@ ATrans *build_alternating(Node *p) /* builds an alternating automaton for p */
       tmp->nxt = t;
       t = tmp;
     }
+    break;
 
   default:
+    break;
   }
 
   transition[node_id] = t;
@@ -400,16 +403,16 @@ void print_alternating() /* dumps the alternating automaton */
 
 void mk_alternating(Node *p) /* generates an alternating automaton for p */
 {
-  if(tl_stats) times(&t_debut);
+  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
   node_size = calculate_node_size(p) + 1; /* number of states in the automaton */
   label = (Node **) tl_emalloc(node_size * sizeof(Node *));
   transition = (ATrans **) tl_emalloc(node_size * sizeof(ATrans *));
-  node_size = node_size / 32 + 1;
+  node_size = node_size / (8 * sizeof(int)) + 1;
 
   sym_size = calculate_sym_size(p); /* number of predicates */
   if(sym_size) sym_table = (char **) tl_emalloc(sym_size * sizeof(char *));
-  sym_size = sym_size / 32 + 1;
+  sym_size = sym_size / (8 * sizeof(int)) + 1;
   
   final_set = make_set(-1, 0);
   transition[0] = boolean(p); /* generates the alternating automaton */
@@ -428,11 +431,11 @@ void mk_alternating(Node *p) /* generates an alternating automaton for p */
   }
   
   if(tl_stats) {
-    times(&t_fin);
-    fprintf(tl_out, "\nBuilding and simplification of the alternating automaton : %.2fs");
-    fprintf(tl_out, "%i states, %i transitions\n", 
-	    ((float)(t_fin.tms_utime - t_debut.tms_utime))/100, 
-	    astate_count, atrans_count);
+    getrusage(RUSAGE_SELF, &tr_fin);
+    timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
+    fprintf(tl_out, "\nBuilding and simplification of the alternating automaton: %i.%06is",
+		t_diff.tv_sec, t_diff.tv_usec);
+    fprintf(tl_out, "\n%i states, %i transitions\n", astate_count, atrans_count);
   }
 
   releasenode(1, p);

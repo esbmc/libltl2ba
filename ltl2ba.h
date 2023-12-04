@@ -2,6 +2,8 @@
 
 /* Written by Denis Oddoux, LIAFA, France                                 */
 /* Copyright (c) 2001  Denis Oddoux                                       */
+/* Modified by Paul Gastin, LSV, France                                   */
+/* Copyright (c) 2007  Paul Gastin                                        */
 /*                                                                        */
 /* This program is free software; you can redistribute it and/or modify   */
 /* it under the terms of the GNU General Public License as published by   */
@@ -18,21 +20,21 @@
 /* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA*/
 /*                                                                        */
 /* Based on the translation algorithm by Gastin and Oddoux,               */
-/* presented at the CAV Conference, held in 2001, Paris, France 2001.     */
-/* Send bug-reports and/or questions to: Denis.Oddoux@liafa.jussieu.fr    */
-/* or to Denis Oddoux                                                     */
-/*       LIAFA, UMR 7089, case 7014                                       */
-/*       Universite Paris 7                                               */
-/*       2, place Jussieu                                                 */
-/*       F-75251 Paris Cedex 05                                           */
-/*       FRANCE                                                           */
-
+/* presented at the 13th International Conference on Computer Aided       */
+/* Verification, CAV 2001, Paris, France.                                 */
+/* Proceedings - LNCS 2102, pp. 53-65                                     */
+/*                                                                        */
+/* Send bug-reports and/or questions to Paul Gastin                       */
+/* http://www.lsv.ens-cachan.fr/~gastin                                   */
+/*                                                                        */
 /* Some of the code in this file was taken from the Spin software         */
 /* Written by Gerard J. Holzmann, Bell Laboratories, U.S.A.               */
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/times.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 typedef struct Symbol {
 char		*name;
@@ -222,6 +224,8 @@ int  same_sets(int *, int *, int);
 int  included_set(int *, int *, int);
 int  in_set(int *, int);
 int  *list_set(int *, int);
+
+int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);
 
 #define ZN	(Node *)0
 #define ZS	(Symbol *)0

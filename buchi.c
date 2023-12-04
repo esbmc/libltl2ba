@@ -2,6 +2,8 @@
 
 /* Written by Denis Oddoux, LIAFA, France                                 */
 /* Copyright (c) 2001  Denis Oddoux                                       */
+/* Modified by Paul Gastin, LSV, France                                   */
+/* Copyright (c) 2007  Paul Gastin                                        */
 /*                                                                        */
 /* This program is free software; you can redistribute it and/or modify   */
 /* it under the terms of the GNU General Public License as published by   */
@@ -18,14 +20,12 @@
 /* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA*/
 /*                                                                        */
 /* Based on the translation algorithm by Gastin and Oddoux,               */
-/* presented at the CAV Conference, held in 2001, Paris, France 2001.     */
-/* Send bug-reports and/or questions to: Denis.Oddoux@liafa.jussieu.fr    */
-/* or to Denis Oddoux                                                     */
-/*       LIAFA, UMR 7089, case 7014                                       */
-/*       Universite Paris 7                                               */
-/*       2, place Jussieu                                                 */
-/*       F-75251 Paris Cedex 05                                           */
-/*       FRANCE                                                           */    
+/* presented at the 13th International Conference on Computer Aided       */
+/* Verification, CAV 2001, Paris, France.                                 */
+/* Proceedings - LNCS 2102, pp. 53-65                                     */
+/*                                                                        */
+/* Send bug-reports and/or questions to Paul Gastin                       */
+/* http://www.lsv.ens-cachan.fr/~gastin                                   */
 
 #include "ltl2ba.h"
 
@@ -34,7 +34,8 @@
 \********************************************************************/
 
 extern GState **init, *gstates;
-extern struct tms t_debut, t_fin;
+extern struct rusage tr_debut, tr_fin;
+extern struct timeval t_diff;
 extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_simp_scc,
   init_size, *final;
 extern void put_uform(void);
@@ -82,35 +83,36 @@ int simplify_btrans() /* simplifies the transitions */
   BTrans *t, *t1;
   int changed = 0;
 
-  if(tl_stats) times(&t_debut);
+  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
   for (s = bstates->nxt; s != bstates; s = s->nxt)
     for (t = s->trans->nxt; t != s->trans;) {
       t1 = s->trans->nxt;
       copy_btrans(t, s->trans);
       while((t == t1) || (t->to != t1->to) ||
-	    !included_set(t1->pos, t->pos, 1) ||
-	    !included_set(t1->neg, t->neg, 1))
-	t1 = t1->nxt;
+            !included_set(t1->pos, t->pos, 1) ||
+            !included_set(t1->neg, t->neg, 1))
+        t1 = t1->nxt;
       if(t1 != s->trans) {
-	BTrans *free = t->nxt;
-	t->to    = free->to;
-	copy_set(free->pos, t->pos, 1);
-	copy_set(free->neg, t->neg, 1);
-	t->nxt   = free->nxt;
-	if(free == s->trans) s->trans = t;
-	free_btrans(free, 0, 0);
-	changed++;
+        BTrans *free = t->nxt;
+        t->to    = free->to;
+        copy_set(free->pos, t->pos, 1);
+        copy_set(free->neg, t->neg, 1);
+        t->nxt   = free->nxt;
+        if(free == s->trans) s->trans = t;
+        free_btrans(free, 0, 0);
+        changed++;
       }
       else
-	t = t->nxt;
+        t = t->nxt;
     }
-
+      
   if(tl_stats) {
-    times(&t_fin);
-    fprintf(tl_out, "\nSimplification of the Buchi automaton - transitions: %.2fs");
-    fprintf(tl_out, "\n%i transitions removed\n", 
-	   ((float)(t_fin.tms_utime - t_debut.tms_utime))/100, changed);
+    getrusage(RUSAGE_SELF, &tr_fin);
+    timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
+    fprintf(tl_out, "\nSimplification of the Buchi automaton - transitions: %i.%06is",
+		t_diff.tv_sec, t_diff.tv_usec);
+    fprintf(tl_out, "\n%i transitions removed\n", changed);
 
   }
   return changed;
@@ -198,7 +200,7 @@ int simplify_bstates() /* eliminates redundant states */
   BState *s, *s1;
   int changed = 0;
 
-  if(tl_stats) times(&t_debut);
+  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
   for (s = bstates->nxt; s != bstates; s = s->nxt) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
@@ -213,7 +215,7 @@ int simplify_bstates() /* eliminates redundant states */
       s1 = s1->nxt;
     if(s1 != bstates) { /* s and s1 are equivalent */
       if(s1->incoming == -1)
-	s1->final = s->final; /* get the good final condition */
+        s1->final = s->final; /* get the good final condition */
       s = remove_bstate(s, s1);
       changed++;
     }
@@ -221,10 +223,11 @@ int simplify_bstates() /* eliminates redundant states */
   retarget_all_btrans();
 
   if(tl_stats) {
-    times(&t_fin);
-    fprintf(tl_out, "\nSimplification of the Buchi automaton - states: %.2fs");
-    fprintf(tl_out, "\n%i states removed\n", 
-	   ((float)(t_fin.tms_utime - t_debut.tms_utime))/100, changed);
+    getrusage(RUSAGE_SELF, &tr_fin);
+    timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
+    fprintf(tl_out, "\nSimplification of the Buchi automaton - states: %i.%06is",
+		t_diff.tv_sec, t_diff.tv_usec);
+    fprintf(tl_out, "\n%i states removed\n", changed);
   }
 
   return changed;
@@ -546,7 +549,7 @@ void mk_buchi()
   BTrans *t1;
   accept = final[0] - 1;
   
-  if(tl_stats) times(&t_debut);
+  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
   bstack        = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
   bstack->nxt   = bstack;
@@ -615,11 +618,11 @@ void mk_buchi()
   retarget_all_btrans();
 
   if(tl_stats) {
-    times(&t_fin);
-    fprintf(tl_out, "\nBuilding of the Buchi automaton : %.2fs");
-    fprintf(tl_out, "\n%i states, %i transitions\n", 
-	    ((float)(t_fin.tms_utime - t_debut.tms_utime))/100, 
-	    bstate_count, btrans_count);
+    getrusage(RUSAGE_SELF, &tr_fin);
+    timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
+    fprintf(tl_out, "\nBuilding the Buchi automaton : %i.%06is",
+		t_diff.tv_sec, t_diff.tv_usec);
+    fprintf(tl_out, "\n%i states, %i transitions\n", bstate_count, btrans_count);
   }
 
   if(tl_verbose) {
