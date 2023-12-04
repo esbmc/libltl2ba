@@ -18,7 +18,7 @@ extern int tl_verbose, tl_stats, tl_simp_diff;
 char **sym_table;
 int node_id = 1, sym_id = 0, node_size, sym_size;
 extern int scc_size;
-int astate_count = 0, atrans_count = 0;
+static int astate_count = 0, atrans_count = 0;
 
 ATrans *build_alternating(Node *p, Node **label, Alternating *alt);
 
