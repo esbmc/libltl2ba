@@ -180,7 +180,7 @@ void	releasenode(int, Node *);
 void	tfree(void *);
 void	tl_explain(int);
 void	tl_UnGetchar(void);
-void	tl_parse(void);
+Node *	tl_formula(void);
 void	tl_yyerror(char *);
 void	trans(Node *);
 

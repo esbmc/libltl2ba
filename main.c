@@ -106,7 +106,20 @@ tl_main(char  *formula)
 
 	strcpy(uform, formula);
 	hasuform = strlen(uform);
-	tl_parse();
+
+	Node *n = tl_formula();
+	if (tl_verbose)
+	{
+		fprintf(stderr, "formula: ");
+		FILE *f = tl_out;
+		tl_out = stderr;
+		put_uform();
+		tl_out = f;
+		fprintf(stderr, "\n");
+	}
+
+	trans(n);
+
 	if (tl_stats)
 		tl_endstats();
 	return tl_errs;

@@ -18,7 +18,6 @@ extern FILE	*tl_out;
 int	tl_yychar = 0;
 YYSTYPE	tl_yylval;
 
-static Node	*tl_formula(void);
 static Node	*tl_factor(void);
 static Node	*tl_level(int);
 
@@ -534,22 +533,7 @@ again:
 	return ptr;
 }
 
-static Node *
-tl_formula(void)
+Node * tl_formula(void)
 {	tl_yychar = tl_yylex();
 	return tl_level(1);	/* 2 precedence levels, 1 and 0 */
-}
-
-void
-tl_parse(void)
-{       Node *n = tl_formula();
-        if (tl_verbose)
-	{	fprintf(stderr, "formula: ");
-		FILE *f = tl_out;
-		tl_out = stderr;
-		put_uform();
-		tl_out = f;
-		fprintf(stderr, "\n");
-	}
-	trans(n);
 }
