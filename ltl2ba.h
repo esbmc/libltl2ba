@@ -180,8 +180,13 @@ void	tl_UnGetchar(void);
 Node *	tl_formula(void);
 void	tl_yyerror(char *);
 
-ATrans ** mk_alternating(Node *);
-void    mk_generalized(ATrans **transition);
+typedef struct {
+  ATrans **transition;
+  int *final_set;
+} Alternating;
+
+Alternating mk_alternating(Node *);
+void    mk_generalized(Alternating *);
 void    mk_buchi();
 
 void print_c_buchi(void);

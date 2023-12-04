@@ -14,7 +14,7 @@
 
 extern FILE *tl_out;
 extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj,
-  tl_simp_scc, *final_set, node_id;
+  tl_simp_scc, node_id;
 extern char **sym_table;
 
 extern int node_size, sym_size;
@@ -271,7 +271,7 @@ int gdfs(GState *s) {
   return scc->theta;
 }
 
-void simplify_gscc() {
+void simplify_gscc(int *final_set) {
   GState *s;
   GTrans *t;
   int i, **scc_final;
@@ -550,7 +550,7 @@ void print_generalized() { /* prints intial states and calls 'reverse_print' */
 |*                       Main method                                *|
 \********************************************************************/
 
-void mk_generalized(ATrans **transition)
+void mk_generalized(Alternating *alt)
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
   GState *s;
@@ -561,7 +561,7 @@ void mk_generalized(ATrans **transition)
 
   fin = new_set(node_size);
   bad_scc = 0; /* will be initialized in simplify_gscc */
-  final = list_set(final_set, node_size);
+  final = list_set(alt->final_set, node_size);
 
   gstack        = (GState *)tl_emalloc(sizeof(GState)); /* sentinel */
   gstack->nxt   = gstack;
@@ -571,7 +571,7 @@ void mk_generalized(ATrans **transition)
   gstates->nxt  = gstates;
   gstates->prv  = gstates;
 
-  for(t = transition[0]; t; t = t->nxt) { /* puts initial states in the stack */
+  for(t = alt->transition[0]; t; t = t->nxt) { /* puts initial states in the stack */
     s = (GState *)tl_emalloc(sizeof(GState));
     s->id = (empty_set(t->to, node_size)) ? 0 : gstate_id++;
     s->incoming = 1;
@@ -595,7 +595,7 @@ void mk_generalized(ATrans **transition)
       free_gstate(s);
       continue;
     }
-    make_gtrans(s, transition);
+    make_gtrans(s, alt->transition);
   }
 
   retarget_all_gtrans();
@@ -615,7 +615,7 @@ void mk_generalized(ATrans **transition)
   /*for(i = 0; i < node_id; i++) // frees the data from the alternating automaton */
   /*free_atrans(transition[i], 1);*/
   free_all_atrans();
-  tfree(transition);
+  tfree(alt->transition);
 
   if(tl_verbose) {
     fprintf(tl_out, "\nGeneralized Buchi automaton before simplification\n");
@@ -623,13 +623,13 @@ void mk_generalized(ATrans **transition)
   }
 
   if(tl_simp_diff) {
-    if (tl_simp_scc) simplify_gscc();
+    if (tl_simp_scc) simplify_gscc(alt->final_set);
     simplify_gtrans();
-    if (tl_simp_scc) simplify_gscc();
+    if (tl_simp_scc) simplify_gscc(alt->final_set);
     while(simplify_gstates()) { /* simplifies as much as possible */
-      if (tl_simp_scc) simplify_gscc();
+      if (tl_simp_scc) simplify_gscc(alt->final_set);
       simplify_gtrans();
-      if (tl_simp_scc) simplify_gscc();
+      if (tl_simp_scc) simplify_gscc(alt->final_set);
     }
 
     if(tl_verbose) {

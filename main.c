@@ -129,8 +129,8 @@ tl_main(char  *formula)
 		tl_out = f;
 	}
 
-	ATrans **transition = mk_alternating(p);
-	mk_generalized(transition);
+	Alternating alt = mk_alternating(p);
+	mk_generalized(&alt);
 	mk_buchi();
 
 	switch (outmode) {
