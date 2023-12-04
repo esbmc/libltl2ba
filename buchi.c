@@ -41,10 +41,6 @@ extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_simp_scc,
 extern int sym_size, scc_size;
 extern void put_uform(void);
 
-extern char **sym_table;
-extern const char *c_sym_name_prefix;
-extern int sym_id;
-extern enum outmodes outmode;
 extern FILE *tl_out;	
 BState *bstack, *bstates, *bremoved;
 BScc *scc_stack;
@@ -55,6 +51,11 @@ int **stutter_accept_table = NULL;
 int *optimistic_accept_state_set = NULL;
 int *pessimistic_accept_state_set = NULL;
 static int g_num_states = 0;
+
+extern char **sym_table;
+extern const char *c_sym_name_prefix;
+extern int sym_id;
+extern enum outmodes outmode;
 
 /********************************************************************\
 |*        Simplification of the generalized Buchi automaton         *|
