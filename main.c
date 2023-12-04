@@ -136,8 +136,6 @@ int
 main(int argc, char *argv[])
 {	int i;
 	int invert_formula = 0;
-	const char *binname = argv[0];
-	const char *ltl_fname;
 	char *ltl_file = (char *)0;
 	char *add_ltl  = (char *)0;
 	char formula[4096], inv_formula[4100];
@@ -174,7 +172,6 @@ main(int argc, char *argv[])
         if (ltl_file)
         {
 		FILE *f;
-		ltl_fname = ltl_file;
                 if (!(f = fopen(ltl_file, "r")))
                 {       fprintf(stderr,"ltl2ba: cannot open %s\n", ltl_file);
                         alldone(1);
