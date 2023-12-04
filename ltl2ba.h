@@ -183,6 +183,7 @@ void	tl_yyerror(char *);
 typedef struct {
   ATrans **transition;
   int *final_set;
+  int node_id; /* really the number of nodes */
 } Alternating;
 
 Alternating mk_alternating(Node *);

@@ -16,7 +16,7 @@ extern FILE *tl_out;
 extern int tl_verbose, tl_stats, tl_simp_diff;
 
 char **sym_table;
-int node_id = 1, sym_id = 0, node_size, sym_size;
+int sym_id = 0, node_size, sym_size;
 extern int scc_size;
 static int astate_count = 0, atrans_count = 0;
 
@@ -101,7 +101,7 @@ ATrans *merge_trans(ATrans *trans1, ATrans *trans2) /* merges two transitions */
 }
 
 /* finds the id of the node, if already explored */
-int already_done(Node *p, Node **label)
+int already_done(Node *p, Node **label, int node_id)
 {
   int i;
   for(i = 1; i<node_id; i++)
@@ -169,7 +169,7 @@ ATrans *boolean(Node *p, Node **label, Alternating *alt)
     clear_set(result->to,  node_size);
     clear_set(result->pos, sym_size);
     clear_set(result->neg, sym_size);
-    add_set(result->to, already_done(p, label));
+    add_set(result->to, already_done(p, label, alt->node_id));
   }
   return result;
 }
@@ -178,7 +178,7 @@ ATrans *boolean(Node *p, Node **label, Alternating *alt)
 ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
 {
   ATrans *t1, *t2, *t = (ATrans *)0;
-  int node = already_done(p, label);
+  int node = already_done(p, label, alt->node_id);
   if(node >= 0) return alt->transition[node];
 
   switch (p->ntyp) {
@@ -221,11 +221,11 @@ ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
     }
     for(t1 = build_alternating(p->lft, label, alt); t1; t1 = t1->nxt) {
       ATrans *tmp = dup_trans(t1);  /* p */
-      add_set(tmp->to, node_id);  /* X (p U q) */
+      add_set(tmp->to, alt->node_id);  /* X (p U q) */
       tmp->nxt = t;
       t = tmp;
     }
-    add_set(alt->final_set, node_id);
+    add_set(alt->final_set, alt->node_id);
     break;
 
   case V_OPER:    /* p V q <-> (p && q) || (p && X (p V q)) */
@@ -241,7 +241,7 @@ ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
       }
 
       tmp = dup_trans(t1);  /* p */
-      add_set(tmp->to, node_id);  /* X (p V q) */
+      add_set(tmp->to, alt->node_id);  /* X (p V q) */
       tmp->nxt = t;
       t = tmp;
     }
@@ -278,8 +278,8 @@ ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
     break;
   }
 
-  alt->transition[node_id] = t;
-  label[node_id++] = p;
+  alt->transition[alt->node_id] = t;
+  label[alt->node_id++] = p;
   return(t);
 }
 
@@ -318,24 +318,24 @@ void simplify_atrans(ATrans **trans) /* simplifies the transitions */
 }
 
 /* simplifies the alternating automaton */
-void simplify_astates(Node **label, ATrans **transition)
+void simplify_astates(Node **label, Alternating *alt)
 {
   ATrans *t;
   int i, *acc = make_set(-1, node_size); /* no state is accessible initially */
 
-  for(t = transition[0]; t; t = t->nxt, i = 0)
+  for(t = alt->transition[0]; t; t = t->nxt, i = 0)
     merge_sets(acc, t->to, node_size); /* all initial states are accessible */
 
-  for(i = node_id - 1; i > 0; i--) {
+  for(i = alt->node_id - 1; i > 0; i--) {
     if (!in_set(acc, i)) { /* frees unaccessible states */
       label[i] = ZN;
-      free_atrans(transition[i], 1);
-      transition[i] = (ATrans *)0;
+      free_atrans(alt->transition[i], 1);
+      alt->transition[i] = (ATrans *)0;
       continue;
     }
     astate_count++;
-    simplify_atrans(&transition[i]);
-    for(t = transition[i]; t; t = t->nxt)
+    simplify_atrans(&alt->transition[i]);
+    for(t = alt->transition[i]; t; t = t->nxt)
       merge_sets(acc, t->to, node_size);
   }
 
@@ -347,24 +347,24 @@ void simplify_astates(Node **label, ATrans **transition)
 \********************************************************************/
 
 /* dumps the alternating automaton */
-static void print_alternating(Node **label, ATrans **transition)
+static void print_alternating(Node **label, Alternating *alt)
 {
   int i;
   ATrans *t;
 
   fprintf(tl_out, "init :\n");
-  for(t = transition[0]; t; t = t->nxt) {
+  for(t = alt->transition[0]; t; t = t->nxt) {
     print_set(t->to, node_size);
     fprintf(tl_out, "\n");
   }
 
-  for(i = node_id - 1; i > 0; i--) {
+  for(i = alt->node_id - 1; i > 0; i--) {
     if(!label[i])
       continue;
     fprintf(tl_out, "state %i : ", i);
     dump(label[i]);
     fprintf(tl_out, "\n");
-    for(t = transition[i]; t; t = t->nxt) {
+    for(t = alt->transition[i]; t; t = t->nxt) {
       if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
 	fprintf(tl_out, "1");
       print_sym_set(t->pos, sym_size);
@@ -387,6 +387,7 @@ Alternating mk_alternating(Node *p)
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
   Alternating alt;
+  alt.node_id = 1;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
 
@@ -407,14 +408,14 @@ Alternating mk_alternating(Node *p)
 
   if(tl_verbose) {
     fprintf(tl_out, "\nAlternating automaton before simplification\n");
-    print_alternating(label, alt.transition);
+    print_alternating(label, &alt);
   }
 
   if(tl_simp_diff) {
-    simplify_astates(label, alt.transition); /* keeps only accessible states */
+    simplify_astates(label, &alt); /* keeps only accessible states */
     if(tl_verbose) {
       fprintf(tl_out, "\nAlternating automaton after simplification\n");
-      print_alternating(label, alt.transition);
+      print_alternating(label, &alt);
     }
   }
 
