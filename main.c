@@ -49,8 +49,6 @@ const char *c_sym_name_prefix = "_ltl2ba";
 
 static char	uform[4096];
 static int	hasuform=0, cnt=0;
-static char     **ltl_file = (char **)0;
-static char     *add_ltl  = (char *)0;
 
 enum outmodes outmode=spin;
 
@@ -141,6 +139,8 @@ main(int argc, char *argv[])
 	int invert_formula = 0;
 	const char *binname = argv[0];
 	const char *ltl_fname;
+	char **ltl_file = (char **)0;
+	char *add_ltl  = (char *)0;
 	char formula[4096], inv_formula[4100];
 	tl_out = stdout;
 
@@ -178,24 +178,19 @@ main(int argc, char *argv[])
 
         if (ltl_file)
         {
+		FILE *f;
 		ltl_fname = *ltl_file;
-                if (!(tl_out = fopen(*ltl_file, "r")))
+                if (!(f = fopen(*ltl_file, "r")))
                 {       fprintf(stderr,"ltl2ba: cannot open %s\n", *ltl_file);
                         alldone(1);
                 }
-                fgets(formula, 4096, tl_out);
-                fclose(tl_out);
-                tl_out = stdout;
-                *ltl_file = (char *) formula;
+                fgets(formula, 4096, f);
+                fclose(f);
 		add_ltl = formula;
         }
 
 	if (invert_formula) {
-		if (ltl_file) {
-			sprintf(inv_formula, "!(%s)", formula);
-		} else {
-			sprintf(inv_formula, "!(%s)", add_ltl);
-		}
+		sprintf(inv_formula, "!(%s)", add_ltl);
 		add_ltl = inv_formula;
 	}
 
