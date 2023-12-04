@@ -228,10 +228,15 @@ void dot_print_set(int *, int*, int);
 void print_set(int *, int);
 int  empty_set(int *, int);
 int  empty_intersect_sets(int *, int *, int);
+int  same_set(int *l1, int *l2, int size);
 int  same_sets(int *, int *, int);
 int  included_set(int *, int *, int);
 int  in_set(int *, int);
 int  *list_set(int *, int);
+
+void print_sym_set(int *l, int size);
+void print_c_accept_tables(void);
+void print_c_epilog(void);
 
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);
 

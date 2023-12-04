@@ -28,7 +28,7 @@
 #       FRANCE                                                               
 
 CC=gcc
-CFLAGS= -ggdb3 -ansi -DNXT
+CFLAGS= -DNXT
 
 LTL2C=	parse.o lex.o main.o trans.o buchi.o set.o \
 	mem.o rewrt.o cache.o alternating.o generalized.o

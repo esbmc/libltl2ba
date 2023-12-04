@@ -168,7 +168,7 @@ main(int argc, char *argv[])
         {       switch (argv[1][1]) {
                 case 'F': ltl_file = (char **) (argv+2);
                           argc--; argv++; break;
-                case 'f': add_ltl = (char **) *(argv+2);
+                case 'f': add_ltl = *(argv+2);
                           argc--; argv++; break;
                 case 'a': tl_fjtofj = 0; break;
                 case 'c': tl_simp_scc = 0; break;
