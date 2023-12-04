@@ -13,7 +13,6 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern ATrans **transition;
 extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj,
   tl_simp_scc, *final_set, node_id;
 extern char **sym_table;
@@ -317,7 +316,8 @@ void simplify_gscc() {
 |*        Generation of the generalized Buchi automaton             *|
 \********************************************************************/
 
-int is_final(int *from, ATrans *at, int i) /*is the transition final for i ?*/
+/*is the transition final for i ?*/
+int is_final(int *from, ATrans *at, int i,ATrans **transition)
 {
   ATrans *t;
   int in_to;
@@ -370,7 +370,8 @@ GState *find_gstate(int *set, GState *s)
   return s;
 }
 
-void make_gtrans(GState *s) { /* creates all the transitions from a state */
+/* creates all the transitions from a state */
+void make_gtrans(GState *s, ATrans **transition) {
   int i, *list, state_trans = 0, trans_exist = 1;
   GState *s1;
   ATrans *t1;
@@ -404,7 +405,7 @@ void make_gtrans(GState *s) { /* creates all the transitions from a state */
       GTrans *trans, *t2;
       clear_set(fin, node_size);
       for(i = 1; i < final[0]; i++)
-	if(is_final(s->nodes_set, t1, final[i]))
+	if(is_final(s->nodes_set, t1, final[i], transition))
 	  add_set(fin, final[i]);
       for(t2 = s->trans->nxt; t2 != s->trans;) {
 	if(tl_simp_fly &&
@@ -549,7 +550,7 @@ void print_generalized() { /* prints intial states and calls 'reverse_print' */
 |*                       Main method                                *|
 \********************************************************************/
 
-void mk_generalized()
+void mk_generalized(ATrans **transition)
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
   GState *s;
@@ -594,7 +595,7 @@ void mk_generalized()
       free_gstate(s);
       continue;
     }
-    make_gtrans(s);
+    make_gtrans(s, transition);
   }
 
   retarget_all_gtrans();

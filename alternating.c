@@ -16,12 +16,11 @@ extern FILE *tl_out;
 extern int tl_verbose, tl_stats, tl_simp_diff;
 
 char **sym_table;
-ATrans **transition;
 int *final_set, node_id = 1, sym_id = 0, node_size, sym_size;
 extern int scc_size;
 int astate_count = 0, atrans_count = 0;
 
-ATrans *build_alternating(Node *p, Node **label);
+ATrans *build_alternating(Node *p, Node **label, ATrans **transition);
 
 /********************************************************************\
 |*              Generation of the alternating automaton             *|
@@ -122,7 +121,7 @@ int get_sym_id(char *s) /* finds the id of a predicate, or attributes one */
 }
 
 /* computes the transitions to boolean nodes -> next & init */
-ATrans *boolean(Node *p, Node **label)
+ATrans *boolean(Node *p, Node **label, ATrans **transition)
 {
   ATrans *t1, *t2, *lft, *rgt, *result = (ATrans *)0;
   switch(p->ntyp) {
@@ -134,8 +133,8 @@ ATrans *boolean(Node *p, Node **label)
   case FALSE:
     break;
   case AND:
-    lft = boolean(p->lft, label);
-    rgt = boolean(p->rgt, label);
+    lft = boolean(p->lft, label, transition);
+    rgt = boolean(p->rgt, label, transition);
     for(t1 = lft; t1; t1 = t1->nxt) {
       for(t2 = rgt; t2; t2 = t2->nxt) {
 	ATrans *tmp = merge_trans(t1, t2);
@@ -149,14 +148,14 @@ ATrans *boolean(Node *p, Node **label)
     free_atrans(rgt, 1);
     break;
   case OR:
-    lft = boolean(p->lft, label);
+    lft = boolean(p->lft, label, transition);
     for(t1 = lft; t1; t1 = t1->nxt) {
       ATrans *tmp = dup_trans(t1);
       tmp->nxt = result;
       result = tmp;
     }
     free_atrans(lft, 1);
-    rgt = boolean(p->rgt, label);
+    rgt = boolean(p->rgt, label, transition);
     for(t1 = rgt; t1; t1 = t1->nxt) {
       ATrans *tmp = dup_trans(t1);
       tmp->nxt = result;
@@ -165,7 +164,7 @@ ATrans *boolean(Node *p, Node **label)
     free_atrans(rgt, 1);
     break;
   default:
-    build_alternating(p, label);
+    build_alternating(p, label, transition);
     result = emalloc_atrans();
     clear_set(result->to,  node_size);
     clear_set(result->pos, sym_size);
@@ -176,7 +175,7 @@ ATrans *boolean(Node *p, Node **label)
 }
 
 /* builds an alternating automaton for p */
-ATrans *build_alternating(Node *p, Node **label)
+ATrans *build_alternating(Node *p, Node **label, ATrans **transition)
 {
   ATrans *t1, *t2, *t = (ATrans *)0;
   int node = already_done(p, label);
@@ -210,17 +209,17 @@ ATrans *build_alternating(Node *p, Node **label)
 
 #ifdef NXT
   case NEXT:
-    t = boolean(p->lft, label);
+    t = boolean(p->lft, label, transition);
     break;
 #endif
 
   case U_OPER:    /* p U q <-> q || (p && X (p U q)) */
-    for(t2 = build_alternating(p->rgt, label); t2; t2 = t2->nxt) {
+    for(t2 = build_alternating(p->rgt, label, transition); t2; t2 = t2->nxt) {
       ATrans *tmp = dup_trans(t2);  /* q */
       tmp->nxt = t;
       t = tmp;
     }
-    for(t1 = build_alternating(p->lft, label); t1; t1 = t1->nxt) {
+    for(t1 = build_alternating(p->lft, label, transition); t1; t1 = t1->nxt) {
       ATrans *tmp = dup_trans(t1);  /* p */
       add_set(tmp->to, node_id);  /* X (p U q) */
       tmp->nxt = t;
@@ -230,10 +229,10 @@ ATrans *build_alternating(Node *p, Node **label)
     break;
 
   case V_OPER:    /* p V q <-> (p && q) || (p && X (p V q)) */
-    for(t1 = build_alternating(p->rgt, label); t1; t1 = t1->nxt) {
+    for(t1 = build_alternating(p->rgt, label, transition); t1; t1 = t1->nxt) {
       ATrans *tmp;
 
-      for(t2 = build_alternating(p->lft, label); t2; t2 = t2->nxt) {
+      for(t2 = build_alternating(p->lft, label, transition); t2; t2 = t2->nxt) {
 	tmp = merge_trans(t1, t2);  /* p && q */
 	if(tmp) {
 	  tmp->nxt = t;
@@ -250,8 +249,8 @@ ATrans *build_alternating(Node *p, Node **label)
 
   case AND:
     t = (ATrans *)0;
-    for(t1 = build_alternating(p->lft, label); t1; t1 = t1->nxt) {
-      for(t2 = build_alternating(p->rgt, label); t2; t2 = t2->nxt) {
+    for(t1 = build_alternating(p->lft, label, transition); t1; t1 = t1->nxt) {
+      for(t2 = build_alternating(p->rgt, label, transition); t2; t2 = t2->nxt) {
 	ATrans *tmp = merge_trans(t1, t2);
 	if(tmp) {
 	  tmp->nxt = t;
@@ -263,12 +262,12 @@ ATrans *build_alternating(Node *p, Node **label)
 
   case OR:
     t = (ATrans *)0;
-    for(t1 = build_alternating(p->lft, label); t1; t1 = t1->nxt) {
+    for(t1 = build_alternating(p->lft, label, transition); t1; t1 = t1->nxt) {
       ATrans *tmp = dup_trans(t1);
       tmp->nxt = t;
       t = tmp;
     }
-    for(t1 = build_alternating(p->rgt, label); t1; t1 = t1->nxt) {
+    for(t1 = build_alternating(p->rgt, label, transition); t1; t1 = t1->nxt) {
       ATrans *tmp = dup_trans(t1);
       tmp->nxt = t;
       t = tmp;
@@ -318,7 +317,8 @@ void simplify_atrans(ATrans **trans) /* simplifies the transitions */
   }
 }
 
-void simplify_astates(Node **label) /* simplifies the alternating automaton */
+/* simplifies the alternating automaton */
+void simplify_astates(Node **label, ATrans **transition)
 {
   ATrans *t;
   int i, *acc = make_set(-1, node_size); /* no state is accessible initially */
@@ -346,7 +346,8 @@ void simplify_astates(Node **label) /* simplifies the alternating automaton */
 |*            Display of the alternating automaton                  *|
 \********************************************************************/
 
-void print_alternating(Node **label) /* dumps the alternating automaton */
+/* dumps the alternating automaton */
+static void print_alternating(Node **label, ATrans **transition)
 {
   int i;
   ATrans *t;
@@ -381,7 +382,7 @@ void print_alternating(Node **label) /* dumps the alternating automaton */
 \********************************************************************/
 
 /* generates an alternating automaton for p */
-void mk_alternating(Node *p)
+ATrans ** mk_alternating(Node *p)
 {
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
@@ -390,7 +391,7 @@ void mk_alternating(Node *p)
 
   node_size = calculate_node_size(p) + 1; /* number of states in the automaton */
   Node **label = (Node **) tl_emalloc(node_size * sizeof(Node *));
-  transition = (ATrans **) tl_emalloc(node_size * sizeof(ATrans *));
+  ATrans **transition = (ATrans **) tl_emalloc(node_size * sizeof(ATrans *));
   node_size = SET_SIZE(node_size);
 
   sym_size = calculate_sym_size(p); /* number of predicates */
@@ -398,21 +399,21 @@ void mk_alternating(Node *p)
   sym_size = SET_SIZE(sym_size);
 
   final_set = make_set(-1, node_size);
-  transition[0] = boolean(p, label); /* generates the alternating automaton */
+  transition[0] = boolean(p, label, transition); /* generates the alternating automaton */
 
   FILE *f = tl_out;
   tl_out = stderr;
 
   if(tl_verbose) {
     fprintf(tl_out, "\nAlternating automaton before simplification\n");
-    print_alternating(label);
+    print_alternating(label, transition);
   }
 
   if(tl_simp_diff) {
-    simplify_astates(label); /* keeps only accessible states */
+    simplify_astates(label, transition); /* keeps only accessible states */
     if(tl_verbose) {
       fprintf(tl_out, "\nAlternating automaton after simplification\n");
-      print_alternating(label);
+      print_alternating(label, transition);
     }
   }
 
@@ -428,4 +429,6 @@ void mk_alternating(Node *p)
 
   releasenode(1, p);
   tfree(label);
+
+  return transition;
 }
