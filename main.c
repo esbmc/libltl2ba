@@ -150,10 +150,7 @@ main(int argc, char *argv[])
 		case '?': usage(1); break;
 		}
 
-	if(!ltl_file && !add_ltl)
-		usage(1);
-
-	if (argc != optind)
+	if(!ltl_file == !add_ltl || argc != optind)
 		usage(1);
 
 	if (ltl_file)
