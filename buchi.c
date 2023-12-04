@@ -971,39 +971,48 @@ print_c_buchi_body(const char *prefix)
 void
 print_c_buchi_body_tail(void)
 {
-
-  fprintf(tl_out, "\t\t__ESBMC_switch_from_monitor();\n");
-  fprintf(tl_out, "\t}\n\n");
-  fprintf(tl_out, "\t__ESBMC_assert(num_iters == iters, \"Unwind bound on ltl2ba_fsm insufficient\");\n\n");
-  fprintf(tl_out, "\treturn;\n}\n\n");
-  return;
+  fprintf(tl_out, "\
+		__ESBMC_switch_from_monitor();\n\
+	}\n\
+\n\
+	__ESBMC_assert(num_iters == iters, \"Unwind bound on ltl2ba_fsm insufficient\");\n\
+\n\
+	return;\n\
+}\n\
+\n\
+");
 }
 
 void
 print_c_buchi_util_funcs(const char *prefix)
 {
-  BState *s;
-
-  fprintf(tl_out, "#ifndef LTL_PREFIX_BOUND\n");
-  fprintf(tl_out, "#define LTL_PREFIX_BOUND 2147483648\n");
-  fprintf(tl_out, "#endif\n\n");
-  fprintf(tl_out, "#define max(x,y) ((x) < (y) ? (y) : (x))\n\n");
-  fprintf(tl_out, "void *\nltl2ba_thread(void *dummy)\n{\n\n");
-  fprintf(tl_out, "\tltl2ba_fsm(false, LTL_PREFIX_BOUND);\n");
-  fprintf(tl_out, "\treturn 0;\n");
-  fprintf(tl_out, "\t(void)dummy;\n");
-  fprintf(tl_out, "}\n\n");
-
-  fprintf(tl_out, "pthread_t\nltl2ba_start_monitor(void)\n{\n");
-  fprintf(tl_out, "\tpthread_t t;\n\n");
-  fprintf(tl_out, "\t__ESBMC_really_atomic_begin();\n");
-  fprintf(tl_out, "\tpthread_create(&t, NULL, ltl2ba_thread, NULL);\n");
-  fprintf(tl_out, "\t__ESBMC_register_monitor(t);\n");
-  fprintf(tl_out, "\t__ESBMC_atomic_end();\n");
-  fprintf(tl_out, "\t__ESBMC_switch_to_monitor();\n");
-  fprintf(tl_out, "\treturn t;\n");
-  fprintf(tl_out, "}\n\n");
-  return;
+  fprintf(tl_out, "\
+#ifndef LTL_PREFIX_BOUND\n\
+#define LTL_PREFIX_BOUND 2147483648\n\
+#endif\n\
+\n\
+#define max(x,y) ((x) < (y) ? (y) : (x))\n\
+\n\
+void * ltl2ba_thread(void *dummy)\n\
+{\n\
+	ltl2ba_fsm(false, LTL_PREFIX_BOUND);\n\
+	return 0;\n\
+	(void)dummy;\n\
+}\n\
+\n\
+pthread_t ltl2ba_start_monitor(void)\n\
+{\n\
+	pthread_t t;\n\
+\n\
+	__ESBMC_really_atomic_begin();\n\
+	pthread_create(&t, NULL, ltl2ba_thread, NULL);\n\
+	__ESBMC_register_monitor(t);\n\
+	__ESBMC_atomic_end();\n\
+	__ESBMC_switch_to_monitor();\n\
+	return t;\n\
+}\n\
+\n\
+");
 }
 
 int state_count=0;
