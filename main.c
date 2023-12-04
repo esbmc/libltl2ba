@@ -115,7 +115,7 @@ static void trans(Node *p)
   mk_buchi();
 }
 
-int
+static int
 tl_main(char  *formula)
 {
 	for (int i = 0; formula[i]; i++)
