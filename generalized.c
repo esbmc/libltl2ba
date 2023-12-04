@@ -15,7 +15,6 @@
 extern FILE *tl_out;
 extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj,
   tl_simp_scc, node_id;
-extern char **sym_table;
 
 extern int node_size, sym_size;
 
