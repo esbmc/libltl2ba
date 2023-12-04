@@ -117,7 +117,7 @@ tfree(void *v)
 
 	--m;
 	if ((m->size&0xFF000000) != A_USER)
-		Fatal("releasing a free block", (char *)0);
+		Fatal("releasing a free block");
 
 	u = (m->size &= 0xFFFFFF);
 	if (u >= A_LARGE)

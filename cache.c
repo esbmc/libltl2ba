@@ -43,7 +43,6 @@ static Cache	*stored = (Cache *) 0;
 static unsigned long	Caches, CacheHits;
 
 static int	ismatch(Node *, Node *);
-extern void fatal(char *, char *);
 int	sameform(Node *, Node *);
 
 void
@@ -215,7 +214,7 @@ sameform(Node *a, Node *b)
 	case FALSE:
 		return 1;
 	case PREDICATE:
-		if (!a->sym || !b->sym) fatal("sameform...", (char *) 0);
+		if (!a->sym || !b->sym) fatal("sameform...");
 		return !strcmp(a->sym->name, b->sym->name);
 
 	case NOT:
@@ -237,7 +236,7 @@ sameform(Node *a, Node *b)
 
 	default:
 		printf("type: %d\n", a->ntyp);
-		fatal("cannot happen, sameform", (char *) 0);
+		fatal("cannot happen, sameform");
 	}
 
 	return 0;
@@ -339,6 +338,6 @@ anywhere(int tok, Node *srch, Node *in)
 	case  OR:	return any_lor(srch, in);
 	case   0:	return any_term(srch, in);
 	}
-	fatal("cannot happen, anywhere", (char *) 0);
+	fatal("cannot happen, anywhere");
 	return 0;
 }
