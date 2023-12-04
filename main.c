@@ -22,7 +22,6 @@ int tl_simp_scc  = 1; /* use scc simplification */
 int tl_fjtofj    = 1; /* 2eme fj */
 int	tl_errs      = 0;
 int	tl_verbose   = 0;
-int	tl_terse     = 0;
 unsigned long	All_Mem = 0;
 const char *c_sym_name_prefix = "_ltl2ba";
 
@@ -121,7 +120,7 @@ tl_main(char  *formula)
 	if (!p || tl_errs)
 		return;
 
-	if (tl_verbose || tl_terse) {
+	if (tl_verbose) {
 		FILE *f = tl_out;
 		tl_out = stderr;
 		fprintf(tl_out, "\t/* Normlzd: ");
@@ -129,8 +128,6 @@ tl_main(char  *formula)
 		fprintf(tl_out, " */\n");
 		tl_out = f;
 	}
-	if (tl_terse)
-		return;
 
 	mk_alternating(p);
 	mk_generalized();
