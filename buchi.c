@@ -506,8 +506,7 @@ void print_buchi(BState *s) /* dumps the Buchi automaton */
   }
 }
 
-void print_c_buchi();
-void print_spin_buchi() {
+void print_spin_buchi(void) {
   BTrans *t;
   BState *s;
   int accept_all = 0;
@@ -591,7 +590,7 @@ void print_dot_state_name(BState *s) {
   }
 }
 
-void print_dot_buchi() {
+void print_dot_buchi(void) {
   BTrans *t;
   BState *s;
   int accept_all = 0, init_count = 0;
@@ -766,14 +765,6 @@ void mk_buchi()
   }
 
   tl_out = f;
-
-switch (outmode) {
-	case none:	break;
-	case c: 	print_c_buchi(); break;
-	case dot: 	print_dot_buchi(); break;
-	case spin:
-	default:	print_spin_buchi(); break;
-	}
 }
 
 extern int cexpr_idx;
@@ -1382,7 +1373,7 @@ print_behaviours()
 }
 
 void
-print_c_buchi()
+print_c_buchi(void)
 {
   BTrans *t, *t1;
   BState *s;

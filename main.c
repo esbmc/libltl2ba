@@ -28,7 +28,7 @@ const char *c_sym_name_prefix = "_ltl2ba";
 static char	uform[4096];
 static int	hasuform=0, cnt=0;
 
-enum outmodes outmode=spin;
+static enum {spin, c, dot, none} outmode = spin;
 
 static void	tl_endstats(void);
 static void	non_fatal(const char *);
@@ -132,6 +132,14 @@ tl_main(char  *formula)
 	mk_alternating(p);
 	mk_generalized();
 	mk_buchi();
+
+	switch (outmode) {
+	case none:	break;
+	case c: 	print_c_buchi(); break;
+	case dot: 	print_dot_buchi(); break;
+	case spin:
+	default:	print_spin_buchi(); break;
+	}
 
 	if (tl_stats)
 		tl_endstats();

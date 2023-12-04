@@ -138,8 +138,6 @@ enum {
 #endif
 };
 
-enum outmodes {spin, c, dot, none};
-
 Node	*Canonical(Node *);
 Node	*canonical(Node *);
 Node	*cached(Node *);
@@ -185,6 +183,10 @@ void	tl_yyerror(char *);
 void    mk_alternating(Node *);
 void    mk_generalized();
 void    mk_buchi();
+
+void print_c_buchi(void);
+void print_dot_buchi(void);
+void print_spin_buchi(void);
 
 ATrans *dup_trans(ATrans *);
 ATrans *merge_trans(ATrans *, ATrans *);
