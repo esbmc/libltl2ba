@@ -93,9 +93,10 @@ tl_UnGetchar(void)
 }
 
 static void
-usage(void)
+usage(int code)
 {
-        printf("\
+	FILE *f = code ? stderr : stdout;
+        fprintf(f, "\
 usage: ltl2ba [-flag] -f 'formula'\n\
                    or -F file\n\
  -f 'formula'  translate LTL formula into never claim\n\
@@ -111,7 +112,7 @@ usage: ltl2ba [-flag] -f 'formula'\n\
  -a            disable trick in (A)ccepting conditions\n\
  -O mode       output mode; one of spin, c or dot\n\
 ");
-        alldone(1);
+        alldone(code);
 }
 
 int
@@ -141,8 +142,9 @@ main(int argc, char *argv[])
 	char formula[4096], inv_formula[4100];
 	tl_out = stdout;
 
-	for (int opt; (opt = getopt(argc, argv, ":F:f:acopldsO:Pi")) != -1;)
+	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:Pi")) != -1;)
                 switch (opt) {
+                case 'h': usage(0); break;
                 case 'F': ltl_file = optarg; break;
                 case 'f': add_ltl = optarg; break;
                 case 'a': tl_fjtofj = 0; break;
@@ -160,14 +162,15 @@ main(int argc, char *argv[])
 					else if (strcmp("dot", optarg)==0)
 						outmode=dot;
 					else
-						usage();
+						usage(1);
 					break;
                 case 'P': c_sym_name_prefix = optarg; break;
                 case 'i': invert_formula = 1; break;
-                default : usage(); break;
+                case ':':
+                case '?': usage(1); break;
                 }
 
-	if(!ltl_file && !add_ltl) usage();
+	if(!ltl_file && !add_ltl) usage(1);
 
         if (ltl_file)
         {
@@ -186,11 +189,10 @@ main(int argc, char *argv[])
 		add_ltl = inv_formula;
 	}
 
-	if (argc == optind)
-		i = tl_main(add_ltl);
-	else
-		usage();
-	return i;
+	if (argc != optind)
+		usage(1);
+
+	return tl_main(add_ltl);
 }
 
 /* Subtract the `struct timeval' values X and Y, storing the result X-Y in RESULT.
