@@ -113,9 +113,9 @@ tl_UnGetchar(void)
 void
 usage(void)
 {
-        printf("usage: ltl2ba [-flag] -f formula\n");
+        printf("usage: ltl2ba [-flag] -f 'formula'\n");
         printf("                   or -F file\n");
-        printf(" -f \"formula\"\ttranslate LTL ");
+        printf(" -f 'formula'\ttranslate LTL ");
         printf("into never claim\n");
         printf(" -F file\tlike -f, but with the LTL ");
         printf("formula stored in a 1-line file\n");
@@ -319,7 +319,7 @@ non_fatal(char *s1, char *s2)
 	if (s2)
 		printf(s1, s2);
 	else
-		printf(s1);
+		printf("%s", s1);
 	if (tl_yychar != -1 && tl_yychar != 0)
 	{	printf(", saw '");
 		tl_explain(tl_yychar);

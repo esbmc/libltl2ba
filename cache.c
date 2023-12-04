@@ -78,7 +78,7 @@ cached(Node *n)
 	Node *m;
 
 	if (!n) return n;
-	if (m = in_cache(n))
+	if ((m = in_cache(n)))
 		return m;
 
 	Caches++;

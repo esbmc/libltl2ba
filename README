@@ -8,6 +8,11 @@ LTL2BA - Version 1.1 - August 2007
 Modified by Paul Gastin, LSV, France                                 
 Copyright (c) 2007  Paul Gastin                                       
 Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
+     
+LTL2BA - Version 1.2 - May 2018
+Modified by Paul Gastin, LSV, France                                 
+Copyright (c) 2018  Paul Gastin                                       
+Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
                                                                   
 This program is free software; you can redistribute it and/or modify   
 it under the terms of the GNU General Public License as published by   
@@ -44,19 +49,18 @@ Here are the files that contain some code from Spin v3.4.1 :
 
 	cache.c  (originally tl_cache.c)
 	lex.c    (           tl_lex.c  )
-	ltl2ba.h (	     tl.h      )
-	main.c   (	     tl_main.c )
-	mem.c	 (	     tl_mem.c  )
-	parse.c  (	     tl_parse.c)
-	rewrt.c  (	     tl_rewrt.c)
-	trans.c	 (	     tl_trans.c)
+	ltl2ba.h (           tl.h      )
+	main.c   (           tl_main.c )
+	mem.c.   (           tl_mem.c  )
+	parse.c  (           tl_parse.c)
+	rewrt.c  (           tl_rewrt.c)
+	trans.c	 (           tl_trans.c)
 
 2. COMPILING
 
 open the archive :
-> gunzip ltl2ba-1.1.tar.gz
-> tar xf ltl2ba-1.1.tar
-> cd ltl2ba-1.1
+> tar -xzf ltl2ba-1.2.tar.gz
+> cd ltl2ba-1.2
 
 compile the program
 > make
@@ -64,7 +68,7 @@ compile the program
 3. EXECUTING
 
 run the program
-> ./ltl2ba -f "formula"
+> ./ltl2ba -f 'formula'
 
 The formula is an LTL formula, and may contain propositional symbols, 
 boolean operators, temporal operators, and parentheses.
@@ -72,12 +76,12 @@ The syntax used is the one used in the 'Spin' model-checker
 
 Propositonal Symbols:
         true, false
-	any lowercase string
+        any lowercase string
 
 Boolean operators:
         !   (negation)
         ->  (implication)
-	<-> (equivalence)
+        <-> (equivalence)
         &&  (and)
         ||  (or)
 

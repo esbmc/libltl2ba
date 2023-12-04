@@ -40,6 +40,8 @@ extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_simp_scc,
   init_size, *final;
 extern void put_uform(void);
 
+extern int gstate_id;
+
 extern FILE *tl_out;	
 BState *bstack, *bstates, *bremoved;
 BScc *scc_stack;
@@ -110,7 +112,7 @@ int simplify_btrans() /* simplifies the transitions */
   if(tl_stats) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
-    fprintf(tl_out, "\nSimplification of the Buchi automaton - transitions: %i.%06is",
+    fprintf(tl_out, "\nSimplification of the Buchi automaton - transitions: %ld.%06is",
 		t_diff.tv_sec, t_diff.tv_usec);
     fprintf(tl_out, "\n%i transitions removed\n", changed);
 
@@ -171,10 +173,18 @@ void retarget_all_btrans()
 int all_btrans_match(BState *a, BState *b) /* decides if the states are equivalent */
 {	
   BTrans *s, *t;
+
+  /* the states have to be both final or both non final,
+   * or at least one of them has to be in a trivial SCC
+   * (incoming == -1), as the acceptance condition of
+   * such a state can be modified without changing the
+   * language of the automaton
+   */
   if (((a->final == accept) || (b->final == accept)) &&
-      (a->final + b->final != 2 * accept) && 
-      a->incoming >=0 && b->incoming >=0)
-    return 0; /* the states have to be both final or both non final */
+      (a->final + b->final != 2 * accept)  /* final condition of a and b differs */
+      && a->incoming >=0   /* a is not in a trivial SCC */
+      && b->incoming >=0)  /* b is not in a trivial SCC */
+    return 0;  /* states can not be matched */
 
   for (s = a->trans->nxt; s != a->trans; s = s->nxt) { 
                                 /* all transitions from a appear in b */
@@ -197,7 +207,7 @@ int all_btrans_match(BState *a, BState *b) /* decides if the states are equivale
 
 int simplify_bstates() /* eliminates redundant states */
 {
-  BState *s, *s1;
+  BState *s, *s1, *s2;
   int changed = 0;
 
   if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
@@ -214,18 +224,61 @@ int simplify_bstates() /* eliminates redundant states */
     while(!all_btrans_match(s, s1))
       s1 = s1->nxt;
     if(s1 != bstates) { /* s and s1 are equivalent */
-      if(s1->incoming == -1)
-        s1->final = s->final; /* get the good final condition */
+      /* we now want to remove s and replace it by s1 */
+      if(s1->incoming == -1) {  /* s1 is in a trivial SCC */
+        s1->final = s->final; /* change the final condition of s1 to that of s */
+
+        /* We may have to update the SCC status of s1
+         * stored in s1->incoming, because we will retarget the incoming
+         * transitions of s to s1.
+         *
+         * If both s1 and s are in trivial SCC, then retargeting
+         * the incoming transitions does not change the status of s1,
+         * it remains in a trivial SCC.
+         *
+         * If s1 was in a trivial SCC, but s was not, then
+         * s1 has to have a transition to s that corresponds to a
+         * self-loop of s (as both states have the same outgoing transitions).
+         * But then, s1 will not remain a trivial SCC after retargeting.
+         * In particular, afterwards the final condition of s1 may not be
+         * changed anymore.
+         *
+         * If both s1 and s are in non-trivial SCC, merging does not
+         * change the SCC status of s1.
+         *
+         * If we are here, s1->incoming==1 and thus s1 forms a trivial SCC.
+         * We therefore can set the status of s1 to that of s,
+         * which correctly handles the first two cases above.
+         */
+        s1->incoming = s->incoming;
+      }
       s = remove_bstate(s, s1);
       changed++;
     }
   }
   retarget_all_btrans();
 
+  /*
+   * As merging equivalent states can change the 'final' attribute of
+   * the remaining state, it is possible that now there are two
+   * different states with the same id and final values.
+   * This would lead to multiply-defined labels in the generated neverclaim.
+   * We iterate over all states and assign new ids (previously unassigned)
+   * to these states to disambiguate.
+   * Fix from ltl3ba.
+   */
+  for (s = bstates->nxt; s != bstates; s = s->nxt) {  /* For all states s*/
+    for (s2 = s->nxt; s2 != bstates; s2 = s2->nxt) {  /*  and states s2 to the right of s */
+      if(s->final == s2->final && s->id == s2->id) {  /* if final and id match */
+        s->id = ++gstate_id;                          /* disambiguate by assigning unused id */
+      }
+    }
+  }
+
   if(tl_stats) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
-    fprintf(tl_out, "\nSimplification of the Buchi automaton - states: %i.%06is",
+    fprintf(tl_out, "\nSimplification of the Buchi automaton - states: %ld.%06is",
 		t_diff.tv_sec, t_diff.tv_usec);
     fprintf(tl_out, "\n%i states removed\n", changed);
   }
@@ -620,7 +673,7 @@ void mk_buchi()
   if(tl_stats) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
-    fprintf(tl_out, "\nBuilding the Buchi automaton : %i.%06is",
+    fprintf(tl_out, "\nBuilding the Buchi automaton : %ld.%06is",
 		t_diff.tv_sec, t_diff.tv_usec);
     fprintf(tl_out, "\n%i states, %i transitions\n", bstate_count, btrans_count);
   }
