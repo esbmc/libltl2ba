@@ -51,7 +51,6 @@ static char	uform[4096];
 static int	hasuform=0, cnt=0;
 static char     **ltl_file = (char **)0;
 static char     *add_ltl  = (char *)0;
-static char     out1[64];
 
 int	invert_formula = 0;
 enum outmodes outmode=spin;
@@ -62,26 +61,7 @@ static void	non_fatal(const char *);
 static void
 alldone(int estatus)
 {
-        if (strlen(out1) > 0)
-                (void) unlink((const char *)out1);
         exit(estatus);
-}
-
-FILE *
-cpyfile(char *src, char *tgt)
-{       FILE *inp, *out;
-        char buf[1024];
-
-        inp = fopen(src, "r");
-        out = fopen(tgt, "w");
-        if (!inp || !out)
-        {       fprintf(stderr,"ltl2ba: cannot cp %s to %s\n", src, tgt);
-                alldone(1);
-        }
-        while (fgets(buf, 1024, inp))
-                fprintf(out, "%s", buf);
-        fclose(inp);
-        return out;
 }
 
 char *
@@ -219,20 +199,10 @@ main(int argc, char *argv[])
 		add_ltl = inv_formula;
 	}
 
-        if (argc > 1)
-        {       char out2[64];
-                strcpy(out1, "_tmp1_");
-                strcpy(out2, "_tmp2_");
-                tl_out = cpyfile(argv[1], out2);
-                i = tl_main(add_ltl);
-                fclose(tl_out);
-        } else
-	{
-                if (argc > 0)
-                        i = tl_main(add_ltl);
-		else
-			usage();
-	}
+	if (argc == 1)
+		i = tl_main(add_ltl);
+	else
+		usage();
 	return i;
 }
 
