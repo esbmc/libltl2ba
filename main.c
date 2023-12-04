@@ -115,7 +115,7 @@ static void trans(Node *p)
   mk_buchi();
 }
 
-static int
+static void
 tl_main(char  *formula)
 {
 	for (int i = 0; formula[i]; i++)
@@ -142,7 +142,6 @@ tl_main(char  *formula)
 
 	if (tl_stats)
 		tl_endstats();
-	return tl_errs;
 }
 
 int
@@ -204,7 +203,9 @@ main(int argc, char *argv[])
 		add_ltl = inv_formula;
 	}
 
-	return tl_main(add_ltl);
+	tl_main(add_ltl);
+
+	return tl_errs != 0;
 }
 
 /* Subtract the `struct timeval' values X and Y, storing the result X-Y in RESULT.
