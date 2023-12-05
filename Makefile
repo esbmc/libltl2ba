@@ -34,10 +34,13 @@ WARNS  = -Wall -Wextra -Wno-unused
 LTL2C =	parse.o lex.o main.o buchi.o set.o \
 	mem.o rewrt.o cache.o alternating.o generalized.o
 
-ltl2c:	$(LTL2C)
+ltl2c: ltl2ba
+	rm -f ltl2c && ln -s $< $@
+
+ltl2ba:	$(LTL2C)
 	$(CC) $(CFLAGS) -o $@ $(LTL2C)
 
 $(LTL2C): ltl2ba.h
 
 clean:
-	rm -f ltl2c $(LTL2C)
+	rm -f ltl2c ltl2ba $(LTL2C)

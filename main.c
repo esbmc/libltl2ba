@@ -10,6 +10,7 @@
 /* Written by Gerard J. Holzmann, Bell Laboratories, U.S.A.               */
 
 #include <unistd.h>
+#include <libgen.h>	/* basename() */
 #include "ltl2ba.h"
 
 FILE	*tl_out;
@@ -154,6 +155,9 @@ main(int argc, char *argv[])
 	char *add_ltl  = (char *)0;
 	char formula[4096], inv_formula[4100];
 	tl_out = stdout;
+
+	if (argv[0] && !strcmp(basename(argv[0]), "ltl2c"))
+		outmode = c;
 
 	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:Pi")) != -1;)
 		switch (opt) {
