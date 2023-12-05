@@ -347,8 +347,9 @@ non_fatal(const char *s1)
 		tl_explain(tl_yychar);
 		fprintf(stderr,"'");
 	}
-	fprintf(stderr,"\n%s: %s\n---------", progname, uform);
-	for (i = 0; i < cnt; i++)
+	fprintf(stderr,"\n%s: %s\n", progname, uform);
+	int n = cnt + strlen(progname) + 2 - 1;
+	for (i = 0; i < n; i++)
 		fprintf(stderr,"-");
 	fprintf(stderr,"^\n");
 	fflush(stderr);
