@@ -149,7 +149,6 @@ Node	*right_linked(Node *);
 Node	*tl_nn(int, Node *, Node *);
 
 Symbol	*tl_lookup(char *);
-Symbol	*getsym(Symbol *);
 
 char	*emalloc(int);
 

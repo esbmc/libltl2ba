@@ -215,11 +215,3 @@ tl_lookup(char *s)
 
 	return sp;
 }
-
-Symbol *
-getsym(Symbol *s)
-{	Symbol *n = (Symbol *) tl_emalloc(sizeof(Symbol));
-
-	n->name = s->name;
-	return n;
-}
