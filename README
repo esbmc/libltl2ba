@@ -82,20 +82,21 @@ The syntax used is the one used in the 'Spin' model-checker
 Propositonal Symbols:
         true, false
         any lowercase string
+        {C-expr}
 
 Boolean operators:
-        !   (negation)
-        ->  (implication)
-        <-> (equivalence)
-        &&  (and)
-        ||  (or)
+        !, NOT  (negation)
+        ->      (implication)
+        <->     (equivalence)
+        &&, /\  (and)
+        ||, \/  (or)
 
 Temporal operators:
-        []  (always)
-        <>  (eventually)
-        U   (until)
-        V   (release)
-        X   (next)
+        G, []   (always)
+        F, <>   (eventually)
+        U       (until)
+        V       (release)
+        X       (next)
 
 Use spaces between any symbols.
 
