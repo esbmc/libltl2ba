@@ -9,6 +9,8 @@
 /* Some of the code in this file was taken from the Spin software         */
 /* Written by Gerard J. Holzmann, Bell Laboratories, U.S.A.               */
 
+#pragma once
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
