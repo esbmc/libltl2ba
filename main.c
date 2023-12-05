@@ -195,8 +195,8 @@ main(int argc, char *argv[])
 
 	if (ltl_file)
 	{
-		FILE *f;
-		if (!(f = fopen(ltl_file, "r")))
+		FILE *f = fopen(ltl_file, "r");
+		if (!f)
 		{
 			fprintf(stderr, "%s: cannot open %s\n", progname, ltl_file);
 			alldone(1);
