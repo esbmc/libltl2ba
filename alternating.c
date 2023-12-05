@@ -15,7 +15,6 @@
 extern FILE *tl_out;
 extern int tl_verbose, tl_stats, tl_simp_diff;
 
-char **sym_table;
 int node_size, sym_size;
 extern int scc_size;
 static int astate_count = 0, atrans_count = 0;
@@ -111,14 +110,14 @@ int already_done(Node *p, Node **label, int node_id)
 }
 
 /* finds the id of a predicate, or attributes one */
-int get_sym_id(char *s, int sym_id)
+int get_sym_id(char *s, Alternating *alt)
 {
   int i;
-  for(i=0; i<sym_id; i++)
-    if (!strcmp(s, sym_table[i]))
+  for(i=0; i<alt->sym_id; i++)
+    if (!strcmp(s, alt->sym_table[i]))
       return i;
-  sym_table[sym_id] = s;
-  return sym_id++;
+  alt->sym_table[alt->sym_id] = s;
+  return alt->sym_id++;
 }
 
 /* computes the transitions to boolean nodes -> next & init */
@@ -197,7 +196,7 @@ ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
     clear_set(t->to,  node_size);
     clear_set(t->pos, sym_size);
     clear_set(t->neg, sym_size);
-    add_set(t->pos, get_sym_id(p->sym->name, alt->sym_id));
+    add_set(t->pos, get_sym_id(p->sym->name, alt));
     break;
 
   case NOT:
@@ -205,7 +204,7 @@ ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
     clear_set(t->to,  node_size);
     clear_set(t->pos, sym_size);
     clear_set(t->neg, sym_size);
-    add_set(t->neg, get_sym_id(p->lft->sym->name, alt->sym_id));
+    add_set(t->neg, get_sym_id(p->lft->sym->name, alt));
     break;
 
 #ifdef NXT
@@ -368,7 +367,7 @@ static void print_alternating(Node **label, Alternating *alt)
     for(t = alt->transition[i]; t; t = t->nxt) {
       if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
 	fprintf(tl_out, "1");
-      print_sym_set(t->pos, sym_size);
+      print_sym_set(alt->sym_table, t->pos, sym_size);
       if (!empty_set(t->pos,sym_size) && !empty_set(t->neg,sym_size)) fprintf(tl_out, " & ");
       print_set(t->neg, scc_size);
       fprintf(tl_out, " -> ");
@@ -388,6 +387,7 @@ Alternating mk_alternating(Node *p)
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
   Alternating alt;
+  memset(&alt, 0, sizeof(alt));
   alt.node_id = 1;
   alt.sym_id = 0;
 
@@ -399,7 +399,7 @@ Alternating mk_alternating(Node *p)
   node_size = SET_SIZE(node_size);
 
   sym_size = calculate_sym_size(p); /* number of predicates */
-  if(sym_size) sym_table = (char **) tl_emalloc(sym_size * sizeof(char *));
+  if(sym_size) alt.sym_table = (char **) tl_emalloc(sym_size * sizeof(char *));
   sym_size = SET_SIZE(sym_size);
 
   alt.final_set = make_set(-1, node_size);

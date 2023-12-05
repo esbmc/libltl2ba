@@ -185,15 +185,16 @@ typedef struct {
   int *final_set;
   int node_id; /* really the number of nodes */
   int sym_id; /* number of symbols */
+  char **sym_table;
 } Alternating;
 
 Alternating mk_alternating(Node *);
 void    mk_generalized(Alternating *);
 void    mk_buchi();
 
-void print_c_buchi(int sym_id);
-void print_dot_buchi(void);
-void print_spin_buchi(void);
+void print_c_buchi(char **sym_table, int sym_id);
+void print_dot_buchi(char **sym_table);
+void print_spin_buchi(char **sym_table);
 
 ATrans *dup_trans(ATrans *);
 ATrans *merge_trans(ATrans *, ATrans *);
@@ -209,8 +210,8 @@ void do_merge_sets(int *, int *, int *, int);
 int  *intersect_sets(int *, int *, int);
 void add_set(int *, int);
 void rem_set(int *, int);
-void spin_print_set(int *, int*);
-void dot_print_set(int *, int*, int);
+void spin_print_set(char **sym_table, int *, int*);
+void dot_print_set(char **sym_table, int *, int*, int);
 void print_set(int *, int);
 int  empty_set(int *, int);
 int  empty_intersect_sets(int *, int *, int);
@@ -220,8 +221,8 @@ int  included_set(int *, int *, int);
 int  in_set(int *, int);
 int  *list_set(int *, int);
 
-void print_sym_set(int *l, int size);
-void print_c_accept_tables(int sym_id);
+void print_sym_set(char **sym_table, int *l, int size);
+void print_c_accept_tables(char **sym_table, int sym_id);
 void print_c_epilog(void);
 
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);

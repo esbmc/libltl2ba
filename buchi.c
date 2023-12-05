@@ -32,7 +32,6 @@ int *optimistic_accept_state_set = NULL;
 int *pessimistic_accept_state_set = NULL;
 static int g_num_states = 0;
 
-extern char **sym_table;
 extern const char *c_sym_name_prefix;
 extern enum outmodes outmode;
 
@@ -507,7 +506,7 @@ void print_buchi(BState *s) /* dumps the Buchi automaton */
   }
 }
 
-void print_spin_buchi(void) {
+void print_spin_buchi(char **sym_table) {
   BTrans *t;
   BState *s;
   int accept_all = 0;
@@ -554,12 +553,12 @@ void print_spin_buchi(void) {
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
       BTrans *t1;
       fprintf(tl_out, "\t:: (");
-      spin_print_set(t->pos, t->neg);
+      spin_print_set(sym_table, t->pos, t->neg);
       for(t1 = t; t1->nxt != s->trans; )
 	if (t1->nxt->to->id == t->to->id &&
 	    t1->nxt->to->final == t->to->final) {
 	  fprintf(tl_out, ") || (");
-	  spin_print_set(t1->nxt->pos, t1->nxt->neg);
+	  spin_print_set(sym_table, t1->nxt->pos, t1->nxt->neg);
 	  t1->nxt = t1->nxt->nxt;
 	}
 	else  t1 = t1->nxt;
@@ -591,7 +590,7 @@ void print_dot_state_name(BState *s) {
   }
 }
 
-void print_dot_buchi(void) {
+void print_dot_buchi(char **sym_table) {
   BTrans *t;
   BState *s;
   int accept_all = 0, init_count = 0;
@@ -633,12 +632,12 @@ void print_dot_buchi(void) {
 		need_parens=1;
       print_dot_state_name(t->to);
 	  fprintf(tl_out, " [label=\""),
-      dot_print_set(t->pos, t->neg,need_parens);
+      dot_print_set(sym_table, t->pos, t->neg,need_parens);
       for(t1 = t; t1->nxt != s->trans; )
 	    if (t1->nxt->to->id == t->to->id &&
 	        t1->nxt->to->final == t->to->final) {
 	      fprintf(tl_out, "||");
-	      dot_print_set(t1->nxt->pos, t1->nxt->neg,sym_size);
+	      dot_print_set(sym_table, t1->nxt->pos, t1->nxt->neg,sym_size);
 	      t1->nxt = t1->nxt->nxt;
 	    }
 	    else
@@ -856,14 +855,14 @@ print_fsm_func_opener(void)
 }
 
 void
-print_transition_guard(BTrans *t, BState *state)
+print_transition_guard(BTrans *t, BState *state, char **sym_table)
 {
   BTrans *t1;
-  spin_print_set(t->pos, t->neg);
+  spin_print_set(sym_table, t->pos, t->neg);
   for(t1 = t->nxt; t1 != state->trans; t1=t1->nxt) {
     if (t1->to->id == t->to->id && t1->to->final == t->to->final){
       fprintf(tl_out, ") || (");
-      spin_print_set(t1->pos, t1->neg);
+      spin_print_set(sym_table, t1->pos, t1->neg);
     }
   }
 }
@@ -876,7 +875,7 @@ print_state_name(BState *s, const char *prefix)
 }
 
 void
-print_c_buchi_body(const char *prefix)
+print_c_buchi_body(char **sym_table, const char *prefix)
 {
   BTrans *t, *t1;
   BState *s;
@@ -903,7 +902,7 @@ print_c_buchi_body(const char *prefix)
 
     fprintf(tl_out, "\t\t\tstate_is_viable = (((");
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
-      print_transition_guard(t, s);
+      print_transition_guard(t, s, sym_table);
       fprintf(tl_out, ")) || ((");
     }
     fprintf(tl_out, "false)));\n");
@@ -919,7 +918,7 @@ print_c_buchi_body(const char *prefix)
       fprintf(tl_out, "if (choice == %d) {\n", choice_count++);
 
       fprintf(tl_out, "\t\t\t\t__ESBMC_assume(((");
-      print_transition_guard(t, s);
+      print_transition_guard(t, s, sym_table);
       fprintf(tl_out, ")));\n");
 
       fprintf(tl_out, "\t\t\t\t%s_statevar = ", prefix);
@@ -1096,7 +1095,7 @@ int * pess_reach(Slist **tr, int st, int depth) {
 }
 
 void
-print_behaviours(int sym_id)
+print_behaviours(char **sym_table, int sym_id)
 {
     BState *s;
     BTrans *t;
@@ -1376,7 +1375,7 @@ print_behaviours(int sym_id)
 }
 
 void
-print_c_buchi(int sym_id)
+print_c_buchi(char **sym_table, int sym_id)
 {
   BTrans *t, *t1;
   BState *s;
@@ -1391,7 +1390,7 @@ print_c_buchi(int sym_id)
   }
 
   fprintf(tl_out, "#if 0\n/* Precomputed transition data */\n");
-  print_behaviours(sym_id);
+  print_behaviours(sym_table, sym_id);
   fprintf(tl_out, "#endif\n");
 
   print_c_headers();
@@ -1404,21 +1403,21 @@ print_c_buchi(int sym_id)
 
   print_fsm_func_opener();
 
-  print_c_buchi_body(c_sym_name_prefix);
+  print_c_buchi_body(sym_table, c_sym_name_prefix);
 
   print_c_buchi_body_tail();
 
   /* Some things vaguely in the shape of a modelling api */
   print_c_buchi_util_funcs(c_sym_name_prefix);
 
-  print_c_accept_tables(sym_id);
+  print_c_accept_tables(sym_table, sym_id);
 
   print_c_epilog();
   return;
 }
 
 void
-print_c_accept_tables(int sym_id)
+print_c_accept_tables(char **sym_table, int sym_id)
 {
   int sym_comb, state, i;
 
