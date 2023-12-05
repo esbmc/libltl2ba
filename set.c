@@ -12,7 +12,7 @@ extern FILE *tl_out;
 extern char *cexpr_expr_table[];
 extern int sym_size;
 
-int mod = 8 * sizeof(int);
+static const int mod = 8 * sizeof(int);
 
 int *new_set(int size) /* creates a new set */
 {
