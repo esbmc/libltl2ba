@@ -31,6 +31,8 @@ static int	hasuform=0, cnt=0;
 
 static enum {spin, c, dot, none} outmode = spin;
 
+static const char *progname;
+
 static void	tl_endstats(void);
 static void	non_fatal(const char *);
 
@@ -156,7 +158,8 @@ main(int argc, char *argv[])
 	char formula[4096], inv_formula[4100];
 	tl_out = stdout;
 
-	if (argv[0] && !strcmp(basename(argv[0]), "ltl2c"))
+	progname = argv[0] ? basename(argv[0]) : "";
+	if (!strcmp(progname, "ltl2c"))
 		outmode = c;
 
 	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:Pi")) != -1;)
@@ -195,7 +198,7 @@ main(int argc, char *argv[])
 		FILE *f;
 		if (!(f = fopen(ltl_file, "r")))
 		{
-			fprintf(stderr,"ltl2ba: cannot open %s\n", ltl_file);
+			fprintf(stderr, "%s: cannot open %s\n", progname, ltl_file);
 			alldone(1);
 		}
 		fgets(formula, 4096, f);
@@ -320,14 +323,14 @@ non_fatal(const char *s1)
 	extern int tl_yychar;
 	int i;
 
-	fprintf(stderr,"ltl2ba: ");
+	fprintf(stderr, "%s: ", progname);
 	fputs(s1, stderr);
 	if (tl_yychar != -1 && tl_yychar != 0)
 	{	fprintf(stderr,", saw '");
 		tl_explain(tl_yychar);
 		fprintf(stderr,"'");
 	}
-	fprintf(stderr,"\nltl2ba: %s\n---------", uform);
+	fprintf(stderr,"\n%s: %s\n---------", progname, uform);
 	for (i = 0; i < cnt; i++)
 		fprintf(stderr,"-");
 	fprintf(stderr,"^\n");
