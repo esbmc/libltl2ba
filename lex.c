@@ -25,12 +25,12 @@ char *cexpr_expr_table[256];
 
 #define Token(y)        tl_yylval = tl_nn(y,ZN,ZN); return y
 
-int
+static int
 isalnum_(int c)
 {       return (isalnum(c) || c == '_');
 }
 
-int
+static int
 hash(char *s)
 {       int h=0;
 
