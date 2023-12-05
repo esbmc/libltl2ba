@@ -33,7 +33,6 @@ int *pessimistic_accept_state_set = NULL;
 static int g_num_states = 0;
 
 extern const char *c_sym_name_prefix;
-extern enum outmodes outmode;
 
 /********************************************************************\
 |*        Simplification of the generalized Buchi automaton         *|
