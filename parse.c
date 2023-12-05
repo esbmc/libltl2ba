@@ -74,7 +74,7 @@ bin_simpler(Node *ptr)
 			ptr = ptr->rgt;
 			break;
 		}
-#ifdef NXT
+
 		/* X p U X q == X (p U q) */
 		if (ptr->rgt->ntyp == NEXT
 		&&  ptr->lft->ntyp == NEXT)
@@ -91,8 +91,6 @@ bin_simpler(Node *ptr)
 		  ptr = tl_nn(NEXT, tl_nn(U_OPER, True, ptr->rgt->lft), ZN);
 		  break;
 		}
-
-#endif
 
 		/* NEW : F G F p == G F p */
 		if (ptr->lft->ntyp == TRUE &&
@@ -130,14 +128,14 @@ bin_simpler(Node *ptr)
 		{	ptr->rgt = ptr->rgt->rgt;
 			break;
 		}
-#ifdef NXT
+
 		/* NEW : G X p == X G p */
 		if (ptr->lft->ntyp == FALSE &&
 		    ptr->rgt->ntyp == NEXT) {
 		  ptr = tl_nn(NEXT, tl_nn(V_OPER, False, ptr->rgt->lft), ZN);
 		  break;
 		}
-#endif
+
 		/* NEW : G F G p == F G p */
 		if (ptr->lft->ntyp == FALSE &&
 		    ptr->rgt->ntyp == U_OPER &&
@@ -163,7 +161,7 @@ bin_simpler(Node *ptr)
 		        break;
 		}
 		break;
-#ifdef NXT
+
 	case NEXT:
 		/* NEW : X G F p == G F p */
 		if (ptr->lft->ntyp == V_OPER &&
@@ -182,7 +180,7 @@ bin_simpler(Node *ptr)
 		  break;
 		}
 		break;
-#endif
+
 	case IMPLIES:
 		if (implies(ptr->lft, ptr->rgt))
 		  {	ptr = True;
@@ -250,7 +248,7 @@ bin_simpler(Node *ptr)
 				tl_nn(AND, ptr->lft->rgt, ptr->rgt->rgt));
 			break;
 		}
-#ifdef NXT
+
 		/* X p && X q == X (p && q) */
 		if (ptr->rgt->ntyp == NEXT
 		&&  ptr->lft->ntyp == NEXT)
@@ -260,7 +258,6 @@ bin_simpler(Node *ptr)
 					ptr->lft->lft), ZN);
 			break;
 		}
-#endif
 
 		/* (p V q) && (r U q) == p V q */
 		if (ptr->rgt->ntyp == U_OPER
@@ -449,7 +446,7 @@ tl_factor(void)
 
 		ptr = tl_nn(V_OPER, False, ptr);
 		goto simpl;
-#ifdef NXT
+
 	case NEXT:
 		tl_yychar = tl_yylex();
 
@@ -460,7 +457,7 @@ tl_factor(void)
 
 		ptr = tl_nn(NEXT, ptr, ZN);
 		goto simpl;
-#endif
+
 	case EVENTUALLY:
 		tl_yychar = tl_yylex();
 

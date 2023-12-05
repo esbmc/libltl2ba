@@ -134,10 +134,8 @@ enum {
 	PREDICATE,	/* 265 */
 	TRUE,		/* 266 */
 	U_OPER,		/* 267 */
-	V_OPER		/* 268 */
-#ifdef NXT
-	, NEXT		/* 269 */
-#endif
+	V_OPER,		/* 268 */
+	NEXT,		/* 269 */
 };
 
 Node	*Canonical(Node *);

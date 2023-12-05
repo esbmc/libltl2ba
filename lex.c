@@ -192,9 +192,7 @@ tl_lex(void)
 	case 'V' : c = V_OPER; break;
 	case 'F' : c = EVENTUALLY; break;
 	case 'G' : c = ALWAYS; break;
-#ifdef NXT
 	case 'X' : c = NEXT; break;
-#endif
 	default  : break;
 	}
 	Token(c);

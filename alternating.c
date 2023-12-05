@@ -34,10 +34,8 @@ static int calculate_node_size(Node *p)
   case U_OPER:
   case V_OPER:
     return(calculate_node_size(p->lft) + calculate_node_size(p->rgt) + 1);
-#ifdef NXT
   case NEXT:
     return(calculate_node_size(p->lft) + 1);
-#endif
   default:
     return 1;
     break;
@@ -52,10 +50,8 @@ static int calculate_sym_size(Node *p) /* returns the number of predicates */
   case U_OPER:
   case V_OPER:
     return(calculate_sym_size(p->lft) + calculate_sym_size(p->rgt));
-#ifdef NXT
   case NEXT:
     return(calculate_sym_size(p->lft));
-#endif
   case NOT:
   case PREDICATE:
     return 1;
@@ -208,11 +204,9 @@ static ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
     add_set(t->neg, get_sym_id(p->lft->sym->name, alt));
     break;
 
-#ifdef NXT
   case NEXT:
     t = boolean(p->lft, label, alt);
     break;
-#endif
 
   case U_OPER:    /* p U q <-> q || (p && X (p U q)) */
     for(t2 = build_alternating(p->rgt, label, alt); t2; t2 = t2->nxt) {

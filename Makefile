@@ -28,7 +28,7 @@
 #       FRANCE
 
 CC = gcc
-CFLAGS = -DNXT $(WARNS)
+CFLAGS = $(WARNS)
 WARNS  = -Wall -Wextra -Wno-unused
 
 LTL2C =	parse.o lex.o main.o buchi.o set.o \

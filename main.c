@@ -257,14 +257,12 @@ dump(Node *n)
 	case AND:	Binop(" && "); break;
 	case U_OPER:	Binop(" U ");  break;
 	case V_OPER:	Binop(" V ");  break;
-#ifdef NXT
 	case NEXT:
 		fprintf(tl_out, "X");
 		fprintf(tl_out, " (");
 		dump(n->lft);
 		fprintf(tl_out, ")");
 		break;
-#endif
 	case NOT:
 		fprintf(tl_out, "!");
 		fprintf(tl_out, " (");
@@ -304,9 +302,7 @@ tl_explain(int n)
 	case NOT:	fprintf(stderr,"!"); break;
 	case U_OPER:	fprintf(stderr,"U"); break;
 	case V_OPER:	fprintf(stderr,"V"); break;
-#ifdef NXT
 	case NEXT:	fprintf(stderr,"X"); break;
-#endif
 	case TRUE:	fprintf(stderr,"true"); break;
 	case FALSE:	fprintf(stderr,"false"); break;
 	case ';':	fprintf(stderr,"end of formula"); break;

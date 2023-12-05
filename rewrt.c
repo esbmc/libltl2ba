@@ -33,10 +33,8 @@ sdump(Node *n)
 common2:		sdump(n->rgt);
 common1:		sdump(n->lft);
 			break;
-#ifdef NXT
 	case NEXT:	strcat(dumpbuf, "X");
 			goto common1;
-#endif
 	case NOT:	strcat(dumpbuf, "!");
 			goto common1;
 	case TRUE:	strcat(dumpbuf, "T");
@@ -124,13 +122,11 @@ push_negation(Node *n)
 	case U_OPER:
 		n->ntyp = V_OPER;
 		goto same;
-#ifdef NXT
 	case NEXT:
 		n->ntyp = NEXT;
 		n->lft->ntyp = NOT;
 		n->lft = push_negation(n->lft);
 		break;
-#endif
 	case  AND:
 		n->ntyp = OR;
 		goto same;

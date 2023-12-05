@@ -202,10 +202,9 @@ sameform(Node *a, Node *b)
 		return !strcmp(a->sym->name, b->sym->name);
 
 	case NOT:
-#ifdef NXT
 	case NEXT:
-#endif
 		return sameform(a->lft, b->lft);
+
 	case U_OPER:
 	case V_OPER:
 		if (!sameform(a->lft, b->lft))
