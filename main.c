@@ -341,14 +341,7 @@ non_fatal(const char *s1)
 void
 tl_yyerror(char *s1)
 {
-	Fatal(s1);
-}
-
-void
-Fatal(const char *s1)
-{
-	non_fatal(s1);
-	alldone(1);
+	fatal(s1);
 }
 
 void

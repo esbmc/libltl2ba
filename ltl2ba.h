@@ -169,7 +169,6 @@ void	a_stats(void);
 void	addtrans(Graph *, char *, Node *, char *);
 void	cache_stats(void);
 void	dump(Node *);
-void	Fatal(const char *);
 void	fatal(const char *);
 void	fsm_print(void);
 void	releasenode(int, Node *);
@@ -245,5 +244,5 @@ typedef Node	*Nodeptr;
 #define Explain(x)	{ if (tl_verbose) tl_explain(x); }
 
 #define Assert(x, y)	{ if (!(x)) { tl_explain(y); \
-			  Fatal(": assertion failed\n"); } }
+			  fatal(": assertion failed\n"); } }
 #define min(x,y)        ((x<y)?x:y)
