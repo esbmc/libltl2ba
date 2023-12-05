@@ -153,9 +153,9 @@ main(int argc, char *argv[])
 {
 	int i;
 	int invert_formula = 0;
-	char *ltl_file = (char *)0;
-	char *add_ltl  = (char *)0;
-	char formula[4096], inv_formula[4100];
+	char *ltl_file = NULL;
+	char *add_ltl  = NULL;
+	char *formula  = NULL, *inv_formula = NULL;
 	tl_out = stdout;
 
 	progname = argv[0] ? basename(argv[0]) : "";
@@ -201,17 +201,34 @@ main(int argc, char *argv[])
 			fprintf(stderr, "%s: cannot open %s\n", progname, ltl_file);
 			alldone(1);
 		}
-		fgets(formula, 4096, f);
+		char buf[4096];
+		formula = calloc(4096, 1);
+		for (size_t rd, off = 0, sz = 4096; (rd = fread(buf, 1, sizeof(buf), f)) > 0;)
+		{
+			if (off + rd >= sz)
+				formula = realloc(formula, sz *= 2);
+			if (!formula)
+				fatal("not enough memory to read the formula from file");
+			memcpy(formula + off, buf, rd);
+			off += rd;
+			formula[off] = '\0';
+		}
 		fclose(f);
 		add_ltl = formula;
 	}
 
 	if (invert_formula) {
+		inv_formula = emalloc(strlen(add_ltl) + 4);
+		if (!inv_formula)
+			fatal("not enough memory to invert formula");
 		sprintf(inv_formula, "!(%s)", add_ltl);
 		add_ltl = inv_formula;
 	}
 
 	tl_main(add_ltl);
+
+	free(formula);
+	free(inv_formula);
 
 	return tl_errs != 0;
 }
