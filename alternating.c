@@ -19,13 +19,14 @@ int node_size, sym_size;
 extern int scc_size;
 static int astate_count = 0, atrans_count = 0;
 
-ATrans *build_alternating(Node *p, Node **label, Alternating *alt);
+static ATrans *build_alternating(Node *p, Node **label, Alternating *alt);
 
 /********************************************************************\
 |*              Generation of the alternating automaton             *|
 \********************************************************************/
 
-int calculate_node_size(Node *p) /* returns the number of temporal nodes */
+/* returns the number of temporal nodes */
+static int calculate_node_size(Node *p)
 {
   switch(p->ntyp) {
   case AND:
@@ -43,7 +44,7 @@ int calculate_node_size(Node *p) /* returns the number of temporal nodes */
   }
 }
 
-int calculate_sym_size(Node *p) /* returns the number of predicates */
+static int calculate_sym_size(Node *p) /* returns the number of predicates */
 {
   switch(p->ntyp) {
   case AND:
@@ -100,7 +101,7 @@ ATrans *merge_trans(ATrans *trans1, ATrans *trans2) /* merges two transitions */
 }
 
 /* finds the id of the node, if already explored */
-int already_done(Node *p, Node **label, int node_id)
+static int already_done(Node *p, Node **label, int node_id)
 {
   int i;
   for(i = 1; i<node_id; i++)
@@ -110,7 +111,7 @@ int already_done(Node *p, Node **label, int node_id)
 }
 
 /* finds the id of a predicate, or attributes one */
-int get_sym_id(char *s, Alternating *alt)
+static int get_sym_id(char *s, Alternating *alt)
 {
   int i;
   for(i=0; i<alt->sym_id; i++)
@@ -121,7 +122,7 @@ int get_sym_id(char *s, Alternating *alt)
 }
 
 /* computes the transitions to boolean nodes -> next & init */
-ATrans *boolean(Node *p, Node **label, Alternating *alt)
+static ATrans *boolean(Node *p, Node **label, Alternating *alt)
 {
   ATrans *t1, *t2, *lft, *rgt, *result = (ATrans *)0;
   switch(p->ntyp) {
@@ -175,7 +176,7 @@ ATrans *boolean(Node *p, Node **label, Alternating *alt)
 }
 
 /* builds an alternating automaton for p */
-ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
+static ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
 {
   ATrans *t1, *t2, *t = (ATrans *)0;
   int node = already_done(p, label, alt->node_id);
@@ -287,7 +288,7 @@ ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
 |*        Simplification of the alternating automaton               *|
 \********************************************************************/
 
-void simplify_atrans(ATrans **trans) /* simplifies the transitions */
+static void simplify_atrans(ATrans **trans) /* simplifies the transitions */
 {
   ATrans *t, *father = (ATrans *)0;
   for(t = *trans; t;) {
@@ -318,7 +319,7 @@ void simplify_atrans(ATrans **trans) /* simplifies the transitions */
 }
 
 /* simplifies the alternating automaton */
-void simplify_astates(Node **label, Alternating *alt)
+static void simplify_astates(Node **label, Alternating *alt)
 {
   ATrans *t;
   int i, *acc = make_set(-1, node_size); /* no state is accessible initially */
