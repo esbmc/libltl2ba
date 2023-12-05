@@ -79,8 +79,8 @@ usage(int code)
 {
 	FILE *f = code ? stderr : stdout;
 	fprintf(f, "\
-usage: ltl2ba [-flag] -f 'formula'\n\
-                   or -F file\n\
+usage: %s [-flag] -f 'formula'\n\
+       %*s      or -F file\n\
  -f 'formula'  translate LTL formula into never claim\n\
  -F file       like -f, but with the LTL formula stored in a 1-line file\n\
  -P            Specify ltl2c symbol prefixes\n\
@@ -93,7 +93,7 @@ usage: ltl2ba [-flag] -f 'formula'\n\
  -c            disable strongly (C)onnected components simplification\n\
  -a            disable trick in (A)ccepting conditions\n\
  -O mode       output mode; one of spin, c or dot\n\
-");
+", progname, (int)strlen(progname), "");
 	alldone(code);
 }
 
