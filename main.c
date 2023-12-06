@@ -140,14 +140,14 @@ tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 	free_all_atrans();
 	tfree(alt.transition);
 
-	mk_buchi(&gen, flags);
+	Buchi b = mk_buchi(&gen, flags);
 
 	switch (outmode) {
 	case none:	break;
-	case c: 	print_c_buchi(alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix); break;
-	case dot: 	print_dot_buchi(alt.sym_table, &cexpr); break;
+	case c: 	print_c_buchi(&b, alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix); break;
+	case dot: 	print_dot_buchi(&b, alt.sym_table, &cexpr); break;
 	case spin:
-	default:	print_spin_buchi(alt.sym_table); break;
+	default:	print_spin_buchi(&b, alt.sym_table); break;
 	}
 
 	if (flags & TL_STATS)

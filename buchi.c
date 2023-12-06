@@ -28,9 +28,6 @@ struct bdfs_state {
   BScc *scc_stack;
 };
 
-static BState *bstates;
-static int accept;
-
 /* Record of what states stutter-accept, according to each input symbol. */
 static int **stutter_accept_table = NULL;
 static int *optimistic_accept_state_set = NULL;
@@ -75,7 +72,8 @@ static void copy_btrans(BTrans *from, BTrans *to) {
   copy_set(from->neg, to->neg, sym_size);
 }
 
-static int simplify_btrans(tl_Flags flags) /* simplifies the transitions */
+/* simplifies the transitions */
+static int simplify_btrans(Buchi *b, tl_Flags flags)
 {
   BState *s;
   BTrans *t, *t1;
@@ -85,7 +83,7 @@ static int simplify_btrans(tl_Flags flags) /* simplifies the transitions */
 
   if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
-  for (s = bstates->nxt; s != bstates; s = s->nxt)
+  for (s = b->bstates->nxt; s != b->bstates; s = s->nxt)
     for (t = s->trans->nxt; t != s->trans;) {
       t1 = s->trans->nxt;
       copy_btrans(t, s->trans);
@@ -127,11 +125,11 @@ static int same_btrans(BTrans *s, BTrans *t)
 }
 
 /* redirects transitions before removing a state from the automaton */
-static void remove_btrans(BState *to)
+static void remove_btrans(Buchi *b, BState *to)
 {
   BState *s;
   BTrans *t;
-  for (s = bstates->nxt; s != bstates; s = s->nxt)
+  for (s = b->bstates->nxt; s != b->bstates; s = s->nxt)
     for (t = s->trans->nxt; t != s->trans; t = t->nxt)
       if (t->to == to) { /* transition to a state with no transitions */
 	BTrans *free = t->nxt;
@@ -145,11 +143,11 @@ static void remove_btrans(BState *to)
 }
 
 /* redirects transitions before removing a state from the automaton */
-static void retarget_all_btrans(BState *const bremoved)
+static void retarget_all_btrans(Buchi *b, BState *const bremoved)
 {
   BState *s;
   BTrans *t;
-  for (s = bstates->nxt; s != bstates; s = s->nxt)
+  for (s = b->bstates->nxt; s != b->bstates; s = s->nxt)
     for (t = s->trans->nxt; t != s->trans; t = t->nxt)
       if (!t->to->trans) { /* t->to has been removed */
 	t->to = t->to->prv;
@@ -171,7 +169,7 @@ static void retarget_all_btrans(BState *const bremoved)
 }
 
 /* decides if the states are equivalent */
-static int all_btrans_match(BState *a, BState *b)
+static int all_btrans_match(Buchi *buchi, BState *a, BState *b)
 {
   BTrans *s, *t;
 
@@ -181,8 +179,8 @@ static int all_btrans_match(BState *a, BState *b)
    * such a state can be modified without changing the
    * language of the automaton
    */
-  if (((a->final == accept) || (b->final == accept)) &&
-      (a->final + b->final != 2 * accept)  /* final condition of a and b differs */
+  if (((a->final == buchi->accept) || (b->final == buchi->accept)) &&
+      (a->final + b->final != 2 * buchi->accept)  /* final condition of a and b differs */
       && a->incoming >=0   /* a is not in a trivial SCC */
       && b->incoming >=0)  /* b is not in a trivial SCC */
     return 0;  /* states can not be matched */
@@ -207,7 +205,7 @@ static int all_btrans_match(BState *a, BState *b)
 }
 
 /* eliminates redundant states */
-static int simplify_bstates(tl_Flags flags, int *gstate_id,
+static int simplify_bstates(Buchi *b, tl_Flags flags, int *gstate_id,
                             BState *const bremoved)
 {
   BState *s, *s1, *s2;
@@ -217,18 +215,18 @@ static int simplify_bstates(tl_Flags flags, int *gstate_id,
 
   if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
-  for (s = bstates->nxt; s != bstates; s = s->nxt) {
+  for (s = b->bstates->nxt; s != b->bstates; s = s->nxt) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
       s = remove_bstate(s, (BState *)0, bremoved);
       changed++;
       continue;
     }
-    bstates->trans = s->trans;
-    bstates->final = s->final;
+    b->bstates->trans = s->trans;
+    b->bstates->final = s->final;
     s1 = s->nxt;
-    while(!all_btrans_match(s, s1))
+    while(!all_btrans_match(b, s, s1))
       s1 = s1->nxt;
-    if(s1 != bstates) { /* s and s1 are equivalent */
+    if(s1 != b->bstates) { /* s and s1 are equivalent */
       /* we now want to remove s and replace it by s1 */
       if(s1->incoming == -1) {  /* s1 is in a trivial SCC */
         s1->final = s->final; /* change the final condition of s1 to that of s */
@@ -261,7 +259,7 @@ static int simplify_bstates(tl_Flags flags, int *gstate_id,
       changed++;
     }
   }
-  retarget_all_btrans(bremoved);
+  retarget_all_btrans(b, bremoved);
 
   /*
    * As merging equivalent states can change the 'final' attribute of
@@ -272,10 +270,10 @@ static int simplify_bstates(tl_Flags flags, int *gstate_id,
    * to these states to disambiguate.
    * Fix from ltl3ba.
    */
-  for (s = bstates->nxt; s != bstates; s = s->nxt) {  /* For all states s*/
-    for (s2 = s->nxt; s2 != bstates; s2 = s2->nxt) {  /*  and states s2 to the right of s */
-      if(s->final == s2->final && s->id == s2->id) {  /* if final and id match */
-        s->id = ++*gstate_id;                         /* disambiguate by assigning unused id */
+  for (s = b->bstates->nxt; s != b->bstates; s = s->nxt) { /* For all states s*/
+    for (s2 = s->nxt; s2 != b->bstates; s2 = s2->nxt) {    /* and states s2 to the right of s */
+      if(s->final == s2->final && s->id == s2->id) {       /* if final and id match */
+        s->id = ++*gstate_id;                              /* disambiguate by assigning unused id */
       }
     }
   }
@@ -329,20 +327,20 @@ static int bdfs(BState *s, struct bdfs_state *st) {
 }
 
 
-static void simplify_bscc(BState *const bremoved) {
+static void simplify_bscc(Buchi *b, BState *const bremoved) {
   BState *s;
   struct bdfs_state st;
   st.rank = 1;
   st.scc_stack = NULL;
 
-  if(bstates == bstates->nxt) return;
+  if(b->bstates == b->bstates->nxt) return;
 
-  for(s = bstates->nxt; s != bstates; s = s->nxt)
+  for(s = b->bstates->nxt; s != b->bstates; s = s->nxt)
     s->incoming = 0; /* state color = white */
 
-  bdfs(bstates->prv, &st);
+  bdfs(b->bstates->prv, &st);
 
-  for(s = bstates->nxt; s != bstates; s = s->nxt)
+  for(s = b->bstates->nxt; s != b->bstates; s = s->nxt)
     if(s->incoming == 0)
       remove_bstate(s, 0, bremoved);
 }
@@ -355,7 +353,7 @@ static void simplify_bscc(BState *const bremoved) {
 \********************************************************************/
 
 /* finds the corresponding state, or creates it */
-static BState *find_bstate(GState **state, int final, BState *s,
+static BState *find_bstate(Buchi *b, GState **state, int final, BState *s,
                            BState *const bstack, BState *const bremoved)
 {
   if((s->gstate == *state) && (s->final == final)) return s; /* same state */
@@ -367,12 +365,12 @@ static BState *find_bstate(GState **state, int final, BState *s,
     s = s->nxt;
   if(s != bstack) return s;
 
-  s = bstates->nxt; /* in the solved states */
-  bstates->gstate = *state;
-  bstates->final = final;
+  s = b->bstates->nxt; /* in the solved states */
+  b->bstates->gstate = *state;
+  b->bstates->final = final;
   while(!(s->gstate == *state) || !(s->final == final))
     s = s->nxt;
-  if(s != bstates) return s;
+  if(s != b->bstates) return s;
 
   s = bremoved->nxt; /* in the removed states */
   bremoved->gstate = *state;
@@ -393,15 +391,15 @@ static BState *find_bstate(GState **state, int final, BState *s,
   return s;
 }
 
-static int next_final(int *set, int fin, const int *final) /* computes the 'final' value */
+static int next_final(Buchi *b, int *set, int fin, const int *final) /* computes the 'final' value */
 {
-  if((fin != accept) && in_set(set, final[fin + 1]))
-    return next_final(set, fin + 1, final);
+  if((fin != b->accept) && in_set(set, final[fin + 1]))
+    return next_final(b, set, fin + 1, final);
   return fin;
 }
 
 /* creates all the transitions from a state */
-static void make_btrans(BState *s, const int *final, tl_Flags flags,
+static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
                         struct bcounts *c, BState *const bstack,
                         BState *const bremoved)
 {
@@ -411,8 +409,8 @@ static void make_btrans(BState *s, const int *final, tl_Flags flags,
   BState *s1;
   if(s->gstate->trans)
     for(t = s->gstate->trans->nxt; t != s->gstate->trans; t = t->nxt) {
-      int fin = next_final(t->final, (s->final == accept) ? 0 : s->final, final);
-      BState *to = find_bstate(&t->to, fin, s, bstack, bremoved);
+      int fin = next_final(b, t->final, (s->final == b->accept) ? 0 : s->final, final);
+      BState *to = find_bstate(b, &t->to, fin, s, bstack, bremoved);
 
       for(t1 = s->trans->nxt; t1 != s->trans;) {
 	if((flags & TL_SIMP_FLY) &&
@@ -461,12 +459,12 @@ static void make_btrans(BState *s, const int *final, tl_Flags flags,
 	  s1->prv = (BState *)0;
       return;
     }
-    bstates->trans = s->trans;
-    bstates->final = s->final;
-    s1 = bstates->nxt;
-    while(!all_btrans_match(s, s1))
+    b->bstates->trans = s->trans;
+    b->bstates->final = s->final;
+    s1 = b->bstates->nxt;
+    while(!all_btrans_match(b, s, s1))
       s1 = s1->nxt;
-    if(s1 != bstates) { /* s and s1 are equivalent */
+    if(s1 != b->bstates) { /* s and s1 are equivalent */
       free_btrans(s->trans->nxt, s->trans, 1);
       s->trans = (BTrans *)0;
       s->prv = s1;
@@ -478,10 +476,10 @@ static void make_btrans(BState *s, const int *final, tl_Flags flags,
       return;
     }
   }
-  s->nxt = bstates->nxt; /* adds the current state to 'bstates' */
-  s->prv = bstates;
+  s->nxt = b->bstates->nxt; /* adds the current state to 'bstates' */
+  s->prv = b->bstates;
   s->nxt->prv = s;
-  bstates->nxt = s;
+  b->bstates->nxt = s;
   c->btrans_count += state_trans;
   c->bstate_count++;
 }
@@ -490,18 +488,19 @@ static void make_btrans(BState *s, const int *final, tl_Flags flags,
 |*                  Display of the Buchi automaton                  *|
 \********************************************************************/
 
-static void print_buchi(BState *s, int scc_size) /* dumps the Buchi automaton */
+/* dumps the Buchi automaton */
+static void print_buchi(Buchi *b, BState *s, int scc_size)
 {
   BTrans *t;
-  if(s == bstates) return;
+  if(s == b->bstates) return;
 
-  print_buchi(s->nxt, scc_size); /* begins with the last state */
+  print_buchi(b, s->nxt, scc_size); /* begins with the last state */
 
   fprintf(tl_out, "state ");
   if(s->id == -1)
     fprintf(tl_out, "init");
   else {
-    if(s->final == accept)
+    if(s->final == b->accept)
       fprintf(tl_out, "accept");
     else
       fprintf(tl_out, "T%i", s->final);
@@ -518,7 +517,7 @@ static void print_buchi(BState *s, int scc_size) /* dumps the Buchi automaton */
     if(t->to->id == -1)
       fprintf(tl_out, "init\n");
     else {
-      if(t->to->final == accept)
+      if(t->to->final == b->accept)
 	fprintf(tl_out, "accept");
       else
 	fprintf(tl_out, "T%i", t->to->final);
@@ -527,11 +526,11 @@ static void print_buchi(BState *s, int scc_size) /* dumps the Buchi automaton */
   }
 }
 
-void print_spin_buchi(const char **sym_table) {
+void print_spin_buchi(const Buchi *b, const char **sym_table) {
   BTrans *t;
   BState *s;
   int accept_all = 0;
-  if(bstates->nxt == bstates) { /* empty automaton */
+  if(b->bstates->nxt == b->bstates) { /* empty automaton */
     fprintf(tl_out, "never {    /* ");
     put_uform();
     fprintf(tl_out, " */\n");
@@ -540,7 +539,7 @@ void print_spin_buchi(const char **sym_table) {
     fprintf(tl_out, "}\n");
     return;
   }
-  if(bstates->nxt->nxt == bstates && bstates->nxt->id == 0) { /* true */
+  if(b->bstates->nxt->nxt == b->bstates && b->bstates->nxt->id == 0) { /* true */
     fprintf(tl_out, "never {    /* ");
     put_uform();
     fprintf(tl_out, " */\n");
@@ -555,12 +554,12 @@ void print_spin_buchi(const char **sym_table) {
   fprintf(tl_out, "never { /* ");
   put_uform();
   fprintf(tl_out, " */\n");
-  for(s = bstates->prv; s != bstates; s = s->prv) {
+  for(s = b->bstates->prv; s != b->bstates; s = s->prv) {
     if(s->id == 0) { /* accept_all at the end */
       accept_all = 1;
       continue;
     }
-    if(s->final == accept)
+    if(s->final == b->accept)
       fprintf(tl_out, "accept_");
     else fprintf(tl_out, "T%i_", s->final);
     if(s->id == -1)
@@ -584,7 +583,7 @@ void print_spin_buchi(const char **sym_table) {
 	}
 	else  t1 = t1->nxt;
       fprintf(tl_out, ") -> goto ");
-      if(t->to->final == accept)
+      if(t->to->final == b->accept)
 	fprintf(tl_out, "accept_");
       else fprintf(tl_out, "T%i_", t->to->final);
       if(t->to->id == 0)
@@ -602,26 +601,26 @@ void print_spin_buchi(const char **sym_table) {
   fprintf(tl_out, "}\n");
 }
 
-static void print_dot_state_name(BState *s) {
+static void print_dot_state_name(const Buchi *b, BState *s) {
   if (s->id == -1) fprintf(tl_out, "init");
   else if (s->id == 0) fprintf(tl_out,"all");
   else {
-    if (s->final != accept) fprintf(tl_out,"T%i_",s->final);
+    if (s->final != b->accept) fprintf(tl_out,"T%i_",s->final);
 	fprintf(tl_out,"%i",s->id);
   }
 }
 
-void print_dot_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr) {
+void print_dot_buchi(const Buchi *b, const char *const *sym_table, const tl_Cexprtab *cexpr) {
   BTrans *t;
   BState *s;
   int accept_all = 0, init_count = 0;
-  if(bstates->nxt == bstates) { /* empty automaton */
+  if(b->bstates->nxt == b->bstates) { /* empty automaton */
     fprintf(tl_out, "digraph G {\n");
     fprintf(tl_out, "init [shape=circle]\n");
     fprintf(tl_out, "}\n");
     return;
   }
-  if(bstates->nxt->nxt == bstates && bstates->nxt->id == 0) { /* true */
+  if(b->bstates->nxt->nxt == b->bstates && b->bstates->nxt->id == 0) { /* true */
     fprintf(tl_out, "digraph G {\n");
     fprintf(tl_out, "init -> init [label=\"{true}\",font=\"courier\"]\n");
     fprintf(tl_out, "init [shape=doublecircle]\n");
@@ -630,14 +629,14 @@ void print_dot_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr) {
   }
 
   fprintf(tl_out, "digraph G {\n");
-  for(s = bstates->prv; s != bstates; s = s->prv) {
+  for(s = b->bstates->prv; s != b->bstates; s = s->prv) {
     if(s->id == 0) { /* accept_all at the end */
       fprintf(tl_out, "all [shape=doublecircle]\n");
 	  fprintf(tl_out,"all -> all [label=\"true\", fontname=\"Courier\", fontcolor=blue]");
       continue;
     }
-	print_dot_state_name(s);
-    if(s->final == accept)
+	print_dot_state_name(b, s);
+    if(s->final == b->accept)
       fprintf(tl_out, " [shape=doublecircle]\n");
     else fprintf(tl_out, " [shape=circle]\n");
     if(s->trans->nxt == s->trans) {
@@ -646,12 +645,12 @@ void print_dot_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr) {
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
 	  int need_parens=0;
       BTrans *t1;
-      print_dot_state_name(s);
+      print_dot_state_name(b, s);
       fprintf(tl_out, " -> ");
 	  if (t->nxt->to->id == t->to->id &&
 	        t->nxt->to->final == t->to->final)
 		need_parens=1;
-      print_dot_state_name(t->to);
+      print_dot_state_name(b, t->to);
 	  fprintf(tl_out, " [label=\""),
       dot_print_set(sym_table, cexpr, t->pos, t->neg,need_parens);
       for(t1 = t; t1->nxt != s->trans; )
@@ -675,13 +674,13 @@ void print_dot_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr) {
 \********************************************************************/
 
 /* generates a Buchi automaton from the generalized Buchi automaton */
-void mk_buchi(Generalized *g, tl_Flags flags)
+Buchi mk_buchi(Generalized *g, tl_Flags flags)
 {
   int i;
   BState *s = (BState *)tl_emalloc(sizeof(BState));
   GTrans *t;
   BTrans *t1;
-  accept = g->final[0] - 1;
+  Buchi b = { .accept = g->final[0] - 1 };
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
   struct bcounts cnts;
@@ -691,16 +690,16 @@ void mk_buchi(Generalized *g, tl_Flags flags)
 
   if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
-  bstack        = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
-  bstack->nxt   = bstack;
-  bremoved      = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
-  bremoved->nxt = bremoved;
-  bstates       = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
-  bstates->nxt  = s;
-  bstates->prv  = s;
+  bstack         = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
+  bstack->nxt    = bstack;
+  bremoved       = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
+  bremoved->nxt  = bremoved;
+  b.bstates      = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
+  b.bstates->nxt = s;
+  b.bstates->prv = s;
 
-  s->nxt        = bstates; /* creates (unique) inital state */
-  s->prv        = bstates;
+  s->nxt        = b.bstates; /* creates (unique) inital state */
+  s->prv        = b.bstates;
   s->id = -1;
   s->incoming = 1;
   s->final = 0;
@@ -710,8 +709,8 @@ void mk_buchi(Generalized *g, tl_Flags flags)
   for(i = 0; i < g->init_size; i++)
     if(g->init[i])
       for(t = g->init[i]->trans->nxt; t != g->init[i]->trans; t = t->nxt) {
-	int fin = next_final(t->final, 0, g->final);
-	BState *to = find_bstate(&t->to, fin, s, bstack, bremoved);
+	int fin = next_final(&b, t->final, 0, g->final);
+	BState *to = find_bstate(&b, &t->to, fin, s, bstack, bremoved);
 	for(t1 = s->trans->nxt; t1 != s->trans;) {
 	  if((flags & TL_SIMP_FLY) &&
 	     (to == t1->to) &&
@@ -752,10 +751,10 @@ void mk_buchi(Generalized *g, tl_Flags flags)
       free_bstate(s);
       continue;
     }
-    make_btrans(s, g->final, flags, &cnts, bstack, bremoved);
+    make_btrans(&b, s, g->final, flags, &cnts, bstack, bremoved);
   }
 
-  retarget_all_btrans(bremoved);
+  retarget_all_btrans(&b, bremoved);
 
   FILE *f = tl_out;
   tl_out = stderr;
@@ -770,29 +769,31 @@ void mk_buchi(Generalized *g, tl_Flags flags)
 
   if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nBuchi automaton before simplification\n");
-    print_buchi(bstates->nxt, g->scc_size);
-    if(bstates == bstates->nxt)
+    print_buchi(&b, b.bstates->nxt, g->scc_size);
+    if(b.bstates == b.bstates->nxt)
       fprintf(tl_out, "empty automaton, refuses all words\n");
   }
 
   if(flags & TL_SIMP_DIFF) {
-    simplify_btrans(flags);
-    if(flags & TL_SIMP_SCC) simplify_bscc(bremoved);
-    while(simplify_bstates(flags, &g->gstate_id, bremoved)) { /* simplifies as much as possible */
-      simplify_btrans(flags);
-      if(flags & TL_SIMP_SCC) simplify_bscc(bremoved);
+    simplify_btrans(&b, flags);
+    if(flags & TL_SIMP_SCC) simplify_bscc(&b, bremoved);
+    while(simplify_bstates(&b, flags, &g->gstate_id, bremoved)) { /* simplifies as much as possible */
+      simplify_btrans(&b, flags);
+      if(flags & TL_SIMP_SCC) simplify_bscc(&b, bremoved);
     }
 
     if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nBuchi automaton after simplification\n");
-      print_buchi(bstates->nxt, g->scc_size);
-      if(bstates == bstates->nxt)
+      print_buchi(&b, b.bstates->nxt, g->scc_size);
+      if(b.bstates == b.bstates->nxt)
 	fprintf(tl_out, "empty automaton, refuses all words\n");
       fprintf(tl_out, "\n");
     }
   }
 
   tl_out = f;
+
+  return b;
 }
 
 static void print_c_headers(const tl_Cexprtab *cexpr,
@@ -824,7 +825,7 @@ static void print_c_headers(const tl_Cexprtab *cexpr,
   }
 }
 
-static int print_enum_decl(const char *c_sym_name_prefix)
+static int print_enum_decl(const Buchi *b, const char *c_sym_name_prefix)
 {
   BState *s;
   int num_states = 0;
@@ -832,7 +833,7 @@ static int print_enum_decl(const char *c_sym_name_prefix)
   /* Generate enumeration of states */
 
   fprintf(tl_out, "\ntypedef enum {\n");
-  for (s = bstates->prv; s != bstates; s = s->prv) {
+  for (s = b->bstates->prv; s != b->bstates; s = s->prv) {
     num_states++;
     fprintf(tl_out, "\t%s_state_%d,\n", c_sym_name_prefix, s->label);
   }
@@ -842,13 +843,14 @@ static int print_enum_decl(const char *c_sym_name_prefix)
   return num_states;
 }
 
-static void print_buchi_statevars(const char *prefix, int num_states)
+static void print_buchi_statevars(const Buchi *b, const char *prefix,
+                                  int num_states)
 {
   BState *s;
 
   fprintf(tl_out, "%s_state %s_statevar =", prefix, prefix);
 
-  s = bstates->prv;
+  s = b->bstates->prv;
   fprintf(tl_out, "%s_state_0;\n\n", prefix);
 
   fprintf(tl_out, "unsigned int %s_visited_states[%d];\n\n",
@@ -891,7 +893,8 @@ static void print_state_name(BState *s, const char *prefix)
   return;
 }
 
-static int print_c_buchi_body(const char *const *sym_table, const char *prefix)
+static int print_c_buchi_body(const Buchi *b, const char *const *sym_table,
+                              const char *prefix)
 {
   BTrans *t, *t1;
   BState *s;
@@ -899,17 +902,17 @@ static int print_c_buchi_body(const char *const *sym_table, const char *prefix)
   int g_num_states = 0;
 
   /* Calculate number of states, globally */
-  for (s = bstates->prv; s != bstates; s = s->prv)
+  for (s = b->bstates->prv; s != b->bstates; s = s->prv)
     g_num_states++;
 
   /* Start in first state? From loops, ltl2ba reverses order...*/
-  s = bstates->prv;
+  s = b->bstates->prv;
 
   fprintf(tl_out, "\t\tchoice = nondet_uint();\n\n");
   fprintf(tl_out, "\t\t__ESBMC_atomic_begin();\n\n");
   fprintf(tl_out, "\t\tswitch(%s_statevar) {\n", prefix);
 
-  for (s = bstates->prv; s != bstates; s = s->prv) {
+  for (s = b->bstates->prv; s != b->bstates; s = s->prv) {
     choice_count = 0;
 
     /* In each state... */
@@ -1107,7 +1110,7 @@ static int * pess_reach(Slist **tr, int st, int depth) {
   return pess_recurse1(tr, tr[st], depth);
 }
 
-static void print_behaviours(const char *const *sym_table,
+static void print_behaviours(const Buchi *b, const char *const *sym_table,
                              const tl_Cexprtab *cexpr, int sym_id)
 {
     BState *s;
@@ -1134,7 +1137,7 @@ static void print_behaviours(const char *const *sym_table,
      * accepting state                                                           */
     {
       int going = !0;
-      for (s = bstates -> prv; s != bstates; s = s -> prv) {
+      for (s = b->bstates->prv; s != b->bstates; s = s->prv) {
         if (s -> id == 0) {
 	  for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {
 	    if ( !t->pos && ! t->neg)
@@ -1153,15 +1156,15 @@ static void print_behaviours(const char *const *sym_table,
       }
     }
     fprintf(tl_out,"States:\nlabel\tid\tfinal\n");
-    for (s = bstates -> prv; s != bstates; s = s -> prv) {   /* Loop over states */
+    for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
       s -> label = state_count;
       state_count++;
       fprintf(tl_out,"%d\t",s->label);
-      print_dot_state_name(s);
+      print_dot_state_name(b, s);
       /* Horribly, the correct test for an accepting state is
        *     s->final == accept || s -> id == 0
        *     Here, "final" is a VARIABLE and the state with id=0 is magic       */
-      fprintf(tl_out,"\t%d\n",s->final == accept || s -> id == 0); } /* END Loop over states */
+      fprintf(tl_out,"\t%d\n",s->final == b->accept || s -> id == 0); } /* END Loop over states */
     fprintf(tl_out,"\nSymbol table:\nid\tsymbol\t\t\tcexpr\n");
     state_size = SET_SIZE(state_count);
     full_state_set = make_set(EMPTY_SET,state_size);
@@ -1222,7 +1225,7 @@ static void print_behaviours(const char *const *sym_table,
 	fprintf(tl_out,"\n");
       }
 
-      for (s = bstates -> prv; s != bstates; s = s -> prv) {   /* Loop over states */
+      for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
         (void)clear_set(working_set,sym_size);                    /* clear transition targets for this state and character */
         for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {       /* Loop over transitions */
 #if 0
@@ -1297,8 +1300,8 @@ static void print_behaviours(const char *const *sym_table,
         BState *s2;
         int r, c;
         int * accepting_cycles=make_set(EMPTY_SET,state_size);
-        for (s2 = bstates -> prv; s2 != bstates; s2 = s2 -> prv)
-          if((s2->final == accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)])
+        for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
+          if((s2->final == b->accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)])
             add_set(accepting_cycles,s2->label);
         fprintf(tl_out,"Accepting cycles: ");
         print_set(accepting_cycles,state_size);
@@ -1335,8 +1338,8 @@ static void print_behaviours(const char *const *sym_table,
         BState *s2;
         int r, c;
         int * accepting_cycles=make_set(EMPTY_SET,state_size);
-        for (s2 = bstates -> prv; s2 != bstates; s2 = s2 -> prv)
-          if((s2->final == accept || s2 -> id == 0) && optimistic_reach[(s2->label)*(state_count+1)])
+        for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
+          if((s2->final == b->accept || s2 -> id == 0) && optimistic_reach[(s2->label)*(state_count+1)])
             add_set(accepting_cycles,s2->label);
         fprintf(tl_out,"\nAccepting optimistic cycles: ");
         print_set(accepting_cycles,state_size);
@@ -1372,13 +1375,13 @@ static void print_behaviours(const char *const *sym_table,
       fprintf(tl_out,"\n"); }
     int *accepting_pessimistic_cycles=make_set(EMPTY_SET,state_size);
     BState* s2;
-    for (s2 = bstates -> prv; s2 != bstates; s2 = s2 -> prv)
-      if((s2->final == accept || s2 -> id == 0) && in_set(pessimistic_reachable[s2->label],s2->label))
+    for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
+      if((s2->final == b->accept || s2 -> id == 0) && in_set(pessimistic_reachable[s2->label],s2->label))
         add_set(accepting_pessimistic_cycles,s2->label);
     fprintf(tl_out,"\nAccepting pessimistic cycles: ");
     print_set(accepting_pessimistic_cycles,state_size);
     int *accepting_pessimistic_states=make_set(EMPTY_SET,state_size);
-    for (s2 = bstates -> prv; s2 != bstates; s2 = s2 -> prv)
+    for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
       if(!empty_intersect_sets(pessimistic_reachable[s2->label],accepting_pessimistic_cycles,state_size))
         add_set(accepting_pessimistic_states,s2->label);
     fprintf(tl_out,"\nAccepting pessimistic states: ");
@@ -1466,36 +1469,37 @@ static void print_c_epilog(const char *c_sym_name_prefix)
   return;
 }
 
-void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr,
-                   int sym_id, const char *c_sym_name_prefix)
+void print_c_buchi(const Buchi *b, const char *const *sym_table,
+                   const tl_Cexprtab *cexpr, int sym_id,
+                   const char *c_sym_name_prefix)
 {
   BTrans *t, *t1;
   BState *s;
   int i, num_states;
 
-  if (bstates->nxt == bstates) {
+  if (b->bstates->nxt == b->bstates) {
     fprintf(tl_out, "#error Empty Buchi automaton\n");
     return;
-  } else if (bstates->nxt->nxt == bstates && bstates->nxt->id == 0) {
+  } else if (b->bstates->nxt->nxt == b->bstates && b->bstates->nxt->id == 0) {
     fprintf(tl_out, "#error Always-true Buchi automaton\n");
     return;
   }
 
   fprintf(tl_out, "#if 0\n/* Precomputed transition data */\n");
-  print_behaviours(sym_table, cexpr, sym_id);
+  print_behaviours(b, sym_table, cexpr, sym_id);
   fprintf(tl_out, "#endif\n");
 
   print_c_headers(cexpr, c_sym_name_prefix);
 
-  num_states = print_enum_decl(c_sym_name_prefix);
+  num_states = print_enum_decl(b, c_sym_name_prefix);
 
-  print_buchi_statevars(c_sym_name_prefix, num_states);
+  print_buchi_statevars(b, c_sym_name_prefix, num_states);
 
   /* And now produce state machine */
 
   print_fsm_func_opener();
 
-  int g_num_states = print_c_buchi_body(sym_table, c_sym_name_prefix);
+  int g_num_states = print_c_buchi_body(b, sym_table, c_sym_name_prefix);
 
   print_c_buchi_body_tail();
 
