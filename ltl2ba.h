@@ -155,6 +155,8 @@ enum {
 			  fatal(": assertion failed\n"); } }
 #define min(x,y)        ((x<y)?x:y)
 
+#undef TL_EMALLOC_VERBOSE
+
 typedef Symbol *tl_Symtab[Nhash + 1];
 
 typedef struct {
@@ -226,9 +228,9 @@ typedef struct {
   char **sym_table;
 } Alternating;
 
-Alternating mk_alternating(Node *, tl_Cexprtab *cexpr);
-void    mk_generalized(Alternating *);
-void    mk_buchi();
+Alternating mk_alternating(Node *, tl_Cexprtab *cexpr, tl_Flags flags);
+void    mk_generalized(Alternating *, tl_Flags flags);
+void    mk_buchi(tl_Flags);
 
 void print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id);
 void print_dot_buchi(char **sym_table, tl_Cexprtab *cexpr);

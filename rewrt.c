@@ -11,8 +11,6 @@
 
 #include "ltl2ba.h"
 
-extern int	tl_verbose;
-
 static Node	*can = ZN;
 
 static char	dumpbuf[2048];

@@ -22,7 +22,6 @@ int tl_simp_fly  = 1;
 int tl_simp_scc  = 1;
 int tl_fjtofj    = 1;
 int	tl_errs      = 0;
-int	tl_verbose   = 0;
 
 unsigned long	All_Mem = 0;
 const char *c_sym_name_prefix = "_ltl2ba";
@@ -99,7 +98,7 @@ usage: %s [-flag] -f 'formula'\n\
 }
 
 static void
-tl_main(char  *formula)
+tl_main(char  *formula, tl_Flags flags)
 {
 	for (int i = 0; formula[i]; i++)
 		if (formula[i] == '\t'
@@ -116,7 +115,7 @@ tl_main(char  *formula)
 	memset(&cexpr, 0, sizeof(cexpr));
 
 	Node *p = tl_parse(symtab, &cexpr);
-	if (tl_verbose)
+	if (flags & TL_VERBOSE)
 	{
 		fprintf(stderr, "formula: ");
 		FILE *f = tl_out;
@@ -129,7 +128,7 @@ tl_main(char  *formula)
 	if (!p || tl_errs)
 		return;
 
-	if (tl_verbose) {
+	if (flags & TL_VERBOSE) {
 		FILE *f = tl_out;
 		tl_out = stderr;
 		fprintf(tl_out, "\t/* Normlzd: ");
@@ -138,9 +137,9 @@ tl_main(char  *formula)
 		tl_out = f;
 	}
 
-	Alternating alt = mk_alternating(p, &cexpr);
-	mk_generalized(&alt);
-	mk_buchi();
+	Alternating alt = mk_alternating(p, &cexpr, flags);
+	mk_generalized(&alt, flags);
+	mk_buchi(flags);
 
 	switch (outmode) {
 	case none:	break;
@@ -183,7 +182,7 @@ main(int argc, char *argv[])
 		case 'o': tl_simp_fly = 0; break;
 		case 'p': tl_simp_diff = 0; break;
 		case 'l': tl_simp_log = 0; break;
-		case 'd': tl_verbose = 1; break;
+		case 'd': flags |= TL_VERBOSE; break;
 		case 's': tl_stats = 1; break;
 		case 'O':
 			if (strcmp("spin", optarg) == 0)
@@ -236,7 +235,7 @@ main(int argc, char *argv[])
 		add_ltl = inv_formula;
 	}
 
-	tl_main(add_ltl);
+	tl_main(add_ltl, flags);
 
 	free(formula);
 	free(inv_formula);

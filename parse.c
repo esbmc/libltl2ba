@@ -11,7 +11,7 @@
 
 #include "ltl2ba.h"
 
-extern int	tl_verbose, tl_simp_log;
+extern int	tl_simp_log;
 extern FILE	*tl_out;
 
 extern int tl_yylex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex);

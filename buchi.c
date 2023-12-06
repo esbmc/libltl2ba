@@ -13,8 +13,7 @@
 \********************************************************************/
 
 extern GState **init, *gstates;
-extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_simp_scc,
-  init_size, *final;
+extern int tl_stats, tl_simp_diff, tl_simp_fly, tl_simp_scc, init_size, *final;
 
 extern int sym_size, scc_size;
 
@@ -652,7 +651,7 @@ void print_dot_buchi(char **sym_table, tl_Cexprtab *cexpr) {
 |*                       Main method                                *|
 \********************************************************************/
 
-void mk_buchi()
+void mk_buchi(tl_Flags flags)
 {/* generates a Buchi automaton from the generalized Buchi automaton */
   int i;
   BState *s = (BState *)tl_emalloc(sizeof(BState));
@@ -741,7 +740,7 @@ void mk_buchi()
     fprintf(tl_out, "\n%i states, %i transitions\n", bstate_count, btrans_count);
   }
 
-  if(tl_verbose) {
+  if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nBuchi automaton before simplification\n");
     print_buchi(bstates->nxt);
     if(bstates == bstates->nxt)
@@ -756,7 +755,7 @@ void mk_buchi()
       if(tl_simp_scc) simplify_bscc();
     }
 
-    if(tl_verbose) {
+    if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nBuchi automaton after simplification\n");
       print_buchi(bstates->nxt);
       if(bstates == bstates->nxt)

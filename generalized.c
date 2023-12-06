@@ -13,8 +13,7 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_verbose, tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj,
-  tl_simp_scc, node_id;
+extern int tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj, tl_simp_scc, node_id;
 
 extern int node_size, sym_size;
 
@@ -549,7 +548,7 @@ void print_generalized() { /* prints intial states and calls 'reverse_print' */
 |*                       Main method                                *|
 \********************************************************************/
 
-void mk_generalized(Alternating *alt)
+void mk_generalized(Alternating *alt, tl_Flags flags)
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
   GState *s;
@@ -616,7 +615,7 @@ void mk_generalized(Alternating *alt)
   free_all_atrans();
   tfree(alt->transition);
 
-  if(tl_verbose) {
+  if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nGeneralized Buchi automaton before simplification\n");
     print_generalized();
   }
@@ -631,7 +630,7 @@ void mk_generalized(Alternating *alt)
       if (tl_simp_scc) simplify_gscc(alt->final_set);
     }
 
-    if(tl_verbose) {
+    if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nGeneralized Buchi automaton after simplification\n");
       print_generalized();
     }

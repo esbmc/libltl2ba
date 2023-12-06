@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_verbose, tl_stats, tl_simp_diff;
+extern int tl_stats, tl_simp_diff;
 
 int node_size, sym_size;
 extern int scc_size;
@@ -377,7 +377,7 @@ static void print_alternating(Node **label, tl_Cexprtab *cexpr, Alternating *alt
 \********************************************************************/
 
 /* generates an alternating automaton for p */
-Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr)
+Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
 {
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
@@ -403,14 +403,14 @@ Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr)
   FILE *f = tl_out;
   tl_out = stderr;
 
-  if(tl_verbose) {
+  if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nAlternating automaton before simplification\n");
     print_alternating(label, cexpr, &alt);
   }
 
   if(tl_simp_diff) {
     simplify_astates(label, &alt); /* keeps only accessible states */
-    if(tl_verbose) {
+    if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nAlternating automaton after simplification\n");
       print_alternating(label, cexpr, &alt);
     }

@@ -27,7 +27,6 @@
 #define NREVENT		3
 
 extern	unsigned long All_Mem;
-extern	int tl_verbose;
 
 extern int sym_size, node_size;
 
@@ -58,8 +57,9 @@ tl_emalloc(int U)
 
 	if (u >= A_LARGE)
 	{	log(ALLOC, 0, 1);
-		if (tl_verbose)
+#if TL_EMALLOC_VERBOSE
 		fprintf(stderr, "tl_spin: memalloc %ld bytes\n", u);
+#endif
 		m = (union M *) emalloc((int) u*sizeof(union M));
 		All_Mem += (unsigned long) u*sizeof(union M);
 	} else
