@@ -35,7 +35,7 @@ static int *pessimistic_accept_state_set = NULL;
 
 extern const char *c_sym_name_prefix;
 
-int state_count=0;
+static int state_count=0;
 
 struct bcounts {
   int bstate_count, btrans_count;
