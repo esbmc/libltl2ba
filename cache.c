@@ -24,7 +24,7 @@ static Cache	*stored = (Cache *) 0;
 static unsigned long	Caches, CacheHits;
 
 static int	ismatch(Node *, Node *);
-int	sameform(Node *, Node *);
+int	sameform(const Node *, const Node *);
 
 void
 cache_dump(void)
@@ -137,8 +137,7 @@ dupnode(Node *n)
 	return d;
 }
 
-int
-one_lft(int ntyp, Node *x, Node *in)
+int one_lft(int ntyp, const Node *x, const Node *in)
 {
 	if (!x)  return 1;
 	if (!in) return 0;
@@ -155,8 +154,7 @@ one_lft(int ntyp, Node *x, Node *in)
 	return one_lft(ntyp, x, in->rgt);
 }
 
-int
-all_lfts(int ntyp, Node *from, Node *in)
+int all_lfts(int ntyp, const Node *from, const Node *in)
 {
 	if (!from) return 1;
 
@@ -169,8 +167,7 @@ all_lfts(int ntyp, Node *from, Node *in)
 	return all_lfts(ntyp, from->rgt, in);
 }
 
-int
-sametrees(int ntyp, Node *a, Node *b)
+int sametrees(int ntyp, const Node *a, const Node *b)
 {	/* toplevel is an AND or OR */
 	/* both trees are right-linked, but the leafs */
 	/* can be in different places in the two trees */
@@ -181,8 +178,8 @@ sametrees(int ntyp, Node *a, Node *b)
 	return all_lfts(ntyp, b, a);
 }
 
-int	/* a better isequal() */
-sameform(Node *a, Node *b)
+/* a better isequal() */
+int sameform(const Node *a, const Node *b)
 {
 	if (!a && !b) return 1;
 	if (!a || !b) return 0;
@@ -225,8 +222,7 @@ sameform(Node *a, Node *b)
 	return 0;
 }
 
-int
-isequal(Node *a, Node *b)
+int isequal(const Node *a, const Node *b)
 {
 	if (!a && !b)
 		return 1;

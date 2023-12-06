@@ -20,14 +20,15 @@ struct counts {
   int astate_count, atrans_count;
 };
 
-static ATrans *build_alternating(Node *p, Node **label, Alternating *alt);
+static ATrans *build_alternating(const Node *p, const Node **label,
+                                 Alternating *alt);
 
 /********************************************************************\
 |*              Generation of the alternating automaton             *|
 \********************************************************************/
 
 /* returns the number of temporal nodes */
-static int calculate_node_size(Node *p)
+static int calculate_node_size(const Node *p)
 {
   switch(p->ntyp) {
   case AND:
@@ -43,7 +44,8 @@ static int calculate_node_size(Node *p)
   }
 }
 
-static int calculate_sym_size(Node *p) /* returns the number of predicates */
+/* returns the number of predicates */
+static int calculate_sym_size(const Node *p)
 {
   switch(p->ntyp) {
   case AND:
@@ -98,7 +100,7 @@ ATrans *merge_trans(ATrans *trans1, ATrans *trans2) /* merges two transitions */
 }
 
 /* finds the id of the node, if already explored */
-static int already_done(Node *p, Node **label, int node_id)
+static int already_done(const Node *p, const Node **label, int node_id)
 {
   int i;
   for(i = 1; i<node_id; i++)
@@ -119,7 +121,7 @@ static int get_sym_id(char *s, Alternating *alt)
 }
 
 /* computes the transitions to boolean nodes -> next & init */
-static ATrans *boolean(Node *p, Node **label, Alternating *alt)
+static ATrans *boolean(const Node *p, const Node **label, Alternating *alt)
 {
   ATrans *t1, *t2, *lft, *rgt, *result = (ATrans *)0;
   switch(p->ntyp) {
@@ -173,7 +175,8 @@ static ATrans *boolean(Node *p, Node **label, Alternating *alt)
 }
 
 /* builds an alternating automaton for p */
-static ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
+static ATrans *build_alternating(const Node *p, const Node **label,
+                                 Alternating *alt)
 {
   ATrans *t1, *t2, *t = (ATrans *)0;
   int node = already_done(p, label, alt->node_id);
@@ -315,7 +318,8 @@ static void simplify_atrans(ATrans **trans, struct counts *c)
 }
 
 /* simplifies the alternating automaton */
-static void simplify_astates(Node **label, Alternating *alt, struct counts *c)
+static void simplify_astates(const Node **label, Alternating *alt,
+                             struct counts *c)
 {
   ATrans *t;
   int i, *acc = make_set(-1, node_size); /* no state is accessible initially */
@@ -344,7 +348,8 @@ static void simplify_astates(Node **label, Alternating *alt, struct counts *c)
 \********************************************************************/
 
 /* dumps the alternating automaton */
-static void print_alternating(Node **label, tl_Cexprtab *cexpr, Alternating *alt)
+static void print_alternating(const Node **label, tl_Cexprtab *cexpr,
+                              Alternating *alt)
 {
   int i;
   ATrans *t;
@@ -380,7 +385,7 @@ static void print_alternating(Node **label, tl_Cexprtab *cexpr, Alternating *alt
 \********************************************************************/
 
 /* generates an alternating automaton for p */
-Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
+Alternating mk_alternating(const Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
 {
   struct counts cnts;
   memset(&cnts, 0, sizeof(cnts));
@@ -394,7 +399,7 @@ Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
   if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   node_size = calculate_node_size(p) + 1; /* number of states in the automaton */
-  Node **label = (Node **) tl_emalloc(node_size * sizeof(Node *));
+  const Node **label = tl_emalloc(node_size * sizeof(Node *));
   alt.transition = (ATrans **) tl_emalloc(node_size * sizeof(ATrans *));
   node_size = SET_SIZE(node_size);
 
@@ -431,7 +436,6 @@ Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
 
   tl_out = f;
 
-  releasenode(1, p);
   tfree(label);
 
   return alt;

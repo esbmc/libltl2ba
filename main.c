@@ -132,6 +132,8 @@ tl_main(char  *formula, tl_Flags flags)
 	}
 
 	Alternating alt = mk_alternating(p, &cexpr, flags);
+	releasenode(1, p);
+
 	Generalized gen = mk_generalized(&alt, flags);
 	mk_buchi(&gen, flags);
 
@@ -274,8 +276,7 @@ tl_endstats(void)
 	dump(n->rgt);		\
 	fprintf(tl_out, ")")
 
-void
-dump(Node *n)
+void dump(const Node *n)
 {
 	if (!n)
 		return;

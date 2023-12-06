@@ -182,7 +182,7 @@ char	*emalloc(int);
 
 int	anywhere(int, Node *, Node *);
 int	dump_cond(Node *, Node *, int);
-int	isequal(Node *, Node *);
+int	isequal(const Node *, const Node *);
 int	tl_Getchar(void);
 
 void	*tl_emalloc(int);
@@ -196,7 +196,7 @@ void    free_btrans(BTrans *, BTrans *, int);
 void	a_stats(void);
 void	addtrans(Graph *, char *, Node *, char *);
 void	cache_stats(void);
-void	dump(Node *);
+void	dump(const Node *);
 void	fatal(const char *);
 void	fsm_print(void);
 void	releasenode(int, Node *);
@@ -219,7 +219,7 @@ typedef struct {
   int init_size, gstate_id, *final, scc_size;
 } Generalized;
 
-Alternating mk_alternating(Node *, tl_Cexprtab *cexpr, tl_Flags flags);
+Alternating mk_alternating(const Node *, tl_Cexprtab *cexpr, tl_Flags flags);
 Generalized mk_generalized(const Alternating *, tl_Flags flags);
 void    mk_buchi(Generalized *g, tl_Flags);
 
