@@ -144,9 +144,9 @@ same:		m = n->lft->rgt;
 	return rewrite(n);
 }
 
-static void
-addcan(tl_Symtab symtab, int tok, Node *n)
-{	Node	*m, *prev = ZN;
+static void addcan(tl_Symtab symtab, int tok, Node *n)
+{
+	Node	*m, *prev = ZN;
 	Node	**ptr;
 	Node	*N;
 	Symbol	*s, *t; int cmp;
@@ -154,7 +154,8 @@ addcan(tl_Symtab symtab, int tok, Node *n)
 	if (!n) return;
 
 	if (n->ntyp == tok)
-	{	addcan(symtab, tok, n->rgt);
+	{
+		addcan(symtab, tok, n->rgt);
 		addcan(symtab, tok, n->lft);
 		return;
 	}
@@ -165,29 +166,35 @@ addcan(tl_Symtab symtab, int tok, Node *n)
 #endif
 	N = dupnode(n);
 	if (!can)
-	{	can = N;
+	{
+		can = N;
 		return;
 	}
 
 	s = DoDump(symtab, N);
 	if (can->ntyp != tok)	/* only one element in list so far */
-	{	ptr = &can;
+	{
+		ptr = &can;
 		goto insert;
 	}
 
 	/* there are at least 2 elements in list */
 	prev = ZN;
 	for (m = can; m->ntyp == tok && m->rgt; prev = m, m = m->rgt)
-	{	t = DoDump(symtab, m->lft);
+	{
+		t = DoDump(symtab, m->lft);
 		cmp = strcmp(s->name, t->name);
 		if (cmp == 0)	/* duplicate */
 			return;
 		if (cmp < 0)
-		{	if (!prev)
-			{	can = tl_nn(tok, N, can);
+		{
+			if (!prev)
+			{
+				can = tl_nn(tok, N, can);
 				return;
 			} else
-			{	ptr = &(prev->rgt);
+			{
+				ptr = &(prev->rgt);
 				goto insert;
 	}	}	}
 
