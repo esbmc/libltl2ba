@@ -108,13 +108,6 @@ typedef struct BState {
   int label;  /* DAN */
 } BState;
 
-typedef struct BScc {
-  struct BState *bstate;
-  int rank;
-  int theta;
-  struct BScc *nxt;
-} BScc;
-
 enum {
 	ALWAYS=257,
 	AND,		/* 258 */

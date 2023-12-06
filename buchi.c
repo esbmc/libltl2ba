@@ -20,6 +20,14 @@ extern int sym_size, scc_size;
 extern int gstate_id;
 
 extern FILE *tl_out;
+
+typedef struct BScc {
+  struct BState *bstate;
+  int rank;
+  int theta;
+  struct BScc *nxt;
+} BScc;
+
 BState *bstack, *bstates, *bremoved;
 static BScc *scc_stack;
 int accept, bstate_count = 0, btrans_count = 0;
