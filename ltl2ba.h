@@ -108,13 +108,6 @@ typedef struct BState {
   int label;  /* DAN */
 } BState;
 
-typedef struct GScc {
-  struct GState *gstate;
-  int rank;
-  int theta;
-  struct GScc *nxt;
-} GScc;
-
 typedef struct BScc {
   struct BState *bstate;
   int rank;

@@ -26,6 +26,13 @@ struct gcounts {
   int gstate_count, gtrans_count;
 };
 
+typedef struct GScc {
+  struct GState *gstate;
+  int rank;
+  int theta;
+  struct GScc *nxt;
+} GScc;
+
 struct gdfs_state {
   int rank;
   int scc_id;
