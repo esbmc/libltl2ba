@@ -1366,50 +1366,6 @@ static void print_behaviours(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
     fprintf(tl_out,"\n");
 }
 
-static void print_c_accept_tables(char **sym_table, int sym_id);
-static void print_c_epilog(void);
-
-void print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
-{
-  BTrans *t, *t1;
-  BState *s;
-  int i, num_states;
-
-  if (bstates->nxt == bstates) {
-    fprintf(tl_out, "#error Empty Buchi automaton\n");
-    return;
-  } else if (bstates->nxt->nxt == bstates && bstates->nxt->id == 0) {
-    fprintf(tl_out, "#error Always-true Buchi automaton\n");
-    return;
-  }
-
-  fprintf(tl_out, "#if 0\n/* Precomputed transition data */\n");
-  print_behaviours(sym_table, cexpr, sym_id);
-  fprintf(tl_out, "#endif\n");
-
-  print_c_headers(cexpr);
-
-  num_states = print_enum_decl();
-
-  print_buchi_statevars(c_sym_name_prefix, num_states);
-
-  /* And now produce state machine */
-
-  print_fsm_func_opener();
-
-  print_c_buchi_body(sym_table, c_sym_name_prefix);
-
-  print_c_buchi_body_tail();
-
-  /* Some things vaguely in the shape of a modelling api */
-  print_c_buchi_util_funcs(c_sym_name_prefix);
-
-  print_c_accept_tables(sym_table, sym_id);
-
-  print_c_epilog();
-  return;
-}
-
 static void print_c_accept_tables(char **sym_table, int sym_id)
 {
   int sym_comb, state, i;
@@ -1484,5 +1440,46 @@ static void print_c_epilog(void)
 
   fprintf(tl_out, "\treturn;\n}\n");
 
+  return;
+}
+
+void print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
+{
+  BTrans *t, *t1;
+  BState *s;
+  int i, num_states;
+
+  if (bstates->nxt == bstates) {
+    fprintf(tl_out, "#error Empty Buchi automaton\n");
+    return;
+  } else if (bstates->nxt->nxt == bstates && bstates->nxt->id == 0) {
+    fprintf(tl_out, "#error Always-true Buchi automaton\n");
+    return;
+  }
+
+  fprintf(tl_out, "#if 0\n/* Precomputed transition data */\n");
+  print_behaviours(sym_table, cexpr, sym_id);
+  fprintf(tl_out, "#endif\n");
+
+  print_c_headers(cexpr);
+
+  num_states = print_enum_decl();
+
+  print_buchi_statevars(c_sym_name_prefix, num_states);
+
+  /* And now produce state machine */
+
+  print_fsm_func_opener();
+
+  print_c_buchi_body(sym_table, c_sym_name_prefix);
+
+  print_c_buchi_body_tail();
+
+  /* Some things vaguely in the shape of a modelling api */
+  print_c_buchi_util_funcs(c_sym_name_prefix);
+
+  print_c_accept_tables(sym_table, sym_id);
+
+  print_c_epilog();
   return;
 }
