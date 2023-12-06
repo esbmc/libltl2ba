@@ -35,28 +35,6 @@ typedef struct Node {
 	struct Node	*nxt;	/* if linked list */
 } Node;
 
-typedef struct Graph {
-	Symbol		*name;
-	Symbol		*incoming;
-	Symbol		*outgoing;
-	Symbol		*oldstring;
-	Symbol		*nxtstring;
-	Node		*New;
-	Node		*Old;
-	Node		*Other;
-	Node		*Next;
-	unsigned char	isred[64], isgrn[64];
-	unsigned char	redcnt, grncnt;
-	unsigned char	reachable;
-	struct Graph	*nxt;
-} Graph;
-
-typedef struct Mapping {
-	char	*from;
-	Graph	*to;
-	struct Mapping	*nxt;
-} Mapping;
-
 typedef struct ATrans {
   int *to;
   int *pos;
@@ -194,7 +172,6 @@ void    free_gtrans(GTrans *, GTrans *, int);
 BTrans  *emalloc_btrans();
 void    free_btrans(BTrans *, BTrans *, int);
 void	a_stats(void);
-void	addtrans(Graph *, char *, Node *, char *);
 void	cache_stats(void);
 void	dump(const Node *);
 void	fatal(const char *);
