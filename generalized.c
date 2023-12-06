@@ -21,7 +21,11 @@ int init_size = 0, gstate_id = 1, *final, scc_size;
 
 static GState *gstack, *gremoved;
 static GScc *scc_stack;
-static int gstate_count = 0, gtrans_count = 0, *bad_scc;
+static int *bad_scc;
+
+struct gcounts {
+  int gstate_count, gtrans_count;
+};
 
 struct gdfs_state {
   int rank;
@@ -377,7 +381,9 @@ static GState *find_gstate(int *set, GState *s)
 }
 
 /* creates all the transitions from a state */
-static void make_gtrans(GState *s, ATrans **transition, tl_Flags flags, int *fin) {
+static void make_gtrans(GState *s, ATrans **transition, tl_Flags flags,
+                        int *fin, struct gcounts *c)
+{
   int i, *list, state_trans = 0, trans_exist = 1;
   GState *s1;
   ATrans *t1;
@@ -513,8 +519,8 @@ static void make_gtrans(GState *s, ATrans **transition, tl_Flags flags, int *fin
   s->prv = gstates;
   s->nxt->prv = s;
   gstates->nxt = s;
-  gtrans_count += state_trans;
-  gstate_count++;
+  c->gtrans_count += state_trans;
+  c->gstate_count++;
 }
 
 /********************************************************************\
@@ -564,6 +570,8 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
   GState *s;
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
+  struct gcounts cnts;
+  memset(&cnts, 0, sizeof(cnts));
 
   if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
@@ -603,7 +611,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
       free_gstate(s);
       continue;
     }
-    make_gtrans(s, alt->transition, flags, fin);
+    make_gtrans(s, alt->transition, flags, fin, &cnts);
   }
 
   retarget_all_gtrans();
@@ -616,7 +624,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nBuilding the generalized Buchi automaton : %ld.%06lis",
 		t_diff.tv_sec, t_diff.tv_usec);
-    fprintf(tl_out, "\n%i states, %i transitions\n", gstate_count, gtrans_count);
+    fprintf(tl_out, "\n%i states, %i transitions\n", cnts.gstate_count, cnts.gtrans_count);
   }
 
   tfree(gstack);
