@@ -47,7 +47,7 @@ common1:		sdump(n->lft);
 }
 
 static Symbol *
-DoDump(Node *n)
+DoDump(tl_Symtab symtab, Node *n)
 {
 	if (!n) return ZS;
 
@@ -56,7 +56,7 @@ DoDump(Node *n)
 
 	dumpbuf[0] = '\0';
 	sdump(n);
-	return tl_lookup(dumpbuf);
+	return tl_lookup(symtab, dumpbuf);
 }
 
 Node *
@@ -79,21 +79,21 @@ right_linked(Node *n)
 }
 
 Node *
-canonical(Node *n)
+canonical(tl_Symtab symtab, Node *n)
 {	Node *m;	/* assumes input is right_linked */
 
 	if (!n) return n;
 	if ((m = in_cache(n)))
 		return m;
 
-	n->rgt = canonical(n->rgt);
-	n->lft = canonical(n->lft);
+	n->rgt = canonical(symtab, n->rgt);
+	n->lft = canonical(symtab, n->lft);
 
-	return cached(n);
+	return cached(symtab, n);
 }
 
 Node *
-push_negation(Node *n)
+push_negation(tl_Symtab symtab, Node *n)
 {	Node *m;
 
 	Assert(n->ntyp == NOT, n->ntyp);
@@ -125,7 +125,7 @@ push_negation(Node *n)
 	case NEXT:
 		n->ntyp = NEXT;
 		n->lft->ntyp = NOT;
-		n->lft = push_negation(n->lft);
+		n->lft = push_negation(symtab, n->lft);
 		break;
 	case  AND:
 		n->ntyp = OR;
@@ -139,7 +139,7 @@ same:		m = n->lft->rgt;
 		n->rgt = Not(m);
 		n->lft->ntyp = NOT;
 		m = n->lft;
-		n->lft = push_negation(m);
+		n->lft = push_negation(symtab, m);
 		break;
 	}
 
@@ -147,7 +147,7 @@ same:		m = n->lft->rgt;
 }
 
 static void
-addcan(int tok, Node *n)
+addcan(tl_Symtab symtab, int tok, Node *n)
 {	Node	*m, *prev = ZN;
 	Node	**ptr;
 	Node	*N;
@@ -156,8 +156,8 @@ addcan(int tok, Node *n)
 	if (!n) return;
 
 	if (n->ntyp == tok)
-	{	addcan(tok, n->rgt);
-		addcan(tok, n->lft);
+	{	addcan(symtab, tok, n->rgt);
+		addcan(symtab, tok, n->lft);
 		return;
 	}
 #if 0
@@ -171,7 +171,7 @@ addcan(int tok, Node *n)
 		return;
 	}
 
-	s = DoDump(N);
+	s = DoDump(symtab, N);
 	if (can->ntyp != tok)	/* only one element in list so far */
 	{	ptr = &can;
 		goto insert;
@@ -180,7 +180,7 @@ addcan(int tok, Node *n)
 	/* there are at least 2 elements in list */
 	prev = ZN;
 	for (m = can; m->ntyp == tok && m->rgt; prev = m, m = m->rgt)
-	{	t = DoDump(m->lft);
+	{	t = DoDump(symtab, m->lft);
 		cmp = strcmp(s->name, t->name);
 		if (cmp == 0)	/* duplicate */
 			return;
@@ -196,7 +196,7 @@ addcan(int tok, Node *n)
 	/* new entry goes at the end of the list */
 	ptr = &(prev->rgt);
 insert:
-	t = DoDump(*ptr);
+	t = DoDump(symtab, *ptr);
 	cmp = strcmp(s->name, t->name);
 	if (cmp == 0)	/* duplicate */
 		return;
@@ -217,7 +217,7 @@ marknode(int tok, Node *m)
 }
 
 Node *
-Canonical(Node *n)
+Canonical(tl_Symtab symtab, Node *n)
 {	Node *m, *p, *k1, *k2, *prev, *dflt = ZN;
 	int tok;
 
@@ -228,7 +228,7 @@ Canonical(Node *n)
 		return n;
 
 	can = ZN;
-	addcan(tok, n);
+	addcan(symtab, tok, n);
 #if 1
 	Debug("\nA0: "); Dump(can);
 	Debug("\nA1: "); Dump(n); Debug("\n");

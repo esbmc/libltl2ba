@@ -11,15 +11,14 @@
 
 #include "ltl2ba.h"
 
-extern int	tl_yylex(void);
 extern int	tl_verbose, tl_simp_log;
 extern FILE	*tl_out;
 
-int	tl_yychar = 0;
-Node	*tl_yylval;
+extern int tl_yylex(tl_Symtab symtab, tl_Lexer *lex);
 
-static Node	*tl_factor(void);
-static Node	*tl_level(int);
+static Node	*tl_formula(tl_Symtab symtab, tl_Lexer *lex);
+static Node	*tl_factor(tl_Symtab, tl_Lexer *);
+static Node	*tl_level(tl_Symtab, tl_Lexer *, int);
 
 static int	prec[2][4] = {
 	{ U_OPER,  V_OPER, 0, 0},  /* left associative */
@@ -46,7 +45,7 @@ implies(Node *a, Node *b)
 }
 
 static Node *
-bin_simpler(Node *ptr)
+bin_simpler(tl_Symtab symtab, Node *ptr)
 {	Node *a, *b;
 
 	if (ptr)
@@ -104,7 +103,7 @@ bin_simpler(Node *ptr)
 
 		/* NEW */
 		if (ptr->lft->ntyp != TRUE &&
-		    implies(push_negation(tl_nn(NOT, dupnode(ptr->rgt), ZN)),
+		    implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), ZN)),
 			    ptr->lft))
 		{       ptr->lft = True;
 		        break;
@@ -156,7 +155,7 @@ bin_simpler(Node *ptr)
 		/* NEW */
 		if (ptr->lft->ntyp != FALSE &&
 		    implies(ptr->lft,
-			    push_negation(tl_nn(NOT, dupnode(ptr->rgt), ZN))))
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), ZN))))
 		{       ptr->lft = False;
 		        break;
 		}
@@ -300,9 +299,9 @@ bin_simpler(Node *ptr)
 
 		/* NEW */
 		if (implies(ptr->lft,
-			    push_negation(tl_nn(NOT, dupnode(ptr->rgt), ZN)))
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), ZN)))
 		 || implies(ptr->rgt,
-			    push_negation(tl_nn(NOT, dupnode(ptr->lft), ZN))))
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), ZN))))
 		{       ptr = False;
 		        break;
 		}
@@ -383,9 +382,9 @@ bin_simpler(Node *ptr)
 		  }
 
 		/* NEW */
-		if (implies(push_negation(tl_nn(NOT, dupnode(ptr->rgt), ZN)),
+		if (implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), ZN)),
 			    ptr->lft)
-		 || implies(push_negation(tl_nn(NOT, dupnode(ptr->lft), ZN)),
+		 || implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), ZN)),
 			    ptr->rgt))
 		{       ptr = True;
 		        break;
@@ -396,7 +395,7 @@ bin_simpler(Node *ptr)
 }
 
 static Node *
-bin_minimal(Node *ptr)
+bin_minimal(tl_Symtab symtab, Node *ptr)
 {       if (ptr)
 	switch (ptr->ntyp) {
 	case IMPLIES:
@@ -410,26 +409,26 @@ bin_minimal(Node *ptr)
 }
 
 static Node *
-tl_factor(void)
+tl_factor(tl_Symtab symtab, tl_Lexer *lex)
 {	Node *ptr = ZN;
 
-	switch (tl_yychar) {
+	switch (lex->tl_yychar) {
 	case '(':
-		ptr = tl_formula();
-		if (tl_yychar != ')')
-			tl_yyerror("expected ')'");
-		tl_yychar = tl_yylex();
+		ptr = tl_formula(symtab, lex);
+		if (lex->tl_yychar != ')')
+			tl_yyerror(lex, "expected ')'");
+		lex->tl_yychar = tl_yylex(symtab, lex);
 		goto simpl;
 	case NOT:
-		ptr = tl_yylval;
-		tl_yychar = tl_yylex();
-		ptr->lft = tl_factor();
-		ptr = push_negation(ptr);
+		ptr = lex->tl_yylval;
+		lex->tl_yychar = tl_yylex(symtab, lex);
+		ptr->lft = tl_factor(symtab, lex);
+		ptr = push_negation(symtab, ptr);
 		goto simpl;
 	case ALWAYS:
-		tl_yychar = tl_yylex();
+		lex->tl_yychar = tl_yylex(symtab, lex);
 
-		ptr = tl_factor();
+		ptr = tl_factor(symtab, lex);
 
 		if(tl_simp_log) {
 		  if (ptr->ntyp == FALSE
@@ -448,9 +447,9 @@ tl_factor(void)
 		goto simpl;
 
 	case NEXT:
-		tl_yychar = tl_yylex();
+		lex->tl_yychar = tl_yylex(symtab, lex);
 
-		ptr = tl_factor();
+		ptr = tl_factor(symtab, lex);
 
 		if ((ptr->ntyp == TRUE || ptr->ntyp == FALSE)&& tl_simp_log)
 			break;	/* X true = true , X false = false */
@@ -459,9 +458,9 @@ tl_factor(void)
 		goto simpl;
 
 	case EVENTUALLY:
-		tl_yychar = tl_yylex();
+		lex->tl_yychar = tl_yylex(symtab, lex);
 
-		ptr = tl_factor();
+		ptr = tl_factor(symtab, lex);
 
 		if(tl_simp_log) {
 		  if (ptr->ntyp == TRUE
@@ -482,19 +481,19 @@ tl_factor(void)
 		ptr = tl_nn(U_OPER, True, ptr);
 	simpl:
 		if (tl_simp_log)
-		  ptr = bin_simpler(ptr);
+		  ptr = bin_simpler(symtab, ptr);
 		break;
 	case PREDICATE:
-		ptr = tl_yylval;
-		tl_yychar = tl_yylex();
+		ptr = lex->tl_yylval;
+		lex->tl_yychar = tl_yylex(symtab, lex);
 		break;
 	case TRUE:
 	case FALSE:
-		ptr = tl_yylval;
-		tl_yychar = tl_yylex();
+		ptr = lex->tl_yylval;
+		lex->tl_yychar = tl_yylex(symtab, lex);
 		break;
 	}
-	if (!ptr) tl_yyerror("expected predicate");
+	if (!ptr) tl_yyerror(lex, "expected predicate");
 #if 0
 	printf("factor:	");
 	tl_explain(ptr->ntyp);
@@ -504,24 +503,24 @@ tl_factor(void)
 }
 
 static Node *
-tl_level(int nr)
+tl_level(tl_Symtab symtab, tl_Lexer *lex, int nr)
 {	int i; Node *ptr = ZN;
 
 	if (nr < 0)
-		return tl_factor();
+		return tl_factor(symtab, lex);
 
-	ptr = tl_level(nr-1);
+	ptr = tl_level(symtab, lex, nr-1);
 again:
 	for (i = 0; i < 4; i++)
-		if (tl_yychar == prec[nr][i])
-		{	tl_yychar = tl_yylex();
+		if (lex->tl_yychar == prec[nr][i])
+		{	lex->tl_yychar = tl_yylex(symtab, lex);
 			ptr = tl_nn(prec[nr][i],
-				ptr, tl_level(nr-1));
-			if(tl_simp_log) ptr = bin_simpler(ptr);
-			else ptr = bin_minimal(ptr);
+				ptr, tl_level(symtab, lex, nr-1));
+			if(tl_simp_log) ptr = bin_simpler(symtab, ptr);
+			else ptr = bin_minimal(symtab, ptr);
 			goto again;
 		}
-	if (!ptr) tl_yyerror("syntax error");
+	if (!ptr) tl_yyerror(lex, "syntax error");
 #if 0
 	printf("level %d:	", nr);
 	tl_explain(ptr->ntyp);
@@ -530,7 +529,15 @@ again:
 	return ptr;
 }
 
-Node * tl_formula(void)
-{	tl_yychar = tl_yylex();
-	return tl_level(1);	/* 2 precedence levels, 1 and 0 */
+static Node * tl_formula(tl_Symtab symtab, tl_Lexer *lex)
+{
+	lex->tl_yychar = tl_yylex(symtab, lex);
+	return tl_level(symtab, lex, 1);	/* 2 precedence levels, 1 and 0 */
+}
+
+Node * tl_parse(tl_Symtab symtab)
+{
+	tl_Lexer lex;
+	memset(&lex, 0, sizeof(lex));
+	return tl_formula(symtab, &lex);
 }

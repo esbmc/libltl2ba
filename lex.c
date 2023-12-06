@@ -14,15 +14,10 @@
 #include <ctype.h>
 #include "ltl2ba.h"
 
-static Symbol	*symtab[Nhash+1];
-
-extern Node	*tl_yylval;
-static char	yytext[2048];
-
 int cexpr_idx = 0;
 char *cexpr_expr_table[256];
 
-#define Token(y)        tl_yylval = tl_nn(y,ZN,ZN); return y
+#define Token(y)        lex->tl_yylval = tl_nn(y,ZN,ZN); return y
 
 static int
 isalnum_(int c)
@@ -43,39 +38,38 @@ hash(char *s)
 }
 
 static void
-getword(int first, int (*tst)(int))
+getword(tl_Lexer *lex, int first, int (*tst)(int))
 {	int i=0; char c;
 
-	yytext[i++]= (char ) first;
+	lex->yytext[i++]= (char ) first;
 	while (tst(c = tl_Getchar()))
-		yytext[i++] = c;
-	yytext[i] = '\0';
+		lex->yytext[i++] = c;
+	lex->yytext[i] = '\0';
 	tl_UnGetchar();
 }
 
 static int
-follow(int tok, int ifyes, int ifno)
+follow(tl_Lexer *lex, int tok, int ifyes, int ifno)
 {	int c;
 	char buf[32];
-	extern int tl_yychar;
 
 	if ((c = tl_Getchar()) == tok)
 		return ifyes;
 	tl_UnGetchar();
-	tl_yychar = c;
+	lex->tl_yychar = c;
 	sprintf(buf, "expected '%c'", tok);
-	tl_yyerror(buf);	/* no return from here */
+	tl_yyerror(lex, buf);	/* no return from here */
 	return ifno;
 }
 
 static int
-tl_lex(void)
+tl_lex(tl_Symtab symtab, tl_Lexer *lex)
 {	int c;
 
 	do {
 		c = tl_Getchar();
-		yytext[0] = (char ) c;
-		yytext[1] = '\0';
+		lex->yytext[0] = (char ) c;
+		lex->yytext[1] = '\0';
 
 		if (c <= 0)
 		{	Token(';');
@@ -92,23 +86,20 @@ tl_lex(void)
 			if (c == '}')
 				break;
 
-			if (c <= 0) {
-				fprintf(stderr, "Unexpected end of file during C expression\n");
-				exit(1);
-			}
+			if (c <= 0)
+				tl_yyerror(lex, "Unexpected end of file during C expression");
 
-			yytext[idx++] = c;
-			if (idx == 2048) {
-				fprintf(stderr, "Your C expression is too long\n");
-				exit(1);
-			}
+			lex->yytext[idx++] = c;
+			if (idx == 2048)
+				tl_yyerror(lex, "Your C expression is too long");
 		} while (1);
 
-		yytext[idx++] = '\0';
-		cexpr_expr_table[cexpr_idx] = (char *)strdup(yytext);
+		lex->yytext[idx++] = '\0';
+		cexpr_expr_table[cexpr_idx] = (char *)strdup(lex->yytext);
 
 		for (idx = 0; idx < cexpr_idx; idx++) {
-			if (!strcmp(cexpr_expr_table[cexpr_idx], cexpr_expr_table[idx])) {
+			if (!strcmp(cexpr_expr_table[cexpr_idx],
+			            cexpr_expr_table[idx])) {
 				sprintf(buffer, "_ltl2ba_cexpr_%d_status",idx);
 				break;
 			}
@@ -117,27 +108,25 @@ tl_lex(void)
 		if (idx == cexpr_idx)
 			sprintf(buffer, "_ltl2ba_cexpr_%d_status", cexpr_idx++);
 
-		if (cexpr_idx == 256) {
-			fprintf(stderr, "You have too many C expressions\n");
-			exit(1);
-		}
+		if (cexpr_idx == 256)
+			tl_yyerror(lex, "You have too many C expressions");
 
-		tl_yylval = tl_nn(PREDICATE,ZN,ZN);
-		tl_yylval->sym = tl_lookup(buffer);
+		lex->tl_yylval = tl_nn(PREDICATE,ZN,ZN);
+		lex->tl_yylval->sym = tl_lookup(symtab, buffer);
 		return PREDICATE;
 	}
 
 
 	if (islower(c))
-	{	getword(c, isalnum_);
-		if (strcmp("true", yytext) == 0)
+	{	getword(lex, c, isalnum_);
+		if (strcmp("true", lex->yytext) == 0)
 		{	Token(TRUE);
 		}
-		if (strcmp("false", yytext) == 0)
+		if (strcmp("false", lex->yytext) == 0)
 		{	Token(FALSE);
 		}
-		tl_yylval = tl_nn(PREDICATE,ZN,ZN);
-		tl_yylval->sym = tl_lookup(yytext);
+		lex->tl_yylval = tl_nn(PREDICATE,ZN,ZN);
+		lex->tl_yylval->sym = tl_lookup(symtab, lex->yytext);
 		return PREDICATE;
 	}
 	if (c == '<')
@@ -147,36 +136,36 @@ tl_lex(void)
 		}
 		if (c != '-')
 		{	tl_UnGetchar();
-			tl_yyerror("expected '<>' or '<->'");
+			tl_yyerror(lex, "expected '<>' or '<->'");
 		}
 		c = tl_Getchar();
 		if (c == '>')
 		{	Token(EQUIV);
 		}
 		tl_UnGetchar();
-		tl_yyerror("expected '<->'");
+		tl_yyerror(lex, "expected '<->'");
 	}
 	if (c == 'N')
 	{	c = tl_Getchar();
 		if (c != 'O')
 		{	tl_UnGetchar();
-			tl_yyerror("expected 'NOT'");
+			tl_yyerror(lex, "expected 'NOT'");
 		}
 		c = tl_Getchar();
 		if (c == 'T')
 		{	Token(NOT);
 		}
 		tl_UnGetchar();
-		tl_yyerror("expected 'NOT'");
+		tl_yyerror(lex, "expected 'NOT'");
 	}
 
 	switch (c) {
-	case '/' : c = follow('\\', AND, '/'); break;
-	case '\\': c = follow('/', OR, '\\'); break;
-	case '&' : c = follow('&', AND, '&'); break;
-	case '|' : c = follow('|', OR, '|'); break;
-	case '[' : c = follow(']', ALWAYS, '['); break;
-	case '-' : c = follow('>', IMPLIES, '-'); break;
+	case '/' : c = follow(lex, '\\', AND, '/'); break;
+	case '\\': c = follow(lex, '/', OR, '\\'); break;
+	case '&' : c = follow(lex, '&', AND, '&'); break;
+	case '|' : c = follow(lex, '|', OR, '|'); break;
+	case '[' : c = follow(lex, ']', ALWAYS, '['); break;
+	case '-' : c = follow(lex, '>', IMPLIES, '-'); break;
 	case '!' : c = NOT; break;
 	case 'U' : c = U_OPER; break;
 	case 'V' : c = V_OPER; break;
@@ -189,8 +178,8 @@ tl_lex(void)
 }
 
 int
-tl_yylex(void)
-{	int c = tl_lex();
+tl_yylex(tl_Symtab symtab, tl_Lexer *lex)
+{	int c = tl_lex(symtab, lex);
 #if 0
 	printf("c = %d\n", c);
 #endif
@@ -198,7 +187,7 @@ tl_yylex(void)
 }
 
 Symbol *
-tl_lookup(char *s)
+tl_lookup(tl_Symtab symtab, char *s)
 {	Symbol *sp;
 	int h = hash(s);
 

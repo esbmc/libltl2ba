@@ -34,7 +34,7 @@ static enum {spin, c, dot, none} outmode = spin;
 static const char *progname;
 
 static void	tl_endstats(void);
-static void	non_fatal(const char *);
+static void	non_fatal(int tl_yychar, const char *);
 
 static void
 alldone(int estatus)
@@ -109,7 +109,10 @@ tl_main(char  *formula)
 	strcpy(uform, formula);
 	hasuform = strlen(uform);
 
-	Node *p = tl_formula();
+	tl_Symtab symtab;
+	memset(&symtab, 0, sizeof(symtab));
+
+	Node *p = tl_parse(symtab);
 	if (tl_verbose)
 	{
 		fprintf(stderr, "formula: ");
@@ -335,9 +338,8 @@ tl_explain(int n)
 }
 
 static void
-non_fatal(const char *s1)
+non_fatal(int tl_yychar, const char *s1)
 {
-	extern int tl_yychar;
 	int i;
 
 	fprintf(stderr, "%s: ", progname);
@@ -357,14 +359,15 @@ non_fatal(const char *s1)
 }
 
 void
-tl_yyerror(char *s1)
+tl_yyerror(tl_Lexer *lex, char *s1)
 {
-	fatal(s1);
+	non_fatal(lex->tl_yychar, s1);
+	alldone(1);
 }
 
 void
 fatal(const char *s1)
 {
-	non_fatal(s1);
+	non_fatal(0, s1);
 	alldone(1);
 }

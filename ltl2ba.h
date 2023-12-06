@@ -138,17 +138,42 @@ enum {
 	NEXT,		/* 269 */
 };
 
-Node	*Canonical(Node *);
-Node	*canonical(Node *);
-Node	*cached(Node *);
+#define ZN	(Node *)0
+#define ZS	(Symbol *)0
+#define Nhash	255
+#define True	tl_nn(TRUE,  ZN, ZN)
+#define False	tl_nn(FALSE, ZN, ZN)
+#define Not(a)	push_negation(symtab, tl_nn(NOT, a, ZN))
+#define rewrite(n)	canonical(symtab, right_linked(n))
+
+#define Debug(x)	{ if (0) fprintf(stderr, x); }
+#define Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
+#define Dump(x)		{ if (0) dump(x); }
+#define Explain(x)	{ if (tl_verbose) tl_explain(x); }
+
+#define Assert(x, y)	{ if (!(x)) { tl_explain(y); \
+			  fatal(": assertion failed\n"); } }
+#define min(x,y)        ((x<y)?x:y)
+
+typedef Symbol *tl_Symtab[Nhash + 1];
+
+typedef struct {
+  Node *tl_yylval;
+  int tl_yychar;
+  char yytext[2048];
+} tl_Lexer;
+
+Node	*Canonical(tl_Symtab symtab, Node *);
+Node	*canonical(tl_Symtab symtab, Node *);
+Node	*cached(tl_Symtab symtab, Node *);
 Node	*dupnode(Node *);
 Node	*getnode(Node *);
 Node	*in_cache(Node *);
-Node	*push_negation(Node *);
+Node	*push_negation(tl_Symtab symtab, Node *);
 Node	*right_linked(Node *);
 Node	*tl_nn(int, Node *, Node *);
 
-Symbol	*tl_lookup(char *);
+Symbol	*tl_lookup(tl_Symtab symtab, char *);
 
 char	*emalloc(int);
 
@@ -175,8 +200,8 @@ void	releasenode(int, Node *);
 void	tfree(void *);
 void	tl_explain(int);
 void	tl_UnGetchar(void);
-Node *	tl_formula(void);
-void	tl_yyerror(char *);
+Node *	tl_parse(tl_Symtab symtab);
+void	tl_yyerror(tl_Lexer *lex, char *);
 
 typedef struct {
   ATrans **transition;
@@ -226,20 +251,3 @@ void print_c_epilog(void);
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);
 
 void put_uform(void);
-
-#define ZN	(Node *)0
-#define ZS	(Symbol *)0
-#define Nhash	255
-#define True	tl_nn(TRUE,  ZN, ZN)
-#define False	tl_nn(FALSE, ZN, ZN)
-#define Not(a)	push_negation(tl_nn(NOT, a, ZN))
-#define rewrite(n)	canonical(right_linked(n))
-
-#define Debug(x)	{ if (0) fprintf(stderr, x); }
-#define Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
-#define Dump(x)		{ if (0) dump(x); }
-#define Explain(x)	{ if (tl_verbose) tl_explain(x); }
-
-#define Assert(x, y)	{ if (!(x)) { tl_explain(y); \
-			  fatal(": assertion failed\n"); } }
-#define min(x,y)        ((x<y)?x:y)

@@ -56,7 +56,7 @@ in_cache(Node *n)
 }
 
 Node *
-cached(Node *n)
+cached(tl_Symtab symtab, Node *n)
 {	Cache *d;
 	Node *m;
 
@@ -67,7 +67,7 @@ cached(Node *n)
 	Caches++;
 	d = (Cache *) tl_emalloc(sizeof(Cache));
 	d->before = dupnode(n);
-	d->after  = Canonical(n); /* n is released */
+	d->after  = Canonical(symtab, n); /* n is released */
 
 	if (ismatch(d->before, d->after))
 	{	d->same = 1;
