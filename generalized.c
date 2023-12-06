@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_simp_diff, tl_simp_fly, tl_fjtofj, tl_simp_scc, node_id;
+extern int tl_simp_fly, tl_fjtofj, tl_simp_scc, node_id;
 
 extern int node_size, sym_size;
 
@@ -620,7 +620,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
     print_generalized();
   }
 
-  if(tl_simp_diff) {
+  if(flags & TL_SIMP_DIFF) {
     if (tl_simp_scc) simplify_gscc(alt->final_set);
     simplify_gtrans(flags);
     if (tl_simp_scc) simplify_gscc(alt->final_set);

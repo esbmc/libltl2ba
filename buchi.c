@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern GState **init, *gstates;
-extern int tl_simp_diff, tl_simp_fly, tl_simp_scc, init_size, *final;
+extern int tl_simp_fly, tl_simp_scc, init_size, *final;
 
 extern int sym_size, scc_size;
 
@@ -747,7 +747,7 @@ void mk_buchi(tl_Flags flags)
       fprintf(tl_out, "empty automaton, refuses all words\n");
   }
 
-  if(tl_simp_diff) {
+  if(flags & TL_SIMP_DIFF) {
     simplify_btrans(flags);
     if(tl_simp_scc) simplify_bscc();
     while(simplify_bstates(flags)) { /* simplifies as much as possible */

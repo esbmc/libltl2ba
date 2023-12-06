@@ -13,7 +13,6 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_simp_diff;
 
 int node_size, sym_size;
 extern int scc_size;
@@ -408,7 +407,7 @@ Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
     print_alternating(label, cexpr, &alt);
   }
 
-  if(tl_simp_diff) {
+  if(flags & TL_SIMP_DIFF) {
     simplify_astates(label, &alt); /* keeps only accessible states */
     if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nAlternating automaton after simplification\n");

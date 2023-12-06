@@ -15,7 +15,6 @@
 
 FILE	*tl_out;
 
-int tl_simp_diff = 1;
 int tl_simp_fly  = 1;
 int tl_simp_scc  = 1;
 int tl_fjtofj    = 1;
@@ -178,7 +177,7 @@ main(int argc, char *argv[])
 		case 'a': tl_fjtofj = 0; break;
 		case 'c': tl_simp_scc = 0; break;
 		case 'o': tl_simp_fly = 0; break;
-		case 'p': tl_simp_diff = 0; break;
+		case 'p': flags &= ~TL_SIMP_DIFF; break;
 		case 'l': flags &= ~TL_SIMP_LOG; break;
 		case 'd': flags |= TL_VERBOSE; break;
 		case 's': flags |= TL_STATS; break;
