@@ -16,7 +16,10 @@ extern FILE *tl_out;
 
 int node_size, sym_size;
 extern int scc_size;
-static int astate_count = 0, atrans_count = 0;
+
+struct counts {
+  int astate_count, atrans_count;
+};
 
 static ATrans *build_alternating(Node *p, Node **label, Alternating *alt);
 
@@ -281,7 +284,8 @@ static ATrans *build_alternating(Node *p, Node **label, Alternating *alt)
 |*        Simplification of the alternating automaton               *|
 \********************************************************************/
 
-static void simplify_atrans(ATrans **trans) /* simplifies the transitions */
+/* simplifies the transitions */
+static void simplify_atrans(ATrans **trans, struct counts *c)
 {
   ATrans *t, *father = (ATrans *)0;
   for(t = *trans; t;) {
@@ -305,14 +309,14 @@ static void simplify_atrans(ATrans **trans) /* simplifies the transitions */
 	t = *trans;
       continue;
     }
-    atrans_count++;
+    c->atrans_count++;
     father = t;
     t = t->nxt;
   }
 }
 
 /* simplifies the alternating automaton */
-static void simplify_astates(Node **label, Alternating *alt)
+static void simplify_astates(Node **label, Alternating *alt, struct counts *c)
 {
   ATrans *t;
   int i, *acc = make_set(-1, node_size); /* no state is accessible initially */
@@ -327,8 +331,8 @@ static void simplify_astates(Node **label, Alternating *alt)
       alt->transition[i] = (ATrans *)0;
       continue;
     }
-    astate_count++;
-    simplify_atrans(&alt->transition[i]);
+    c->astate_count++;
+    simplify_atrans(&alt->transition[i], c);
     for(t = alt->transition[i]; t; t = t->nxt)
       merge_sets(acc, t->to, node_size);
   }
@@ -378,6 +382,8 @@ static void print_alternating(Node **label, tl_Cexprtab *cexpr, Alternating *alt
 /* generates an alternating automaton for p */
 Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
 {
+  struct counts cnts;
+  memset(&cnts, 0, sizeof(cnts));
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
   Alternating alt;
@@ -408,7 +414,7 @@ Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
   }
 
   if(flags & TL_SIMP_DIFF) {
-    simplify_astates(label, &alt); /* keeps only accessible states */
+    simplify_astates(label, &alt, &cnts); /* keeps only accessible states */
     if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nAlternating automaton after simplification\n");
       print_alternating(label, cexpr, &alt);
@@ -420,7 +426,7 @@ Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nBuilding and simplification of the alternating automaton: %ld.%06lis",
 		t_diff.tv_sec, t_diff.tv_usec);
-    fprintf(tl_out, "\n%i states, %i transitions\n", astate_count, atrans_count);
+    fprintf(tl_out, "\n%i states, %i transitions\n", cnts.astate_count, cnts.atrans_count);
   }
 
   tl_out = f;
