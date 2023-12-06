@@ -25,7 +25,7 @@ typedef struct BScc {
 
 BState *bstack, *bstates, *bremoved;
 static BScc *scc_stack;
-int accept, bstate_count = 0, btrans_count = 0;
+int accept;
 static int rank;
 
 /* Record of what states stutter-accept, according to each input symbol. */
@@ -37,6 +37,10 @@ static int g_num_states = 0;
 extern const char *c_sym_name_prefix;
 
 int state_count=0;
+
+struct bcounts {
+  int bstate_count, btrans_count;
+};
 
 /********************************************************************\
 |*        Simplification of the generalized Buchi automaton         *|
@@ -391,7 +395,8 @@ static int next_final(int *set, int fin, const int *final) /* computes the 'fina
 }
 
 /* creates all the transitions from a state */
-static void make_btrans(BState *s, const int *final, tl_Flags flags)
+static void make_btrans(BState *s, const int *final, tl_Flags flags,
+                        struct bcounts *c)
 {
   int state_trans = 0;
   GTrans *t;
@@ -470,8 +475,8 @@ static void make_btrans(BState *s, const int *final, tl_Flags flags)
   s->prv = bstates;
   s->nxt->prv = s;
   bstates->nxt = s;
-  btrans_count += state_trans;
-  bstate_count++;
+  c->btrans_count += state_trans;
+  c->bstate_count++;
 }
 
 /********************************************************************\
@@ -672,6 +677,8 @@ void mk_buchi(Generalized *g, tl_Flags flags)
   accept = g->final[0] - 1;
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
+  struct bcounts cnts;
+  memset(&cnts, 0, sizeof(cnts));
 
   if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
@@ -736,7 +743,7 @@ void mk_buchi(Generalized *g, tl_Flags flags)
       free_bstate(s);
       continue;
     }
-    make_btrans(s, g->final, flags);
+    make_btrans(s, g->final, flags, &cnts);
   }
 
   retarget_all_btrans();
@@ -749,7 +756,7 @@ void mk_buchi(Generalized *g, tl_Flags flags)
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nBuilding the Buchi automaton : %ld.%06lis",
 		t_diff.tv_sec, t_diff.tv_usec);
-    fprintf(tl_out, "\n%i states, %i transitions\n", bstate_count, btrans_count);
+    fprintf(tl_out, "\n%i states, %i transitions\n", cnts.bstate_count, cnts.btrans_count);
   }
 
   if(flags & TL_VERBOSE) {
