@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_stats, tl_simp_diff;
+extern int tl_simp_diff;
 
 int node_size, sym_size;
 extern int scc_size;
@@ -386,7 +386,7 @@ Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
   alt.node_id = 1;
   alt.sym_id = 0;
 
-  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   node_size = calculate_node_size(p) + 1; /* number of states in the automaton */
   Node **label = (Node **) tl_emalloc(node_size * sizeof(Node *));
@@ -416,7 +416,7 @@ Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
     }
   }
 
-  if(tl_stats) {
+  if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nBuilding and simplification of the alternating automaton: %ld.%06lis",

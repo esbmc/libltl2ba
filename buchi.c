@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern GState **init, *gstates;
-extern int tl_stats, tl_simp_diff, tl_simp_fly, tl_simp_scc, init_size, *final;
+extern int tl_simp_diff, tl_simp_fly, tl_simp_scc, init_size, *final;
 
 extern int sym_size, scc_size;
 
@@ -65,7 +65,7 @@ void copy_btrans(BTrans *from, BTrans *to) {
   copy_set(from->neg, to->neg, sym_size);
 }
 
-int simplify_btrans() /* simplifies the transitions */
+int simplify_btrans(tl_Flags flags) /* simplifies the transitions */
 {
   BState *s;
   BTrans *t, *t1;
@@ -73,7 +73,7 @@ int simplify_btrans() /* simplifies the transitions */
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   for (s = bstates->nxt; s != bstates; s = s->nxt)
     for (t = s->trans->nxt; t != s->trans;) {
@@ -97,7 +97,7 @@ int simplify_btrans() /* simplifies the transitions */
         t = t->nxt;
     }
 
-  if(tl_stats) {
+  if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nSimplification of the Buchi automaton - transitions: %ld.%06lis",
@@ -192,14 +192,14 @@ int all_btrans_match(BState *a, BState *b) /* decides if the states are equivale
   return 1;
 }
 
-int simplify_bstates() /* eliminates redundant states */
+int simplify_bstates(tl_Flags flags) /* eliminates redundant states */
 {
   BState *s, *s1, *s2;
   int changed = 0;
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   for (s = bstates->nxt; s != bstates; s = s->nxt) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
@@ -264,7 +264,7 @@ int simplify_bstates() /* eliminates redundant states */
     }
   }
 
-  if(tl_stats) {
+  if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nSimplification of the Buchi automaton - states: %ld.%06lis",
@@ -661,7 +661,7 @@ void mk_buchi(tl_Flags flags)
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   bstack        = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
   bstack->nxt   = bstack;
@@ -732,7 +732,7 @@ void mk_buchi(tl_Flags flags)
   FILE *f = tl_out;
   tl_out = stderr;
 
-  if(tl_stats) {
+  if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nBuilding the Buchi automaton : %ld.%06lis",
@@ -748,10 +748,10 @@ void mk_buchi(tl_Flags flags)
   }
 
   if(tl_simp_diff) {
-    simplify_btrans();
+    simplify_btrans(flags);
     if(tl_simp_scc) simplify_bscc();
-    while(simplify_bstates()) { /* simplifies as much as possible */
-      simplify_btrans();
+    while(simplify_bstates(flags)) { /* simplifies as much as possible */
+      simplify_btrans(flags);
       if(tl_simp_scc) simplify_bscc();
     }
 

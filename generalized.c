@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_stats, tl_simp_diff, tl_simp_fly, tl_fjtofj, tl_simp_scc, node_id;
+extern int tl_simp_diff, tl_simp_fly, tl_fjtofj, tl_simp_scc, node_id;
 
 extern int node_size, sym_size;
 
@@ -89,7 +89,7 @@ int same_gtrans(GState *a, GTrans *s, GState *b, GTrans *t, int use_scc)
   return 1; /* same transitions up to acceptance conditions */
 }
 
-int simplify_gtrans() /* simplifies the transitions */
+int simplify_gtrans(tl_Flags flags) /* simplifies the transitions */
 {
   int changed = 0;
   GState *s;
@@ -97,7 +97,7 @@ int simplify_gtrans() /* simplifies the transitions */
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   for(s = gstates->nxt; s != gstates; s = s->nxt) {
     t = s->trans->nxt;
@@ -127,7 +127,7 @@ int simplify_gtrans() /* simplifies the transitions */
     }
   }
 
-  if(tl_stats) {
+  if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nSimplification of the generalized Buchi automaton - transitions: %ld.%06lis",
@@ -193,14 +193,14 @@ int all_gtrans_match(GState *a, GState *b, int use_scc)
   return 1;
 }
 
-int simplify_gstates() /* eliminates redundant states */
+int simplify_gstates(tl_Flags flags) /* eliminates redundant states */
 {
   int changed = 0;
   GState *a, *b;
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   for(a = gstates->nxt; a != gstates; a = a->nxt) {
     if(a->trans == a->trans->nxt) { /* a has no transitions */
@@ -222,7 +222,7 @@ int simplify_gstates() /* eliminates redundant states */
   }
   retarget_all_gtrans();
 
-  if(tl_stats) {
+  if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nSimplification of the generalized Buchi automaton - states: %ld.%06lis",
@@ -555,7 +555,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(tl_stats) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   fin = new_set(node_size);
   bad_scc = 0; /* will be initialized in simplify_gscc */
@@ -601,7 +601,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
   FILE *f = tl_out;
   tl_out = stderr;
 
-  if(tl_stats) {
+  if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nBuilding the generalized Buchi automaton : %ld.%06lis",
@@ -622,11 +622,11 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
 
   if(tl_simp_diff) {
     if (tl_simp_scc) simplify_gscc(alt->final_set);
-    simplify_gtrans();
+    simplify_gtrans(flags);
     if (tl_simp_scc) simplify_gscc(alt->final_set);
-    while(simplify_gstates()) { /* simplifies as much as possible */
+    while(simplify_gstates(flags)) { /* simplifies as much as possible */
       if (tl_simp_scc) simplify_gscc(alt->final_set);
-      simplify_gtrans();
+      simplify_gtrans(flags);
       if (tl_simp_scc) simplify_gscc(alt->final_set);
     }
 

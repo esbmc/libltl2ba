@@ -15,7 +15,6 @@
 
 FILE	*tl_out;
 
-int	tl_stats     = 0;
 int tl_simp_log  = 1;
 int tl_simp_diff = 1;
 int tl_simp_fly  = 1;
@@ -149,7 +148,7 @@ tl_main(char  *formula, tl_Flags flags)
 	default:	print_spin_buchi(alt.sym_table); break;
 	}
 
-	if (tl_stats)
+	if (flags & TL_STATS)
 		tl_endstats();
 }
 
@@ -183,7 +182,7 @@ main(int argc, char *argv[])
 		case 'p': tl_simp_diff = 0; break;
 		case 'l': tl_simp_log = 0; break;
 		case 'd': flags |= TL_VERBOSE; break;
-		case 's': tl_stats = 1; break;
+		case 's': flags |= TL_STATS; break;
 		case 'O':
 			if (strcmp("spin", optarg) == 0)
 				outmode=spin;
