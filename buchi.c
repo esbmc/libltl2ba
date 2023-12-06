@@ -25,7 +25,7 @@ typedef struct BScc {
 
 BState *bstack, *bstates, *bremoved;
 static BScc *scc_stack;
-int accept;
+static int accept;
 static int rank;
 
 /* Record of what states stutter-accept, according to each input symbol. */
