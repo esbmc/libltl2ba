@@ -11,14 +11,13 @@
 
 #include "ltl2ba.h"
 
-extern int	tl_simp_log;
 extern FILE	*tl_out;
 
 extern int tl_yylex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex);
 
-static Node	*tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex);
-static Node	*tl_factor(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *);
-static Node	*tl_level(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, int);
+static Node	*tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags);
+static Node	*tl_factor(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags);
+static Node	*tl_level(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags, int);
 
 static int	prec[2][4] = {
 	{ U_OPER,  V_OPER, 0, 0},  /* left associative */
@@ -409,12 +408,12 @@ bin_minimal(tl_Symtab symtab, Node *ptr)
 }
 
 static Node *
-tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
+tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 {	Node *ptr = ZN;
 
 	switch (lex->tl_yychar) {
 	case '(':
-		ptr = tl_formula(symtab, cexpr, lex);
+		ptr = tl_formula(symtab, cexpr, lex, flags);
 		if (lex->tl_yychar != ')')
 			tl_yyerror(lex, "expected ')'");
 		lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
@@ -422,15 +421,15 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 	case NOT:
 		ptr = lex->tl_yylval;
 		lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
-		ptr->lft = tl_factor(symtab, cexpr, lex);
+		ptr->lft = tl_factor(symtab, cexpr, lex, flags);
 		ptr = push_negation(symtab, ptr);
 		goto simpl;
 	case ALWAYS:
 		lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
 
-		ptr = tl_factor(symtab, cexpr, lex);
+		ptr = tl_factor(symtab, cexpr, lex, flags);
 
-		if(tl_simp_log) {
+		if(flags & TL_SIMP_LOG) {
 		  if (ptr->ntyp == FALSE
 		      ||  ptr->ntyp == TRUE)
 		    break;	/* [] false == false */
@@ -449,9 +448,9 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 	case NEXT:
 		lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
 
-		ptr = tl_factor(symtab, cexpr, lex);
+		ptr = tl_factor(symtab, cexpr, lex, flags);
 
-		if ((ptr->ntyp == TRUE || ptr->ntyp == FALSE)&& tl_simp_log)
+		if ((ptr->ntyp == TRUE || ptr->ntyp == FALSE)&& (flags & TL_SIMP_LOG))
 			break;	/* X true = true , X false = false */
 
 		ptr = tl_nn(NEXT, ptr, ZN);
@@ -460,9 +459,9 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 	case EVENTUALLY:
 		lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
 
-		ptr = tl_factor(symtab, cexpr, lex);
+		ptr = tl_factor(symtab, cexpr, lex, flags);
 
-		if(tl_simp_log) {
+		if(flags & TL_SIMP_LOG) {
 		  if (ptr->ntyp == TRUE
 		      ||  ptr->ntyp == FALSE)
 		    break;	/* <> true == true */
@@ -480,7 +479,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 
 		ptr = tl_nn(U_OPER, True, ptr);
 	simpl:
-		if (tl_simp_log)
+		if (flags & TL_SIMP_LOG)
 		  ptr = bin_simpler(symtab, ptr);
 		break;
 	case PREDICATE:
@@ -503,20 +502,20 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 }
 
 static Node *
-tl_level(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, int nr)
+tl_level(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags, int nr)
 {	int i; Node *ptr = ZN;
 
 	if (nr < 0)
-		return tl_factor(symtab, cexpr, lex);
+		return tl_factor(symtab, cexpr, lex, flags);
 
-	ptr = tl_level(symtab, cexpr, lex, nr-1);
+	ptr = tl_level(symtab, cexpr, lex, flags, nr-1);
 again:
 	for (i = 0; i < 4; i++)
 		if (lex->tl_yychar == prec[nr][i])
 		{	lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
 			ptr = tl_nn(prec[nr][i],
-				ptr, tl_level(symtab, cexpr, lex, nr-1));
-			if(tl_simp_log) ptr = bin_simpler(symtab, ptr);
+				ptr, tl_level(symtab, cexpr, lex, flags, nr-1));
+			if(flags & TL_SIMP_LOG) ptr = bin_simpler(symtab, ptr);
 			else ptr = bin_minimal(symtab, ptr);
 			goto again;
 		}
@@ -529,15 +528,15 @@ again:
 	return ptr;
 }
 
-static Node * tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
+static Node * tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 {
 	lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
-	return tl_level(symtab, cexpr, lex, 1);	/* 2 precedence levels, 1 and 0 */
+	return tl_level(symtab, cexpr, lex, flags, 1);	/* 2 precedence levels, 1 and 0 */
 }
 
-Node * tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr)
+Node * tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags)
 {
 	tl_Lexer lex;
 	memset(&lex, 0, sizeof(lex));
-	return tl_formula(symtab, cexpr, &lex);
+	return tl_formula(symtab, cexpr, &lex, flags);
 }

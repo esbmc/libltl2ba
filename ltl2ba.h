@@ -217,7 +217,7 @@ void	releasenode(int, Node *);
 void	tfree(void *);
 void	tl_explain(int);
 void	tl_UnGetchar(void);
-Node *	tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr);
+Node *	tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags);
 void	tl_yyerror(tl_Lexer *lex, char *);
 
 typedef struct {

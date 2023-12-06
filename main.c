@@ -15,7 +15,6 @@
 
 FILE	*tl_out;
 
-int tl_simp_log  = 1;
 int tl_simp_diff = 1;
 int tl_simp_fly  = 1;
 int tl_simp_scc  = 1;
@@ -113,7 +112,7 @@ tl_main(char  *formula, tl_Flags flags)
 	tl_Cexprtab cexpr;
 	memset(&cexpr, 0, sizeof(cexpr));
 
-	Node *p = tl_parse(symtab, &cexpr);
+	Node *p = tl_parse(symtab, &cexpr, flags);
 	if (flags & TL_VERBOSE)
 	{
 		fprintf(stderr, "formula: ");
@@ -180,7 +179,7 @@ main(int argc, char *argv[])
 		case 'c': tl_simp_scc = 0; break;
 		case 'o': tl_simp_fly = 0; break;
 		case 'p': tl_simp_diff = 0; break;
-		case 'l': tl_simp_log = 0; break;
+		case 'l': flags &= ~TL_SIMP_LOG; break;
 		case 'd': flags |= TL_VERBOSE; break;
 		case 's': flags |= TL_STATS; break;
 		case 'O':
