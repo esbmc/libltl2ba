@@ -20,7 +20,6 @@ GState *gstates, **init;
 int init_size = 0, gstate_id = 1, *final, scc_size;
 
 static GState *gstack, *gremoved;
-static GScc *scc_stack;
 static int *bad_scc;
 
 struct gcounts {
@@ -30,6 +29,7 @@ struct gcounts {
 struct gdfs_state {
   int rank;
   int scc_id;
+  GScc *scc_stack;
 };
 
 static void print_generalized(void);
@@ -250,8 +250,8 @@ static int gdfs(GState *s, struct gdfs_state *st) {
   scc->gstate = s;
   scc->rank = st->rank;
   scc->theta = st->rank++;
-  scc->nxt = scc_stack;
-  scc_stack = scc;
+  scc->nxt = st->scc_stack;
+  st->scc_stack = scc;
 
   s->incoming = 1;
 
@@ -261,7 +261,7 @@ static int gdfs(GState *s, struct gdfs_state *st) {
       scc->theta = min(scc->theta, result);
     }
     else {
-      for(c = scc_stack->nxt; c != 0; c = c->nxt)
+      for(c = st->scc_stack->nxt; c != 0; c = c->nxt)
 	if(c->gstate == t->to) {
 	  scc->theta = min(scc->theta, c->rank);
 	  break;
@@ -269,12 +269,12 @@ static int gdfs(GState *s, struct gdfs_state *st) {
     }
   }
   if(scc->rank == scc->theta) {
-    while(scc_stack != scc) {
-      scc_stack->gstate->incoming = st->scc_id;
-      scc_stack = scc_stack->nxt;
+    while(st->scc_stack != scc) {
+      st->scc_stack->gstate->incoming = st->scc_id;
+      st->scc_stack = st->scc_stack->nxt;
     }
     scc->gstate->incoming = st->scc_id++;
-    scc_stack = scc->nxt;
+    st->scc_stack = scc->nxt;
   }
   return scc->theta;
 }
@@ -285,7 +285,7 @@ static void simplify_gscc(int *final_set) {
   int i, **scc_final;
   struct gdfs_state st;
   st.rank = 1;
-  scc_stack = 0;
+  st.scc_stack = NULL;
   st.scc_id = 1;
 
   if(gstates == gstates->nxt) return;
