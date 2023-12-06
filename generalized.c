@@ -572,7 +572,7 @@ static void print_generalized(Generalized *g) {
 |*                       Main method                                *|
 \********************************************************************/
 
-Generalized mk_generalized(Alternating *alt, tl_Flags flags)
+Generalized mk_generalized(const Alternating *alt, tl_Flags flags)
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
   GState *s, *gstack = NULL, *gremoved = NULL;

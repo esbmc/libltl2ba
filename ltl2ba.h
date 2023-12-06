@@ -220,7 +220,7 @@ typedef struct {
 } Generalized;
 
 Alternating mk_alternating(Node *, tl_Cexprtab *cexpr, tl_Flags flags);
-Generalized mk_generalized(Alternating *, tl_Flags flags);
+Generalized mk_generalized(const Alternating *, tl_Flags flags);
 void    mk_buchi(Generalized *g, tl_Flags);
 
 void print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id);
