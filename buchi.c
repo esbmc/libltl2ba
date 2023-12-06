@@ -25,7 +25,7 @@ typedef struct BScc {
   struct BScc *nxt;
 } BScc;
 
-static BState *bstack, *bstates, *bremoved;
+static BState *bstates;
 static BScc *scc_stack;
 static int accept;
 static int rank;
@@ -51,7 +51,8 @@ static void free_bstate(BState *s) /* frees a state and its transitions */
   tfree(s);
 }
 
-static BState *remove_bstate(BState *s, BState *s1) /* removes a state */
+/* removes a state */
+static BState *remove_bstate(BState *s, BState *s1, BState *const bremoved)
 {
   BState *prv = s->prv;
   s->prv->nxt = s->nxt;
@@ -143,7 +144,7 @@ static void remove_btrans(BState *to)
 }
 
 /* redirects transitions before removing a state from the automaton */
-static void retarget_all_btrans(void)
+static void retarget_all_btrans(BState *const bremoved)
 {
   BState *s;
   BTrans *t;
@@ -204,7 +205,9 @@ static int all_btrans_match(BState *a, BState *b)
   return 1;
 }
 
-static int simplify_bstates(tl_Flags flags, int *gstate_id) /* eliminates redundant states */
+/* eliminates redundant states */
+static int simplify_bstates(tl_Flags flags, int *gstate_id,
+                            BState *const bremoved)
 {
   BState *s, *s1, *s2;
   int changed = 0;
@@ -215,7 +218,7 @@ static int simplify_bstates(tl_Flags flags, int *gstate_id) /* eliminates redund
 
   for (s = bstates->nxt; s != bstates; s = s->nxt) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
-      s = remove_bstate(s, (BState *)0);
+      s = remove_bstate(s, (BState *)0, bremoved);
       changed++;
       continue;
     }
@@ -253,11 +256,11 @@ static int simplify_bstates(tl_Flags flags, int *gstate_id) /* eliminates redund
          */
         s1->incoming = s->incoming;
       }
-      s = remove_bstate(s, s1);
+      s = remove_bstate(s, s1, bremoved);
       changed++;
     }
   }
-  retarget_all_btrans();
+  retarget_all_btrans(bremoved);
 
   /*
    * As merging equivalent states can change the 'final' attribute of
@@ -325,7 +328,7 @@ static int bdfs(BState *s) {
 }
 
 
-static void simplify_bscc() {
+static void simplify_bscc(BState *const bremoved) {
   BState *s;
   rank = 1;
   scc_stack = 0;
@@ -339,7 +342,7 @@ static void simplify_bscc() {
 
   for(s = bstates->nxt; s != bstates; s = s->nxt)
     if(s->incoming == 0)
-      remove_bstate(s, 0);
+      remove_bstate(s, 0, bremoved);
 }
 
 
@@ -349,8 +352,10 @@ static void simplify_bscc() {
 |*              Generation of the Buchi automaton                   *|
 \********************************************************************/
 
-static BState *find_bstate(GState **state, int final, BState *s)
-{                       /* finds the corresponding state, or creates it */
+/* finds the corresponding state, or creates it */
+static BState *find_bstate(GState **state, int final, BState *s,
+                           BState *const bstack, BState *const bremoved)
+{
   if((s->gstate == *state) && (s->final == final)) return s; /* same state */
 
   s = bstack->nxt; /* in the stack */
@@ -395,7 +400,8 @@ static int next_final(int *set, int fin, const int *final) /* computes the 'fina
 
 /* creates all the transitions from a state */
 static void make_btrans(BState *s, const int *final, tl_Flags flags,
-                        struct bcounts *c)
+                        struct bcounts *c, BState *const bstack,
+                        BState *const bremoved)
 {
   int state_trans = 0;
   GTrans *t;
@@ -404,7 +410,7 @@ static void make_btrans(BState *s, const int *final, tl_Flags flags,
   if(s->gstate->trans)
     for(t = s->gstate->trans->nxt; t != s->gstate->trans; t = t->nxt) {
       int fin = next_final(t->final, (s->final == accept) ? 0 : s->final, final);
-      BState *to = find_bstate(&t->to, fin, s);
+      BState *to = find_bstate(&t->to, fin, s, bstack, bremoved);
 
       for(t1 = s->trans->nxt; t1 != s->trans;) {
 	if((flags & TL_SIMP_FLY) &&
@@ -679,6 +685,8 @@ void mk_buchi(Generalized *g, tl_Flags flags)
   struct bcounts cnts;
   memset(&cnts, 0, sizeof(cnts));
 
+  BState *bstack, *bremoved;
+
   if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   bstack        = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
@@ -701,7 +709,7 @@ void mk_buchi(Generalized *g, tl_Flags flags)
     if(g->init[i])
       for(t = g->init[i]->trans->nxt; t != g->init[i]->trans; t = t->nxt) {
 	int fin = next_final(t->final, 0, g->final);
-	BState *to = find_bstate(&t->to, fin, s);
+	BState *to = find_bstate(&t->to, fin, s, bstack, bremoved);
 	for(t1 = s->trans->nxt; t1 != s->trans;) {
 	  if((flags & TL_SIMP_FLY) &&
 	     (to == t1->to) &&
@@ -742,10 +750,10 @@ void mk_buchi(Generalized *g, tl_Flags flags)
       free_bstate(s);
       continue;
     }
-    make_btrans(s, g->final, flags, &cnts);
+    make_btrans(s, g->final, flags, &cnts, bstack, bremoved);
   }
 
-  retarget_all_btrans();
+  retarget_all_btrans(bremoved);
 
   FILE *f = tl_out;
   tl_out = stderr;
@@ -767,10 +775,10 @@ void mk_buchi(Generalized *g, tl_Flags flags)
 
   if(flags & TL_SIMP_DIFF) {
     simplify_btrans(flags);
-    if(flags & TL_SIMP_SCC) simplify_bscc();
-    while(simplify_bstates(flags, &g->gstate_id)) { /* simplifies as much as possible */
+    if(flags & TL_SIMP_SCC) simplify_bscc(bremoved);
+    while(simplify_bstates(flags, &g->gstate_id, bremoved)) { /* simplifies as much as possible */
       simplify_btrans(flags);
-      if(flags & TL_SIMP_SCC) simplify_bscc();
+      if(flags & TL_SIMP_SCC) simplify_bscc(bremoved);
     }
 
     if(flags & TL_VERBOSE) {
