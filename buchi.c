@@ -23,10 +23,13 @@ typedef struct BScc {
   struct BScc *nxt;
 } BScc;
 
+struct bdfs_state {
+  int rank;
+  BScc *scc_stack;
+};
+
 static BState *bstates;
-static BScc *scc_stack;
 static int accept;
-static int rank;
 
 /* Record of what states stutter-accept, according to each input symbol. */
 static int **stutter_accept_table = NULL;
@@ -288,25 +291,25 @@ static int simplify_bstates(tl_Flags flags, int *gstate_id,
   return changed;
 }
 
-static int bdfs(BState *s) {
+static int bdfs(BState *s, struct bdfs_state *st) {
   BTrans *t;
   BScc *c;
   BScc *scc = (BScc *)tl_emalloc(sizeof(BScc));
   scc->bstate = s;
-  scc->rank = rank;
-  scc->theta = rank++;
-  scc->nxt = scc_stack;
-  scc_stack = scc;
+  scc->rank = st->rank;
+  scc->theta = st->rank++;
+  scc->nxt = st->scc_stack;
+  st->scc_stack = scc;
 
   s->incoming = 1;
 
   for (t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (t->to->incoming == 0) {
-      int result = bdfs(t->to);
+      int result = bdfs(t->to, st);
       scc->theta = min(scc->theta, result);
     }
     else {
-      for(c = scc_stack->nxt; c != 0; c = c->nxt)
+      for(c = st->scc_stack->nxt; c != 0; c = c->nxt)
 	if(c->bstate == t->to) {
 	  scc->theta = min(scc->theta, c->rank);
 	  break;
@@ -314,13 +317,13 @@ static int bdfs(BState *s) {
     }
   }
   if(scc->rank == scc->theta) {
-    if(scc_stack == scc) { /* s is alone in a scc */
+    if(st->scc_stack == scc) { /* s is alone in a scc */
       s->incoming = -1;
       for (t = s->trans->nxt; t != s->trans; t = t->nxt)
 	if (t->to == s)
 	  s->incoming = 1;
     }
-    scc_stack = scc->nxt;
+    st->scc_stack = scc->nxt;
   }
   return scc->theta;
 }
@@ -328,15 +331,16 @@ static int bdfs(BState *s) {
 
 static void simplify_bscc(BState *const bremoved) {
   BState *s;
-  rank = 1;
-  scc_stack = 0;
+  struct bdfs_state st;
+  st.rank = 1;
+  st.scc_stack = NULL;
 
   if(bstates == bstates->nxt) return;
 
   for(s = bstates->nxt; s != bstates; s = s->nxt)
     s->incoming = 0; /* state color = white */
 
-  bdfs(bstates->prv);
+  bdfs(bstates->prv, &st);
 
   for(s = bstates->nxt; s != bstates; s = s->nxt)
     if(s->incoming == 0)
