@@ -29,9 +29,9 @@ static int accept;
 static int rank;
 
 /* Record of what states stutter-accept, according to each input symbol. */
-int **stutter_accept_table = NULL;
-int *optimistic_accept_state_set = NULL;
-int *pessimistic_accept_state_set = NULL;
+static int **stutter_accept_table = NULL;
+static int *optimistic_accept_state_set = NULL;
+static int *pessimistic_accept_state_set = NULL;
 
 extern const char *c_sym_name_prefix;
 
