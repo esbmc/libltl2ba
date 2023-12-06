@@ -16,6 +16,8 @@ extern int sym_size;
 
 extern FILE *tl_out;
 
+extern const char *c_sym_name_prefix;
+
 typedef struct BScc {
   struct BState *bstate;
   int rank;
@@ -32,8 +34,6 @@ static int rank;
 static int **stutter_accept_table = NULL;
 static int *optimistic_accept_state_set = NULL;
 static int *pessimistic_accept_state_set = NULL;
-
-extern const char *c_sym_name_prefix;
 
 static int state_count=0;
 
