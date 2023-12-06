@@ -19,7 +19,7 @@ static Node	*tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_
 static Node	*tl_factor(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags);
 static Node	*tl_level(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags, int);
 
-static int	prec[2][4] = {
+static const int prec[2][4] = {
 	{ U_OPER,  V_OPER, 0, 0},  /* left associative */
 	{ OR, AND, IMPLIES, EQUIV, },	/* left associative */
 };
