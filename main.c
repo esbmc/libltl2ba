@@ -15,14 +15,15 @@
 
 FILE	*tl_out;
 
-int	tl_stats     = 0; /* time and size stats */
-int tl_simp_log  = 1; /* logical simplification */
-int tl_simp_diff = 1; /* automata simplification */
-int tl_simp_fly  = 1; /* on the fly simplification */
-int tl_simp_scc  = 1; /* use scc simplification */
-int tl_fjtofj    = 1; /* 2eme fj */
+int	tl_stats     = 0;
+int tl_simp_log  = 1;
+int tl_simp_diff = 1;
+int tl_simp_fly  = 1;
+int tl_simp_scc  = 1;
+int tl_fjtofj    = 1;
 int	tl_errs      = 0;
 int	tl_verbose   = 0;
+
 unsigned long	All_Mem = 0;
 const char *c_sym_name_prefix = "_ltl2ba";
 
@@ -161,6 +162,11 @@ main(int argc, char *argv[])
 	char *ltl_file = NULL;
 	char *add_ltl  = NULL;
 	char *formula  = NULL, *inv_formula = NULL;
+	tl_Flags flags = TL_SIMP_LOG
+	               | TL_SIMP_DIFF
+	               | TL_SIMP_FLY
+	               | TL_SIMP_SCC
+	               | TL_FJTOFJ;
 	tl_out = stdout;
 
 	progname = argv[0] ? basename(argv[0]) : "";

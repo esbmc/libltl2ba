@@ -168,6 +168,16 @@ typedef struct {
   char yytext[2048];
 } tl_Lexer;
 
+typedef enum {
+	TL_STATS     = 1 << 0, /* time and size stats */
+	TL_SIMP_LOG  = 1 << 1, /* logical simplification */
+	TL_SIMP_DIFF = 1 << 2, /* automata simplification */
+	TL_SIMP_FLY  = 1 << 3, /* on the fly simplification */
+	TL_SIMP_SCC  = 1 << 4, /* use scc simplification */
+	TL_FJTOFJ    = 1 << 5, /* 2eme fj */
+	TL_VERBOSE   = 1 << 6,
+} tl_Flags;
+
 Node	*Canonical(tl_Symtab symtab, Node *);
 Node	*canonical(tl_Symtab symtab, Node *);
 Node	*cached(tl_Symtab symtab, Node *);
