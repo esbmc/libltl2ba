@@ -21,9 +21,9 @@ isalnum_(int c)
 {       return (isalnum(c) || c == '_');
 }
 
-static int
-hash(char *s)
-{       int h=0;
+static int hash(const char *s)
+{
+	int h=0;
 
         while (*s)
         {       h += *s++;
@@ -183,17 +183,17 @@ tl_yylex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 	return c;
 }
 
-Symbol *
-tl_lookup(tl_Symtab symtab, char *s)
-{	Symbol *sp;
+Symbol * tl_lookup(tl_Symtab symtab, const char *s)
+{
+	Symbol *sp;
 	int h = hash(s);
 
 	for (sp = symtab[h]; sp; sp = sp->next)
 		if (strcmp(sp->name, s) == 0)
 			return sp;
 
-	sp = (Symbol *) tl_emalloc(sizeof(Symbol));
-	sp->name = (char *) tl_emalloc(strlen(s) + 1);
+	sp = tl_emalloc(sizeof(Symbol));
+	sp->name = tl_emalloc(strlen(s) + 1);
 	strcpy(sp->name, s);
 	sp->next = symtab[h];
 	symtab[h] = sp;

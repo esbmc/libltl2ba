@@ -176,7 +176,7 @@ Node	*push_negation(tl_Symtab symtab, Node *);
 Node	*right_linked(Node *);
 Node	*tl_nn(int, Node *, Node *);
 
-Symbol	*tl_lookup(tl_Symtab symtab, char *);
+Symbol	*tl_lookup(tl_Symtab symtab, const char *);
 
 char	*emalloc(int);
 
