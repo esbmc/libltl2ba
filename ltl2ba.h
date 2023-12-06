@@ -169,8 +169,8 @@ typedef enum {
 Node	*Canonical(tl_Symtab symtab, Node *);
 Node	*canonical(tl_Symtab symtab, Node *);
 Node	*cached(tl_Symtab symtab, Node *);
-Node	*dupnode(Node *);
-Node	*getnode(Node *);
+Node	*dupnode(const Node *);
+Node	*getnode(const Node *);
 Node	*in_cache(Node *);
 Node	*push_negation(tl_Symtab symtab, Node *);
 Node	*right_linked(Node *);
@@ -227,8 +227,8 @@ void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr, int s
 void print_dot_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr);
 void print_spin_buchi(const char **sym_table);
 
-ATrans *dup_trans(ATrans *);
-ATrans *merge_trans(ATrans *, ATrans *);
+ATrans *dup_trans(const ATrans *);
+ATrans *merge_trans(const ATrans *, const ATrans *);
 void do_merge_trans(ATrans **, const ATrans *, const ATrans *);
 
 int  *new_set(int);

@@ -214,12 +214,12 @@ marknode(int tok, Node *m)
 	m->ntyp = -1;
 }
 
-Node *
-Canonical(tl_Symtab symtab, Node *n)
-{	Node *m, *p, *k1, *k2, *prev, *dflt = ZN;
+Node * Canonical(tl_Symtab symtab, Node *n)
+{
+	Node *m, *p, *k1, *k2, *prev, *dflt = ZN;
 	int tok;
 
-	if (!n) return n;
+	if (!n) return NULL;
 
 	tok = n->ntyp;
 	if (tok != AND && tok != OR)

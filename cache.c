@@ -23,8 +23,8 @@ extern FILE	*tl_out;
 static Cache	*stored = (Cache *) 0;
 static unsigned long	Caches, CacheHits;
 
-static int	ismatch(Node *, Node *);
-int	sameform(const Node *, const Node *);
+static int ismatch(const Node *, const Node *);
+static int sameform(const Node *, const Node *);
 
 void
 cache_dump(void)
@@ -42,22 +42,24 @@ cache_dump(void)
 	fprintf(stderr, "============\n");
 }
 
-Node *
-in_cache(Node *n)
-{	Cache *d; int nr=0;
+Node * in_cache(Node *n)
+{
+	Cache *d;
+	int nr=0;
 
 	for (d = stored; d; d = d->nxt, nr++)
 		if (isequal(d->before, n))
-		{	CacheHits++;
+		{
+			CacheHits++;
 			if (d->same && ismatch(n, d->before)) return n;
 			return dupnode(d->after);
 		}
 	return ZN;
 }
 
-Node *
-cached(tl_Symtab symtab, Node *n)
-{	Cache *d;
+Node * cached(tl_Symtab symtab, Node *n)
+{
+	Cache *d;
 	Node *m;
 
 	if (!n) return n;
@@ -111,13 +113,14 @@ tl_nn(int t, Node *ll, Node *rl)
 	return n;
 }
 
-Node *
-getnode(Node *p)
-{	Node *n;
+Node * getnode(const Node *p)
+{
+	Node *n;
 
-	if (!p) return p;
+	if (!p)
+		return NULL;
 
-	n =  (Node *) tl_emalloc(sizeof(Node));
+	n = tl_emalloc(sizeof(Node));
 	n->ntyp = p->ntyp;
 	n->sym  = p->sym; /* same name */
 	n->lft  = p->lft;
@@ -126,11 +129,12 @@ getnode(Node *p)
 	return n;
 }
 
-Node *
-dupnode(Node *n)
-{	Node *d;
+Node * dupnode(const Node *n)
+{
+	Node *d;
 
-	if (!n) return n;
+	if (!n)
+		return NULL;
 	d = getnode(n);
 	d->lft = dupnode(n->lft);
 	d->rgt = dupnode(n->rgt);
@@ -179,7 +183,7 @@ int sametrees(int ntyp, const Node *a, const Node *b)
 }
 
 /* a better isequal() */
-int sameform(const Node *a, const Node *b)
+static int sameform(const Node *a, const Node *b)
 {
 	if (!a && !b) return 1;
 	if (!a || !b) return 0;
@@ -252,8 +256,7 @@ int isequal(const Node *a, const Node *b)
 	return sameform(a, b);
 }
 
-static int
-ismatch(Node *a, Node *b)
+static int ismatch(const Node *a, const Node *b)
 {
 	if (!a && !b) return 1;
 	if (!a || !b) return 0;

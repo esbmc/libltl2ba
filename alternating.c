@@ -63,10 +63,10 @@ static int calculate_sym_size(const Node *p)
   }
 }
 
-ATrans *dup_trans(ATrans *trans)  /* returns the copy of a transition */
+ATrans *dup_trans(const ATrans *trans)  /* returns the copy of a transition */
 {
   ATrans *result;
-  if(!trans) return trans;
+  if(!trans) return NULL;
   result = emalloc_atrans();
   copy_set(trans->to,  result->to,  node_size);
   copy_set(trans->pos, result->pos, sym_size);
@@ -92,7 +92,8 @@ void do_merge_trans(ATrans **result, const ATrans *trans1, const ATrans *trans2)
   }
 }
 
-ATrans *merge_trans(ATrans *trans1, ATrans *trans2) /* merges two transitions */
+/* merges two transitions */
+ATrans *merge_trans(const ATrans *trans1, const ATrans *trans2)
 {
   ATrans *result = emalloc_atrans();
   do_merge_trans(&result, trans1, trans2);
