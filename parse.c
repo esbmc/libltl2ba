@@ -16,7 +16,7 @@ extern int	tl_verbose, tl_simp_log;
 extern FILE	*tl_out;
 
 int	tl_yychar = 0;
-YYSTYPE	tl_yylval;
+Node	*tl_yylval;
 
 static Node	*tl_factor(void);
 static Node	*tl_level(int);

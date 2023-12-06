@@ -17,7 +17,7 @@
 static Symbol	*symtab[Nhash+1];
 static int	tl_lex(void);
 
-extern YYSTYPE	tl_yylval;
+extern Node	*tl_yylval;
 static char	yytext[2048];
 
 int cexpr_idx = 0;

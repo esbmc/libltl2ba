@@ -235,9 +235,6 @@ void put_uform(void);
 #define Not(a)	push_negation(tl_nn(NOT, a, ZN))
 #define rewrite(n)	canonical(right_linked(n))
 
-typedef Node	*Nodeptr;
-#define YYSTYPE	 Nodeptr
-
 #define Debug(x)	{ if (0) fprintf(stderr, x); }
 #define Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
 #define Dump(x)		{ if (0) dump(x); }
