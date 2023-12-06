@@ -22,6 +22,25 @@
 #define EMPTY_SET (-1)
 #define SET_SIZE(elements) (elements/(8 * sizeof(int)) + 1)
 
+#define ZN	(Node *)0
+#define ZS	(Symbol *)0
+#define Nhash	255
+#define True	tl_nn(TRUE,  ZN, ZN)
+#define False	tl_nn(FALSE, ZN, ZN)
+#define Not(a)	push_negation(symtab, tl_nn(NOT, a, ZN))
+#define rewrite(n)	canonical(symtab, right_linked(n))
+
+#define Debug(x)	{ if (0) fprintf(stderr, x); }
+#define Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
+#define Dump(x)		{ if (0) dump(x); }
+#define Explain(x)	{ if (tl_verbose) tl_explain(x); }
+
+#define Assert(x, y)	{ if (!(x)) { tl_explain(y); \
+			  fatal(": assertion failed\n"); } }
+#define min(x,y)        ((x<y)?x:y)
+
+#undef TL_EMALLOC_VERBOSE
+
 typedef struct Symbol {
 char		*name;
 	struct Symbol	*next;	/* linked list, symbol table */
@@ -49,7 +68,6 @@ typedef struct AProd {
   struct AProd *nxt;
   struct AProd *prv;
 } AProd;
-
 
 typedef struct GTrans {
   int *pos;
@@ -102,25 +120,6 @@ enum {
 	NEXT,		/* 269 */
 };
 
-#define ZN	(Node *)0
-#define ZS	(Symbol *)0
-#define Nhash	255
-#define True	tl_nn(TRUE,  ZN, ZN)
-#define False	tl_nn(FALSE, ZN, ZN)
-#define Not(a)	push_negation(symtab, tl_nn(NOT, a, ZN))
-#define rewrite(n)	canonical(symtab, right_linked(n))
-
-#define Debug(x)	{ if (0) fprintf(stderr, x); }
-#define Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
-#define Dump(x)		{ if (0) dump(x); }
-#define Explain(x)	{ if (tl_verbose) tl_explain(x); }
-
-#define Assert(x, y)	{ if (!(x)) { tl_explain(y); \
-			  fatal(": assertion failed\n"); } }
-#define min(x,y)        ((x<y)?x:y)
-
-#undef TL_EMALLOC_VERBOSE
-
 typedef Symbol *tl_Symtab[Nhash + 1];
 
 typedef struct {
@@ -143,6 +142,24 @@ typedef enum {
 	TL_FJTOFJ    = 1 << 5, /* 2eme fj */
 	TL_VERBOSE   = 1 << 6,
 } tl_Flags;
+
+typedef struct {
+  ATrans **transition;
+  int *final_set;
+  int node_id; /* really the number of nodes */
+  int sym_id; /* number of symbols */
+  const char **sym_table;
+} Alternating;
+
+typedef struct {
+  GState *gstates, **init;
+  int init_size, gstate_id, *final, scc_size;
+} Generalized;
+
+typedef struct {
+  BState *bstates;
+  int accept;
+} Buchi;
 
 Node	*Canonical(tl_Symtab symtab, Node *);
 Node	*canonical(tl_Symtab symtab, Node *);
@@ -182,24 +199,6 @@ void	tl_explain(int);
 void	tl_UnGetchar(void);
 Node *	tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags);
 void	tl_yyerror(tl_Lexer *lex, char *);
-
-typedef struct {
-  ATrans **transition;
-  int *final_set;
-  int node_id; /* really the number of nodes */
-  int sym_id; /* number of symbols */
-  const char **sym_table;
-} Alternating;
-
-typedef struct {
-  GState *gstates, **init;
-  int init_size, gstate_id, *final, scc_size;
-} Generalized;
-
-typedef struct {
-  BState *bstates;
-  int accept;
-} Buchi;
 
 Alternating mk_alternating(const Node *, const tl_Cexprtab *cexpr, tl_Flags flags);
 Generalized mk_generalized(const Alternating *, tl_Flags flags);
