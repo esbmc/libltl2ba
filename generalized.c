@@ -638,10 +638,6 @@ Generalized mk_generalized(const Alternating *alt, tl_Flags flags)
   }
 
   tfree(gstack);
-  /*for(i = 0; i < alt->node_id; i++) // frees the data from the alternating automaton */
-  /*free_atrans(transition[i], 1);*/
-  free_all_atrans();
-  tfree(alt->transition);
 
   if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nGeneralized Buchi automaton before simplification\n");

@@ -135,6 +135,12 @@ tl_main(char  *formula, tl_Flags flags)
 	releasenode(1, p);
 
 	Generalized gen = mk_generalized(&alt, flags);
+	// free the data from the alternating automaton
+	/* for(i = 0; i < alt->node_id; i++)
+		free_atrans(transition[i], 1); */
+	free_all_atrans();
+	tfree(alt.transition);
+
 	mk_buchi(&gen, flags);
 
 	switch (outmode) {
