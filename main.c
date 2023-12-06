@@ -132,8 +132,8 @@ tl_main(char  *formula, tl_Flags flags)
 	}
 
 	Alternating alt = mk_alternating(p, &cexpr, flags);
-	mk_generalized(&alt, flags);
-	mk_buchi(flags);
+	Generalized gen = mk_generalized(&alt, flags);
+	mk_buchi(&gen, flags);
 
 	switch (outmode) {
 	case none:	break;

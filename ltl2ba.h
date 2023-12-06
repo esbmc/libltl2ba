@@ -214,9 +214,14 @@ typedef struct {
   char **sym_table;
 } Alternating;
 
+typedef struct {
+  GState *gstates, **init;
+  int init_size, gstate_id, *final, scc_size;
+} Generalized;
+
 Alternating mk_alternating(Node *, tl_Cexprtab *cexpr, tl_Flags flags);
-void    mk_generalized(Alternating *, tl_Flags flags);
-void    mk_buchi(tl_Flags);
+Generalized mk_generalized(Alternating *, tl_Flags flags);
+void    mk_buchi(Generalized *g, tl_Flags);
 
 void print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id);
 void print_dot_buchi(char **sym_table, tl_Cexprtab *cexpr);

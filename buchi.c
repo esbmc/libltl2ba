@@ -12,12 +12,7 @@
 |*              Structures and shared variables                     *|
 \********************************************************************/
 
-extern GState **init, *gstates;
-extern int init_size, *final;
-
-extern int sym_size, scc_size;
-
-extern int gstate_id;
+extern int sym_size;
 
 extern FILE *tl_out;
 
@@ -206,7 +201,7 @@ static int all_btrans_match(BState *a, BState *b)
   return 1;
 }
 
-static int simplify_bstates(tl_Flags flags) /* eliminates redundant states */
+static int simplify_bstates(tl_Flags flags, int *gstate_id) /* eliminates redundant states */
 {
   BState *s, *s1, *s2;
   int changed = 0;
@@ -273,7 +268,7 @@ static int simplify_bstates(tl_Flags flags) /* eliminates redundant states */
   for (s = bstates->nxt; s != bstates; s = s->nxt) {  /* For all states s*/
     for (s2 = s->nxt; s2 != bstates; s2 = s2->nxt) {  /*  and states s2 to the right of s */
       if(s->final == s2->final && s->id == s2->id) {  /* if final and id match */
-        s->id = ++gstate_id;                          /* disambiguate by assigning unused id */
+        s->id = ++*gstate_id;                         /* disambiguate by assigning unused id */
       }
     }
   }
@@ -388,15 +383,15 @@ static BState *find_bstate(GState **state, int final, BState *s)
   return s;
 }
 
-static int next_final(int *set, int fin) /* computes the 'final' value */
+static int next_final(int *set, int fin, const int *final) /* computes the 'final' value */
 {
   if((fin != accept) && in_set(set, final[fin + 1]))
-    return next_final(set, fin + 1);
+    return next_final(set, fin + 1, final);
   return fin;
 }
 
 /* creates all the transitions from a state */
-static void make_btrans(BState *s, tl_Flags flags)
+static void make_btrans(BState *s, const int *final, tl_Flags flags)
 {
   int state_trans = 0;
   GTrans *t;
@@ -404,7 +399,7 @@ static void make_btrans(BState *s, tl_Flags flags)
   BState *s1;
   if(s->gstate->trans)
     for(t = s->gstate->trans->nxt; t != s->gstate->trans; t = t->nxt) {
-      int fin = next_final(t->final, (s->final == accept) ? 0 : s->final);
+      int fin = next_final(t->final, (s->final == accept) ? 0 : s->final, final);
       BState *to = find_bstate(&t->to, fin, s);
 
       for(t1 = s->trans->nxt; t1 != s->trans;) {
@@ -483,12 +478,12 @@ static void make_btrans(BState *s, tl_Flags flags)
 |*                  Display of the Buchi automaton                  *|
 \********************************************************************/
 
-static void print_buchi(BState *s) /* dumps the Buchi automaton */
+static void print_buchi(BState *s, int scc_size) /* dumps the Buchi automaton */
 {
   BTrans *t;
   if(s == bstates) return;
 
-  print_buchi(s->nxt); /* begins with the last state */
+  print_buchi(s->nxt, scc_size); /* begins with the last state */
 
   fprintf(tl_out, "state ");
   if(s->id == -1)
@@ -668,13 +663,13 @@ void print_dot_buchi(char **sym_table, tl_Cexprtab *cexpr) {
 \********************************************************************/
 
 /* generates a Buchi automaton from the generalized Buchi automaton */
-void mk_buchi(tl_Flags flags)
+void mk_buchi(Generalized *g, tl_Flags flags)
 {
   int i;
   BState *s = (BState *)tl_emalloc(sizeof(BState));
   GTrans *t;
   BTrans *t1;
-  accept = final[0] - 1;
+  accept = g->final[0] - 1;
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
@@ -696,10 +691,10 @@ void mk_buchi(tl_Flags flags)
   s->gstate = 0;
   s->trans = emalloc_btrans(); /* sentinel */
   s->trans->nxt = s->trans;
-  for(i = 0; i < init_size; i++)
-    if(init[i])
-      for(t = init[i]->trans->nxt; t != init[i]->trans; t = t->nxt) {
-	int fin = next_final(t->final, 0);
+  for(i = 0; i < g->init_size; i++)
+    if(g->init[i])
+      for(t = g->init[i]->trans->nxt; t != g->init[i]->trans; t = t->nxt) {
+	int fin = next_final(t->final, 0, g->final);
 	BState *to = find_bstate(&t->to, fin, s);
 	for(t1 = s->trans->nxt; t1 != s->trans;) {
 	  if((flags & TL_SIMP_FLY) &&
@@ -741,7 +736,7 @@ void mk_buchi(tl_Flags flags)
       free_bstate(s);
       continue;
     }
-    make_btrans(s, flags);
+    make_btrans(s, g->final, flags);
   }
 
   retarget_all_btrans();
@@ -759,7 +754,7 @@ void mk_buchi(tl_Flags flags)
 
   if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nBuchi automaton before simplification\n");
-    print_buchi(bstates->nxt);
+    print_buchi(bstates->nxt, g->scc_size);
     if(bstates == bstates->nxt)
       fprintf(tl_out, "empty automaton, refuses all words\n");
   }
@@ -767,14 +762,14 @@ void mk_buchi(tl_Flags flags)
   if(flags & TL_SIMP_DIFF) {
     simplify_btrans(flags);
     if(flags & TL_SIMP_SCC) simplify_bscc();
-    while(simplify_bstates(flags)) { /* simplifies as much as possible */
+    while(simplify_bstates(flags, &g->gstate_id)) { /* simplifies as much as possible */
       simplify_btrans(flags);
       if(flags & TL_SIMP_SCC) simplify_bscc();
     }
 
     if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nBuchi automaton after simplification\n");
-      print_buchi(bstates->nxt);
+      print_buchi(bstates->nxt, g->scc_size);
       if(bstates == bstates->nxt)
 	fprintf(tl_out, "empty automaton, refuses all words\n");
       fprintf(tl_out, "\n");

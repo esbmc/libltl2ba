@@ -15,7 +15,6 @@
 extern FILE *tl_out;
 
 int node_size, sym_size;
-extern int scc_size;
 
 struct counts {
   int astate_count, atrans_count;
@@ -367,7 +366,8 @@ static void print_alternating(Node **label, tl_Cexprtab *cexpr, Alternating *alt
 	fprintf(tl_out, "1");
       print_sym_set(alt->sym_table, cexpr, t->pos, sym_size);
       if (!empty_set(t->pos,sym_size) && !empty_set(t->neg,sym_size)) fprintf(tl_out, " & ");
-      print_set(t->neg, scc_size);
+      print_set(t->neg, 0 /* TODO: was 'scc_size', but that's only initialized
+                           * later for the generalized automaton */);
       fprintf(tl_out, " -> ");
       print_set(t->to, node_size);
       fprintf(tl_out, "\n");
