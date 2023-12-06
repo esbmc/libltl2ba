@@ -32,7 +32,6 @@ static int rank;
 int **stutter_accept_table = NULL;
 int *optimistic_accept_state_set = NULL;
 int *pessimistic_accept_state_set = NULL;
-static int g_num_states = 0;
 
 extern const char *c_sym_name_prefix;
 
@@ -883,11 +882,12 @@ static void print_state_name(BState *s, const char *prefix)
   return;
 }
 
-static void print_c_buchi_body(const char *const *sym_table, const char *prefix)
+static int print_c_buchi_body(const char *const *sym_table, const char *prefix)
 {
   BTrans *t, *t1;
   BState *s;
   int choice_count;
+  int g_num_states = 0;
 
   /* Calculate number of states, globally */
   for (s = bstates->prv; s != bstates; s = s->prv)
@@ -950,7 +950,7 @@ static void print_c_buchi_body(const char *const *sym_table, const char *prefix)
   fprintf(tl_out, "\t\t\t%s_visited_states[%s_statevar]++;\n\n", prefix, prefix);
   fprintf(tl_out, "\t\t__ESBMC_really_atomic_end();\n");
 
-  return;
+  return g_num_states;
 }
 
 static void print_c_buchi_body_tail(void)
@@ -1378,7 +1378,8 @@ static void print_behaviours(const char *const *sym_table,
     fprintf(tl_out,"\n");
 }
 
-static void print_c_accept_tables(const char *const *sym_table, int sym_id)
+static void print_c_accept_tables(const char *const *sym_table, int sym_id,
+                                  int g_num_states)
 {
   int sym_comb, state, i;
 
@@ -1483,14 +1484,14 @@ void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr, int s
 
   print_fsm_func_opener();
 
-  print_c_buchi_body(sym_table, c_sym_name_prefix);
+  int g_num_states = print_c_buchi_body(sym_table, c_sym_name_prefix);
 
   print_c_buchi_body_tail();
 
   /* Some things vaguely in the shape of a modelling api */
   print_c_buchi_util_funcs(c_sym_name_prefix);
 
-  print_c_accept_tables(sym_table, sym_id);
+  print_c_accept_tables(sym_table, sym_id, g_num_states);
 
   print_c_epilog();
   return;
