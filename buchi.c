@@ -33,17 +33,19 @@ static int g_num_states = 0;
 
 extern const char *c_sym_name_prefix;
 
+int state_count=0;
+
 /********************************************************************\
 |*        Simplification of the generalized Buchi automaton         *|
 \********************************************************************/
 
-void free_bstate(BState *s) /* frees a state and its transitions */
+static void free_bstate(BState *s) /* frees a state and its transitions */
 {
   free_btrans(s->trans->nxt, s->trans, 1);
   tfree(s);
 }
 
-BState *remove_bstate(BState *s, BState *s1) /* removes a state */
+static BState *remove_bstate(BState *s, BState *s1) /* removes a state */
 {
   BState *prv = s->prv;
   s->prv->nxt = s->nxt;
@@ -59,13 +61,13 @@ BState *remove_bstate(BState *s, BState *s1) /* removes a state */
   return prv;
 }
 
-void copy_btrans(BTrans *from, BTrans *to) {
+static void copy_btrans(BTrans *from, BTrans *to) {
   to->to    = from->to;
   copy_set(from->pos, to->pos, sym_size);
   copy_set(from->neg, to->neg, sym_size);
 }
 
-int simplify_btrans(tl_Flags flags) /* simplifies the transitions */
+static int simplify_btrans(tl_Flags flags) /* simplifies the transitions */
 {
   BState *s;
   BTrans *t, *t1;
@@ -108,15 +110,17 @@ int simplify_btrans(tl_Flags flags) /* simplifies the transitions */
   return changed;
 }
 
-int same_btrans(BTrans *s, BTrans *t) /* returns 1 if the transitions are identical */
+/* returns 1 if the transitions are identical */
+static int same_btrans(BTrans *s, BTrans *t)
 {
   return((s->to == t->to) &&
 	 same_sets(s->pos, t->pos, sym_size) &&
 	 same_sets(s->neg, t->neg, sym_size));
 }
 
-void remove_btrans(BState *to)
-{             /* redirects transitions before removing a state from the automaton */
+/* redirects transitions before removing a state from the automaton */
+static void remove_btrans(BState *to)
+{
   BState *s;
   BTrans *t;
   for (s = bstates->nxt; s != bstates; s = s->nxt)
@@ -132,8 +136,9 @@ void remove_btrans(BState *to)
       }
 }
 
-void retarget_all_btrans()
-{             /* redirects transitions before removing a state from the automaton */
+/* redirects transitions before removing a state from the automaton */
+static void retarget_all_btrans(void)
+{
   BState *s;
   BTrans *t;
   for (s = bstates->nxt; s != bstates; s = s->nxt)
@@ -157,7 +162,8 @@ void retarget_all_btrans()
   }
 }
 
-int all_btrans_match(BState *a, BState *b) /* decides if the states are equivalent */
+/* decides if the states are equivalent */
+static int all_btrans_match(BState *a, BState *b)
 {
   BTrans *s, *t;
 
@@ -192,7 +198,7 @@ int all_btrans_match(BState *a, BState *b) /* decides if the states are equivale
   return 1;
 }
 
-int simplify_bstates(tl_Flags flags) /* eliminates redundant states */
+static int simplify_bstates(tl_Flags flags) /* eliminates redundant states */
 {
   BState *s, *s1, *s2;
   int changed = 0;
@@ -275,7 +281,7 @@ int simplify_bstates(tl_Flags flags) /* eliminates redundant states */
   return changed;
 }
 
-int bdfs(BState *s) {
+static int bdfs(BState *s) {
   BTrans *t;
   BScc *c;
   BScc *scc = (BScc *)tl_emalloc(sizeof(BScc));
@@ -312,7 +318,8 @@ int bdfs(BState *s) {
   return scc->theta;
 }
 
-void simplify_bscc() {
+
+static void simplify_bscc() {
   BState *s;
   rank = 1;
   scc_stack = 0;
@@ -336,7 +343,7 @@ void simplify_bscc() {
 |*              Generation of the Buchi automaton                   *|
 \********************************************************************/
 
-BState *find_bstate(GState **state, int final, BState *s)
+static BState *find_bstate(GState **state, int final, BState *s)
 {                       /* finds the corresponding state, or creates it */
   if((s->gstate == *state) && (s->final == final)) return s; /* same state */
 
@@ -373,7 +380,7 @@ BState *find_bstate(GState **state, int final, BState *s)
   return s;
 }
 
-int next_final(int *set, int fin) /* computes the 'final' value */
+static int next_final(int *set, int fin) /* computes the 'final' value */
 {
   if((fin != accept) && in_set(set, final[fin + 1]))
     return next_final(set, fin + 1);
@@ -381,7 +388,7 @@ int next_final(int *set, int fin) /* computes the 'final' value */
 }
 
 /* creates all the transitions from a state */
-void make_btrans(BState *s, tl_Flags flags)
+static void make_btrans(BState *s, tl_Flags flags)
 {
   int state_trans = 0;
   GTrans *t;
@@ -468,7 +475,7 @@ void make_btrans(BState *s, tl_Flags flags)
 |*                  Display of the Buchi automaton                  *|
 \********************************************************************/
 
-void print_buchi(BState *s) /* dumps the Buchi automaton */
+static void print_buchi(BState *s) /* dumps the Buchi automaton */
 {
   BTrans *t;
   if(s == bstates) return;
@@ -580,7 +587,7 @@ void print_spin_buchi(char **sym_table) {
   fprintf(tl_out, "}\n");
 }
 
-void print_dot_state_name(BState *s) {
+static void print_dot_state_name(BState *s) {
   if (s->id == -1) fprintf(tl_out, "init");
   else if (s->id == 0) fprintf(tl_out,"all");
   else {
@@ -652,8 +659,9 @@ void print_dot_buchi(char **sym_table, tl_Cexprtab *cexpr) {
 |*                       Main method                                *|
 \********************************************************************/
 
+/* generates a Buchi automaton from the generalized Buchi automaton */
 void mk_buchi(tl_Flags flags)
-{/* generates a Buchi automaton from the generalized Buchi automaton */
+{
   int i;
   BState *s = (BState *)tl_emalloc(sizeof(BState));
   GTrans *t;
@@ -768,8 +776,7 @@ void mk_buchi(tl_Flags flags)
   tl_out = f;
 }
 
-void
-print_c_headers(tl_Cexprtab *cexpr)
+static void print_c_headers(tl_Cexprtab *cexpr)
 {
   int i;
 
@@ -799,8 +806,7 @@ print_c_headers(tl_Cexprtab *cexpr)
   return;
 }
 
-int
-print_enum_decl(void)
+static int print_enum_decl(void)
 {
   BState *s;
   int num_states = 0;
@@ -818,8 +824,7 @@ print_enum_decl(void)
   return num_states;
 }
 
-void
-print_buchi_statevars(const char *prefix, int num_states)
+static void print_buchi_statevars(const char *prefix, int num_states)
 {
   BState *s;
 
@@ -832,8 +837,7 @@ print_buchi_statevars(const char *prefix, int num_states)
 		  prefix, num_states);
 }
 
-void
-print_fsm_func_opener(void)
+static void print_fsm_func_opener(void)
 {
 
   fprintf(tl_out, "void\nltl2ba_fsm(bool state_stats, unsigned int num_iters)\n{\n");
@@ -850,8 +854,7 @@ print_fsm_func_opener(void)
   return;
 }
 
-void
-print_transition_guard(BTrans *t, BState *state, char **sym_table)
+static void print_transition_guard(BTrans *t, BState *state, char **sym_table)
 {
   BTrans *t1;
   spin_print_set(sym_table, t->pos, t->neg);
@@ -863,15 +866,13 @@ print_transition_guard(BTrans *t, BState *state, char **sym_table)
   }
 }
 
-void
-print_state_name(BState *s, const char *prefix)
+static void print_state_name(BState *s, const char *prefix)
 {
   fprintf(tl_out, "%s_state_%d", prefix, s->label);
   return;
 }
 
-void
-print_c_buchi_body(char **sym_table, const char *prefix)
+static void print_c_buchi_body(char **sym_table, const char *prefix)
 {
   BTrans *t, *t1;
   BState *s;
@@ -941,8 +942,7 @@ print_c_buchi_body(char **sym_table, const char *prefix)
   return;
 }
 
-void
-print_c_buchi_body_tail(void)
+static void print_c_buchi_body_tail(void)
 {
   fprintf(tl_out, "\
 		__ESBMC_switch_from_monitor();\n\
@@ -956,8 +956,7 @@ print_c_buchi_body_tail(void)
 ");
 }
 
-void
-print_c_buchi_util_funcs(const char *prefix)
+static void print_c_buchi_util_funcs(const char *prefix)
 {
   fprintf(tl_out, "\
 #ifndef LTL_PREFIX_BOUND\n\
@@ -988,9 +987,7 @@ pthread_t ltl2ba_start_monitor(void)\n\
 ");
 }
 
-int state_count=0;
-
-int increment_symbol_set(int *s, int sym_id)
+static int increment_symbol_set(int *s, int sym_id)
 {
   int i,j;
   for(i=0; i< sym_id && in_set(s, i); i++);
@@ -1008,7 +1005,7 @@ typedef struct Slist {
   int * set;
   struct Slist * nxt; } Slist;
 
-int * reachability(int * m, int rows)
+static int * reachability(int * m, int rows)
 {
 /* This function takes a rows * cols integer array and repeatedly applies the transformation
  * M <- M*M + M to a fixed point, where the elementwise + operator is boolean OR and the * is
@@ -1039,9 +1036,9 @@ int * reachability(int * m, int rows)
 int state_size;
 int *full_state_set;
 
-int *pess_recurse1(Slist **tr, Slist* sl, int depth);
+static int *pess_recurse1(Slist **tr, Slist* sl, int depth);
 
-int* pess_recurse3(Slist **tr, int i, int depth) {
+static int* pess_recurse3(Slist **tr, int i, int depth) {
 /* Okay, we've now pessimistically picked a set and optimistically picked
  * an element within it. So we just have to iterate the depth */
   depth--;
@@ -1051,7 +1048,7 @@ int* pess_recurse3(Slist **tr, int i, int depth) {
 }
 
 
-int* pess_recurse2(Slist **tr, int * s, int depth) {
+static int* pess_recurse2(Slist **tr, int * s, int depth) {
 /* Optimistically pick an element out of the set */
   int i;
   int *t;
@@ -1065,7 +1062,7 @@ int* pess_recurse2(Slist **tr, int * s, int depth) {
 
 
 
-int *pess_recurse1(Slist **tr, Slist* sl, int depth) {
+static int *pess_recurse1(Slist **tr, Slist* sl, int depth) {
 /* Pessimistically pick a set out of p->slist */
   int * reach = dup_set(full_state_set,state_size);
   int *t, *t1;
@@ -1078,7 +1075,7 @@ int *pess_recurse1(Slist **tr, Slist* sl, int depth) {
 }
 
 
-int * pess_reach(Slist **tr, int st, int depth) {
+static int * pess_reach(Slist **tr, int st, int depth) {
 /* We are looking for states which are reachable down _all_ the imposed Slist elements
  * So, the one-step reachable states are simply the intersection of all the Slist elements.
  * The two-step reachable states are those for which we can pick an element of each slist element and replace it
@@ -1090,8 +1087,7 @@ int * pess_reach(Slist **tr, int st, int depth) {
   return pess_recurse1(tr, tr[st], depth);
 }
 
-void
-print_behaviours(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
+static void print_behaviours(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
 {
     BState *s;
     BTrans *t;
@@ -1370,8 +1366,10 @@ print_behaviours(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
     fprintf(tl_out,"\n");
 }
 
-void
-print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
+static void print_c_accept_tables(char **sym_table, int sym_id);
+static void print_c_epilog(void);
+
+void print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
 {
   BTrans *t, *t1;
   BState *s;
@@ -1412,8 +1410,7 @@ print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
   return;
 }
 
-void
-print_c_accept_tables(char **sym_table, int sym_id)
+static void print_c_accept_tables(char **sym_table, int sym_id)
 {
   int sym_comb, state, i;
 
@@ -1464,8 +1461,7 @@ print_c_accept_tables(char **sym_table, int sym_id)
   return;
 }
 
-void
-print_c_epilog(void)
+static void print_c_epilog(void)
 {
 
   fprintf(tl_out, "void\nltl2ba_finish_monitor(pthread_t t)\n{\n");

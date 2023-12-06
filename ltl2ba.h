@@ -262,8 +262,6 @@ int  in_set(int *, int);
 int  *list_set(int *, int);
 
 void print_sym_set(char **sym_table, tl_Cexprtab *cexpr, int *l, int size);
-void print_c_accept_tables(char **sym_table, int sym_id);
-void print_c_epilog(void);
 
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);
 
