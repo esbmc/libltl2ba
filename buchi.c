@@ -23,7 +23,7 @@ typedef struct BScc {
   struct BScc *nxt;
 } BScc;
 
-BState *bstack, *bstates, *bremoved;
+static BState *bstack, *bstates, *bremoved;
 static BScc *scc_stack;
 static int accept;
 static int rank;
