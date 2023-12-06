@@ -21,10 +21,11 @@ int init_size = 0, gstate_id = 1, *final, scc_size;
 
 static GState *gstack, *gremoved;
 static GScc *scc_stack;
-static int gstate_count = 0, gtrans_count = 0, scc_id, *bad_scc;
+static int gstate_count = 0, gtrans_count = 0, *bad_scc;
 
 struct gdfs_state {
   int rank;
+  int scc_id;
 };
 
 static void print_generalized(void);
@@ -265,10 +266,10 @@ static int gdfs(GState *s, struct gdfs_state *st) {
   }
   if(scc->rank == scc->theta) {
     while(scc_stack != scc) {
-      scc_stack->gstate->incoming = scc_id;
+      scc_stack->gstate->incoming = st->scc_id;
       scc_stack = scc_stack->nxt;
     }
-    scc->gstate->incoming = scc_id++;
+    scc->gstate->incoming = st->scc_id++;
     scc_stack = scc->nxt;
   }
   return scc->theta;
@@ -281,7 +282,7 @@ static void simplify_gscc(int *final_set) {
   struct gdfs_state st;
   st.rank = 1;
   scc_stack = 0;
-  scc_id = 1;
+  st.scc_id = 1;
 
   if(gstates == gstates->nxt) return;
 
@@ -292,8 +293,8 @@ static void simplify_gscc(int *final_set) {
     if(init[i] && init[i]->incoming == 0)
       gdfs(init[i], &st);
 
-  scc_final = (int **)tl_emalloc(scc_id * sizeof(int *));
-  for(i = 0; i < scc_id; i++)
+  scc_final = (int **)tl_emalloc(st.scc_id * sizeof(int *));
+  for(i = 0; i < st.scc_id; i++)
     scc_final[i] = make_set(-1,node_size);
 
   for(s = gstates->nxt; s != gstates; s = s->nxt)
@@ -304,14 +305,14 @@ static void simplify_gscc(int *final_set) {
         if(t->to->incoming == s->incoming)
           merge_sets(scc_final[s->incoming], t->final, node_size);
 
-  scc_size = SET_SIZE(scc_id + 1);
+  scc_size = SET_SIZE(st.scc_id + 1);
   bad_scc=make_set(-1,scc_size);
 
-  for(i = 0; i < scc_id; i++)
+  for(i = 0; i < st.scc_id; i++)
     if(!included_set(final_set, scc_final[i], node_size))
        add_set(bad_scc, i);
 
-  for(i = 0; i < scc_id; i++)
+  for(i = 0; i < st.scc_id; i++)
     tfree(scc_final[i]);
   tfree(scc_final);
 }
