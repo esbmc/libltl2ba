@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_fjtofj, node_id;
+extern int node_id;
 
 extern int node_size, sym_size;
 
@@ -315,12 +315,12 @@ void simplify_gscc(int *final_set) {
 \********************************************************************/
 
 /*is the transition final for i ?*/
-int is_final(int *from, ATrans *at, int i,ATrans **transition)
+int is_final(int *from, ATrans *at, int i,ATrans **transition, tl_Flags flags)
 {
   ATrans *t;
   int in_to;
-  if((tl_fjtofj && !in_set(at->to, i)) ||
-    (!tl_fjtofj && !in_set(from,  i))) return 1;
+  if(((flags & TL_FJTOFJ) && !in_set(at->to, i)) ||
+    (!(flags & TL_FJTOFJ) && !in_set(from,  i))) return 1;
   in_to = in_set(at->to, i);
   rem_set(at->to, i);
   for(t = transition[i]; t; t = t->nxt)
@@ -403,7 +403,7 @@ void make_gtrans(GState *s, ATrans **transition, tl_Flags flags) {
       GTrans *trans, *t2;
       clear_set(fin, node_size);
       for(i = 1; i < final[0]; i++)
-	if(is_final(s->nodes_set, t1, final[i], transition))
+	if(is_final(s->nodes_set, t1, final[i], transition, flags))
 	  add_set(fin, final[i]);
       for(t2 = s->trans->nxt; t2 != s->trans;) {
 	if((flags & TL_SIMP_FLY) &&

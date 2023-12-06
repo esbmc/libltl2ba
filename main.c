@@ -15,7 +15,6 @@
 
 FILE	*tl_out;
 
-int tl_fjtofj    = 1;
 int	tl_errs      = 0;
 
 unsigned long	All_Mem = 0;
@@ -172,7 +171,7 @@ main(int argc, char *argv[])
 		case 'h': usage(0); break;
 		case 'F': ltl_file = optarg; break;
 		case 'f': add_ltl = optarg; break;
-		case 'a': tl_fjtofj = 0; break;
+		case 'a': flags &= ~TL_FJTOFJ; break;
 		case 'c': flags &= ~TL_SIMP_SCC; break;
 		case 'o': flags &= ~TL_SIMP_FLY; break;
 		case 'p': flags &= ~TL_SIMP_DIFF; break;
