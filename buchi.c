@@ -515,7 +515,7 @@ static void print_buchi(BState *s, int scc_size) /* dumps the Buchi automaton */
   }
 }
 
-void print_spin_buchi(char **sym_table) {
+void print_spin_buchi(const char **sym_table) {
   BTrans *t;
   BState *s;
   int accept_all = 0;
@@ -599,7 +599,7 @@ static void print_dot_state_name(BState *s) {
   }
 }
 
-void print_dot_buchi(char **sym_table, tl_Cexprtab *cexpr) {
+void print_dot_buchi(const char **sym_table, tl_Cexprtab *cexpr) {
   BTrans *t;
   BState *s;
   int accept_all = 0, init_count = 0;
@@ -857,7 +857,8 @@ static void print_fsm_func_opener(void)
   return;
 }
 
-static void print_transition_guard(BTrans *t, BState *state, char **sym_table)
+static void print_transition_guard(BTrans *t, BState *state,
+                                   const char **sym_table)
 {
   BTrans *t1;
   spin_print_set(sym_table, t->pos, t->neg);
@@ -875,7 +876,7 @@ static void print_state_name(BState *s, const char *prefix)
   return;
 }
 
-static void print_c_buchi_body(char **sym_table, const char *prefix)
+static void print_c_buchi_body(const char **sym_table, const char *prefix)
 {
   BTrans *t, *t1;
   BState *s;
@@ -1090,7 +1091,8 @@ static int * pess_reach(Slist **tr, int st, int depth) {
   return pess_recurse1(tr, tr[st], depth);
 }
 
-static void print_behaviours(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
+static void print_behaviours(const char **sym_table, tl_Cexprtab *cexpr,
+                             int sym_id)
 {
     BState *s;
     BTrans *t;
@@ -1369,7 +1371,7 @@ static void print_behaviours(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
     fprintf(tl_out,"\n");
 }
 
-static void print_c_accept_tables(char **sym_table, int sym_id)
+static void print_c_accept_tables(const char **sym_table, int sym_id)
 {
   int sym_comb, state, i;
 
@@ -1446,7 +1448,7 @@ static void print_c_epilog(void)
   return;
 }
 
-void print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
+void print_c_buchi(const char **sym_table, tl_Cexprtab *cexpr, int sym_id)
 {
   BTrans *t, *t1;
   BState *s;

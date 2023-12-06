@@ -74,7 +74,7 @@ ATrans *dup_trans(ATrans *trans)  /* returns the copy of a transition */
   return result;
 }
 
-void do_merge_trans(ATrans **result, ATrans *trans1, ATrans *trans2)
+void do_merge_trans(ATrans **result, const ATrans *trans1, const ATrans *trans2)
 { /* merges two transitions */
   if(!trans1 || !trans2) {
     free_atrans(*result, 0);
@@ -100,7 +100,7 @@ ATrans *merge_trans(ATrans *trans1, ATrans *trans2) /* merges two transitions */
 }
 
 /* finds the id of the node, if already explored */
-static int already_done(const Node *p, const Node **label, int node_id)
+static int already_done(const Node *p, const Node *const *label, int node_id)
 {
   int i;
   for(i = 1; i<node_id; i++)
@@ -110,7 +110,7 @@ static int already_done(const Node *p, const Node **label, int node_id)
 }
 
 /* finds the id of a predicate, or attributes one */
-static int get_sym_id(char *s, Alternating *alt)
+static int get_sym_id(const char *s, Alternating *alt)
 {
   int i;
   for(i=0; i<alt->sym_id; i++)
@@ -404,7 +404,7 @@ Alternating mk_alternating(const Node *p, tl_Cexprtab *cexpr, tl_Flags flags)
   node_size = SET_SIZE(node_size);
 
   sym_size = calculate_sym_size(p); /* number of predicates */
-  if(sym_size) alt.sym_table = (char **) tl_emalloc(sym_size * sizeof(char *));
+  if(sym_size) alt.sym_table = tl_emalloc(sym_size * sizeof(char *));
   sym_size = SET_SIZE(sym_size);
 
   alt.final_set = make_set(-1, node_size);
