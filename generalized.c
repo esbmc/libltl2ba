@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_fjtofj, tl_simp_scc, node_id;
+extern int tl_fjtofj, node_id;
 
 extern int node_size, sym_size;
 
@@ -109,7 +109,7 @@ int simplify_gtrans(tl_Flags flags) /* simplifies the transitions */
           && included_set(t1->pos, t->pos, sym_size)
           && included_set(t1->neg, t->neg, sym_size)
           && (included_set(t->final, t1->final, node_size)  /* acceptance conditions of t are also in t1 or may be ignored */
-              || (tl_simp_scc && ((s->incoming != t->to->incoming) || in_set(bad_scc, s->incoming))))) )
+              || ((flags & TL_SIMP_SCC) && ((s->incoming != t->to->incoming) || in_set(bad_scc, s->incoming))))) )
         t1 = t1->nxt;
       if(t1 != s->trans) { /* remove transition t */
         GTrans *free = t->nxt;
@@ -210,7 +210,7 @@ int simplify_gstates(tl_Flags flags) /* eliminates redundant states */
     }
     gstates->trans = a->trans;
     b = a->nxt;
-    while(!all_gtrans_match(a, b, tl_simp_scc)) b = b->nxt;
+    while(!all_gtrans_match(a, b, (flags & TL_SIMP_SCC) != 0)) b = b->nxt;
     if(b != gstates) { /* a and b are equivalent */
       /* if scc(a)>scc(b) and scc(a) is non-trivial then all_gtrans_match(a,b,use_scc) must fail */
       if(a->incoming > b->incoming) /* scc(a) is trivial */
@@ -621,13 +621,13 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
   }
 
   if(flags & TL_SIMP_DIFF) {
-    if (tl_simp_scc) simplify_gscc(alt->final_set);
+    if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set);
     simplify_gtrans(flags);
-    if (tl_simp_scc) simplify_gscc(alt->final_set);
+    if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set);
     while(simplify_gstates(flags)) { /* simplifies as much as possible */
-      if (tl_simp_scc) simplify_gscc(alt->final_set);
+      if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set);
       simplify_gtrans(flags);
-      if (tl_simp_scc) simplify_gscc(alt->final_set);
+      if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set);
     }
 
     if(flags & TL_VERBOSE) {

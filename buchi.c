@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern GState **init, *gstates;
-extern int tl_simp_scc, init_size, *final;
+extern int init_size, *final;
 
 extern int sym_size, scc_size;
 
@@ -750,10 +750,10 @@ void mk_buchi(tl_Flags flags)
 
   if(flags & TL_SIMP_DIFF) {
     simplify_btrans(flags);
-    if(tl_simp_scc) simplify_bscc();
+    if(flags & TL_SIMP_SCC) simplify_bscc();
     while(simplify_bstates(flags)) { /* simplifies as much as possible */
       simplify_btrans(flags);
-      if(tl_simp_scc) simplify_bscc();
+      if(flags & TL_SIMP_SCC) simplify_bscc();
     }
 
     if(flags & TL_VERBOSE) {
