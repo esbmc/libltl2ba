@@ -18,7 +18,6 @@ FILE	*tl_out;
 int	tl_errs      = 0;
 
 unsigned long	All_Mem = 0;
-const char *c_sym_name_prefix = "_ltl2ba";
 
 static char	uform[4096];
 static int	hasuform=0, cnt=0;
@@ -92,7 +91,7 @@ usage: %s [-flag] -f 'formula'\n\
 }
 
 static void
-tl_main(char  *formula, tl_Flags flags)
+tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 {
 	for (int i = 0; formula[i]; i++)
 		if (formula[i] == '\t'
@@ -145,7 +144,7 @@ tl_main(char  *formula, tl_Flags flags)
 
 	switch (outmode) {
 	case none:	break;
-	case c: 	print_c_buchi(alt.sym_table, &cexpr, alt.sym_id); break;
+	case c: 	print_c_buchi(alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix); break;
 	case dot: 	print_dot_buchi(alt.sym_table, &cexpr); break;
 	case spin:
 	default:	print_spin_buchi(alt.sym_table); break;
@@ -168,6 +167,7 @@ main(int argc, char *argv[])
 	               | TL_SIMP_FLY
 	               | TL_SIMP_SCC
 	               | TL_FJTOFJ;
+	const char *c_sym_name_prefix = "_ltl2ba";
 	tl_out = stdout;
 
 	progname = argv[0] ? basename(argv[0]) : "";
@@ -237,7 +237,7 @@ main(int argc, char *argv[])
 		add_ltl = inv_formula;
 	}
 
-	tl_main(add_ltl, flags);
+	tl_main(add_ltl, flags, c_sym_name_prefix);
 
 	free(formula);
 	free(inv_formula);

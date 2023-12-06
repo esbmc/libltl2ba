@@ -16,8 +16,6 @@ extern int sym_size;
 
 extern FILE *tl_out;
 
-extern const char *c_sym_name_prefix;
-
 typedef struct BScc {
   struct BState *bstate;
   int rank;
@@ -793,7 +791,8 @@ void mk_buchi(Generalized *g, tl_Flags flags)
   tl_out = f;
 }
 
-static void print_c_headers(const tl_Cexprtab *cexpr)
+static void print_c_headers(const tl_Cexprtab *cexpr,
+                            const char *c_sym_name_prefix)
 {
   int i;
 
@@ -819,11 +818,9 @@ static void print_c_headers(const tl_Cexprtab *cexpr)
     fprintf(tl_out, "char __ESBMC_property__ltl2ba_cexpr_%d[] = \"%s\";\n", i, cexpr->cexpr_expr_table[i]);
     fprintf(tl_out, "int %s_cexpr_%d_status;\n", c_sym_name_prefix, i);
   }
-
-  return;
 }
 
-static int print_enum_decl(void)
+static int print_enum_decl(const char *c_sym_name_prefix)
 {
   BState *s;
   int num_states = 0;
@@ -1387,7 +1384,8 @@ static void print_behaviours(const char *const *sym_table,
 }
 
 static void print_c_accept_tables(const char *const *sym_table, int sym_id,
-                                  int g_num_states)
+                                  int g_num_states,
+                                  const char *c_sym_name_prefix)
 {
   int sym_comb, state, i;
 
@@ -1438,7 +1436,7 @@ static void print_c_accept_tables(const char *const *sym_table, int sym_id,
   return;
 }
 
-static void print_c_epilog(void)
+static void print_c_epilog(const char *c_sym_name_prefix)
 {
 
   fprintf(tl_out, "void\nltl2ba_finish_monitor(pthread_t t)\n{\n");
@@ -1464,7 +1462,8 @@ static void print_c_epilog(void)
   return;
 }
 
-void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr, int sym_id)
+void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr,
+                   int sym_id, const char *c_sym_name_prefix)
 {
   BTrans *t, *t1;
   BState *s;
@@ -1482,9 +1481,9 @@ void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr, int s
   print_behaviours(sym_table, cexpr, sym_id);
   fprintf(tl_out, "#endif\n");
 
-  print_c_headers(cexpr);
+  print_c_headers(cexpr, c_sym_name_prefix);
 
-  num_states = print_enum_decl();
+  num_states = print_enum_decl(c_sym_name_prefix);
 
   print_buchi_statevars(c_sym_name_prefix, num_states);
 
@@ -1499,8 +1498,8 @@ void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr, int s
   /* Some things vaguely in the shape of a modelling api */
   print_c_buchi_util_funcs(c_sym_name_prefix);
 
-  print_c_accept_tables(sym_table, sym_id, g_num_states);
+  print_c_accept_tables(sym_table, sym_id, g_num_states, c_sym_name_prefix);
 
-  print_c_epilog();
+  print_c_epilog(c_sym_name_prefix);
   return;
 }

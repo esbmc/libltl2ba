@@ -223,7 +223,8 @@ Alternating mk_alternating(const Node *, const tl_Cexprtab *cexpr, tl_Flags flag
 Generalized mk_generalized(const Alternating *, tl_Flags flags);
 void    mk_buchi(Generalized *g, tl_Flags);
 
-void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr, int sym_id);
+void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr,
+                   int sym_id, const char *c_sym_name_prefix);
 void print_dot_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr);
 void print_spin_buchi(const char **sym_table);
 
