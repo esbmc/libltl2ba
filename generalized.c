@@ -13,7 +13,6 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int node_id;
 
 extern int node_size, sym_size;
 
@@ -615,7 +614,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
   }
 
   tfree(gstack);
-  /*for(i = 0; i < node_id; i++) // frees the data from the alternating automaton */
+  /*for(i = 0; i < alt->node_id; i++) // frees the data from the alternating automaton */
   /*free_atrans(transition[i], 1);*/
   free_all_atrans();
   tfree(alt->transition);
