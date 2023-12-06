@@ -15,7 +15,6 @@
 #include "ltl2ba.h"
 
 static Symbol	*symtab[Nhash+1];
-static int	tl_lex(void);
 
 extern Node	*tl_yylval;
 static char	yytext[2048];
@@ -67,15 +66,6 @@ follow(int tok, int ifyes, int ifno)
 	sprintf(buf, "expected '%c'", tok);
 	tl_yyerror(buf);	/* no return from here */
 	return ifno;
-}
-
-int
-tl_yylex(void)
-{	int c = tl_lex();
-#if 0
-	printf("c = %d\n", c);
-#endif
-	return c;
 }
 
 static int
@@ -196,6 +186,15 @@ tl_lex(void)
 	default  : break;
 	}
 	Token(c);
+}
+
+int
+tl_yylex(void)
+{	int c = tl_lex();
+#if 0
+	printf("c = %d\n", c);
+#endif
+	return c;
 }
 
 Symbol *
