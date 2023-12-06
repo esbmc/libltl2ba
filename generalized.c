@@ -21,7 +21,11 @@ int init_size = 0, gstate_id = 1, *final, scc_size;
 
 static GState *gstack, *gremoved;
 static GScc *scc_stack;
-static int gstate_count = 0, gtrans_count = 0, scc_id, *bad_scc, rank;
+static int gstate_count = 0, gtrans_count = 0, scc_id, *bad_scc;
+
+struct gdfs_state {
+  int rank;
+};
 
 static void print_generalized(void);
 
@@ -234,13 +238,13 @@ static int simplify_gstates(tl_Flags flags) /* eliminates redundant states */
   return changed;
 }
 
-static int gdfs(GState *s) {
+static int gdfs(GState *s, struct gdfs_state *st) {
   GTrans *t;
   GScc *c;
   GScc *scc = (GScc *)tl_emalloc(sizeof(GScc));
   scc->gstate = s;
-  scc->rank = rank;
-  scc->theta = rank++;
+  scc->rank = st->rank;
+  scc->theta = st->rank++;
   scc->nxt = scc_stack;
   scc_stack = scc;
 
@@ -248,7 +252,7 @@ static int gdfs(GState *s) {
 
   for (t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (t->to->incoming == 0) {
-      int result = gdfs(t->to);
+      int result = gdfs(t->to, st);
       scc->theta = min(scc->theta, result);
     }
     else {
@@ -274,7 +278,8 @@ static void simplify_gscc(int *final_set) {
   GState *s;
   GTrans *t;
   int i, **scc_final;
-  rank = 1;
+  struct gdfs_state st;
+  st.rank = 1;
   scc_stack = 0;
   scc_id = 1;
 
@@ -285,7 +290,7 @@ static void simplify_gscc(int *final_set) {
 
   for(i = 0; i < init_size; i++)
     if(init[i] && init[i]->incoming == 0)
-      gdfs(init[i]);
+      gdfs(init[i], &st);
 
   scc_final = (int **)tl_emalloc(scc_id * sizeof(int *));
   for(i = 0; i < scc_id; i++)
