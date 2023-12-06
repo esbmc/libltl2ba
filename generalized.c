@@ -21,7 +21,7 @@ int init_size = 0, gstate_id = 1, *final, scc_size;
 
 static GState *gstack, *gremoved;
 static GScc *scc_stack;
-static int gstate_count = 0, gtrans_count = 0, *fin, scc_id, *bad_scc, rank;
+static int gstate_count = 0, gtrans_count = 0, scc_id, *bad_scc, rank;
 
 static void print_generalized(void);
 
@@ -371,7 +371,7 @@ static GState *find_gstate(int *set, GState *s)
 }
 
 /* creates all the transitions from a state */
-static void make_gtrans(GState *s, ATrans **transition, tl_Flags flags) {
+static void make_gtrans(GState *s, ATrans **transition, tl_Flags flags, int *fin) {
   int i, *list, state_trans = 0, trans_exist = 1;
   GState *s1;
   ATrans *t1;
@@ -561,7 +561,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
 
   if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
-  fin = new_set(node_size);
+  int *fin = new_set(node_size);
   bad_scc = 0; /* will be initialized in simplify_gscc */
   final = list_set(alt->final_set, node_size);
 
@@ -597,7 +597,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
       free_gstate(s);
       continue;
     }
-    make_gtrans(s, alt->transition, flags);
+    make_gtrans(s, alt->transition, flags, fin);
   }
 
   retarget_all_gtrans();
