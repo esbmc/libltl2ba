@@ -17,11 +17,12 @@ extern int node_id;
 
 extern int node_size, sym_size;
 
-GState *gstack, *gremoved, *gstates, **init;
+GState *gstates, **init;
+int init_size = 0, gstate_id = 1, *final, scc_size;
+
+static GState *gstack, *gremoved;
 static GScc *scc_stack;
-int init_size = 0, gstate_id = 1, gstate_count = 0, gtrans_count = 0;
-int *fin, *final, scc_id, scc_size, *bad_scc;
-static int rank;
+static int gstate_count = 0, gtrans_count = 0, *fin, scc_id, *bad_scc, rank;
 
 static void print_generalized(void);
 
