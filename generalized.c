@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern FILE *tl_out;
-extern int tl_simp_fly, tl_fjtofj, tl_simp_scc, node_id;
+extern int tl_fjtofj, tl_simp_scc, node_id;
 
 extern int node_size, sym_size;
 
@@ -369,7 +369,7 @@ GState *find_gstate(int *set, GState *s)
 }
 
 /* creates all the transitions from a state */
-void make_gtrans(GState *s, ATrans **transition) {
+void make_gtrans(GState *s, ATrans **transition, tl_Flags flags) {
   int i, *list, state_trans = 0, trans_exist = 1;
   GState *s1;
   ATrans *t1;
@@ -406,7 +406,7 @@ void make_gtrans(GState *s, ATrans **transition) {
 	if(is_final(s->nodes_set, t1, final[i], transition))
 	  add_set(fin, final[i]);
       for(t2 = s->trans->nxt; t2 != s->trans;) {
-	if(tl_simp_fly &&
+	if((flags & TL_SIMP_FLY) &&
 	   included_set(t1->to, t2->to->nodes_set, node_size) &&
 	   included_set(t1->pos, t2->pos, sym_size) &&
 	   included_set(t1->neg, t2->neg, sym_size) &&
@@ -422,7 +422,7 @@ void make_gtrans(GState *s, ATrans **transition) {
 	  free_gtrans(free, 0, 0);
 	  state_trans--;
 	}
-	else if(tl_simp_fly &&
+	else if((flags & TL_SIMP_FLY) &&
 		included_set(t2->to->nodes_set, t1->to, node_size) &&
 		included_set(t2->pos, t1->pos, sym_size) &&
 		included_set(t2->neg, t1->neg, sym_size) &&
@@ -471,7 +471,7 @@ void make_gtrans(GState *s, ATrans **transition) {
   free_atrans(prod->prod, 0);
   tfree(prod);
 
-  if(tl_simp_fly) {
+  if(flags & TL_SIMP_FLY) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
       free_gtrans(s->trans->nxt, s->trans, 1);
       s->trans = (GTrans *)0;
@@ -593,7 +593,7 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
       free_gstate(s);
       continue;
     }
-    make_gtrans(s, alt->transition);
+    make_gtrans(s, alt->transition, flags);
   }
 
   retarget_all_gtrans();

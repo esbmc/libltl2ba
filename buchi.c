@@ -13,7 +13,7 @@
 \********************************************************************/
 
 extern GState **init, *gstates;
-extern int tl_simp_fly, tl_simp_scc, init_size, *final;
+extern int tl_simp_scc, init_size, *final;
 
 extern int sym_size, scc_size;
 
@@ -380,7 +380,8 @@ int next_final(int *set, int fin) /* computes the 'final' value */
   return fin;
 }
 
-void make_btrans(BState *s) /* creates all the transitions from a state */
+/* creates all the transitions from a state */
+void make_btrans(BState *s, tl_Flags flags)
 {
   int state_trans = 0;
   GTrans *t;
@@ -392,7 +393,7 @@ void make_btrans(BState *s) /* creates all the transitions from a state */
       BState *to = find_bstate(&t->to, fin, s);
 
       for(t1 = s->trans->nxt; t1 != s->trans;) {
-	if(tl_simp_fly &&
+	if((flags & TL_SIMP_FLY) &&
 	   (to == t1->to) &&
 	   included_set(t->pos, t1->pos, sym_size) &&
 	   included_set(t->neg, t1->neg, sym_size)) { /* t1 is redondant */
@@ -406,7 +407,7 @@ void make_btrans(BState *s) /* creates all the transitions from a state */
 	  free_btrans(free, 0, 0);
 	  state_trans--;
 	}
-	else if(tl_simp_fly &&
+	else if((flags & TL_SIMP_FLY) &&
 		(t1->to == to ) &&
 		included_set(t1->pos, t->pos, sym_size) &&
 		included_set(t1->neg, t->neg, sym_size)) /* t is redondant */
@@ -426,7 +427,7 @@ void make_btrans(BState *s) /* creates all the transitions from a state */
       }
     }
 
-  if(tl_simp_fly) {
+  if(flags & TL_SIMP_FLY) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
       free_btrans(s->trans->nxt, s->trans, 1);
       s->trans = (BTrans *)0;
@@ -685,7 +686,7 @@ void mk_buchi(tl_Flags flags)
 	int fin = next_final(t->final, 0);
 	BState *to = find_bstate(&t->to, fin, s);
 	for(t1 = s->trans->nxt; t1 != s->trans;) {
-	  if(tl_simp_fly &&
+	  if((flags & TL_SIMP_FLY) &&
 	     (to == t1->to) &&
 	     included_set(t->pos, t1->pos, sym_size) &&
 	     included_set(t->neg, t1->neg, sym_size)) { /* t1 is redondant */
@@ -698,7 +699,7 @@ void mk_buchi(tl_Flags flags)
 	    if(free == s->trans) s->trans = t1;
 	    free_btrans(free, 0, 0);
 	  }
-	else if(tl_simp_fly &&
+	else if((flags & TL_SIMP_FLY) &&
 		(t1->to == to ) &&
 		included_set(t1->pos, t->pos, sym_size) &&
 		included_set(t1->neg, t->neg, sym_size)) /* t is redondant */
@@ -724,7 +725,7 @@ void mk_buchi(tl_Flags flags)
       free_bstate(s);
       continue;
     }
-    make_btrans(s);
+    make_btrans(s, flags);
   }
 
   retarget_all_btrans();
