@@ -342,7 +342,7 @@ static void simplify_astates(Node **label, Alternating *alt)
 \********************************************************************/
 
 /* dumps the alternating automaton */
-static void print_alternating(Node **label, Alternating *alt)
+static void print_alternating(Node **label, tl_Cexprtab *cexpr, Alternating *alt)
 {
   int i;
   ATrans *t;
@@ -362,7 +362,7 @@ static void print_alternating(Node **label, Alternating *alt)
     for(t = alt->transition[i]; t; t = t->nxt) {
       if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
 	fprintf(tl_out, "1");
-      print_sym_set(alt->sym_table, t->pos, sym_size);
+      print_sym_set(alt->sym_table, cexpr, t->pos, sym_size);
       if (!empty_set(t->pos,sym_size) && !empty_set(t->neg,sym_size)) fprintf(tl_out, " & ");
       print_set(t->neg, scc_size);
       fprintf(tl_out, " -> ");
@@ -377,7 +377,7 @@ static void print_alternating(Node **label, Alternating *alt)
 \********************************************************************/
 
 /* generates an alternating automaton for p */
-Alternating mk_alternating(Node *p)
+Alternating mk_alternating(Node *p, tl_Cexprtab *cexpr)
 {
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
@@ -405,14 +405,14 @@ Alternating mk_alternating(Node *p)
 
   if(tl_verbose) {
     fprintf(tl_out, "\nAlternating automaton before simplification\n");
-    print_alternating(label, &alt);
+    print_alternating(label, cexpr, &alt);
   }
 
   if(tl_simp_diff) {
     simplify_astates(label, &alt); /* keeps only accessible states */
     if(tl_verbose) {
       fprintf(tl_out, "\nAlternating automaton after simplification\n");
-      print_alternating(label, &alt);
+      print_alternating(label, cexpr, &alt);
     }
   }
 

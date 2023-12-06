@@ -111,8 +111,10 @@ tl_main(char  *formula)
 
 	tl_Symtab symtab;
 	memset(&symtab, 0, sizeof(symtab));
+	tl_Cexprtab cexpr;
+	memset(&cexpr, 0, sizeof(cexpr));
 
-	Node *p = tl_parse(symtab);
+	Node *p = tl_parse(symtab, &cexpr);
 	if (tl_verbose)
 	{
 		fprintf(stderr, "formula: ");
@@ -135,14 +137,14 @@ tl_main(char  *formula)
 		tl_out = f;
 	}
 
-	Alternating alt = mk_alternating(p);
+	Alternating alt = mk_alternating(p, &cexpr);
 	mk_generalized(&alt);
 	mk_buchi();
 
 	switch (outmode) {
 	case none:	break;
-	case c: 	print_c_buchi(alt.sym_table, alt.sym_id); break;
-	case dot: 	print_dot_buchi(alt.sym_table); break;
+	case c: 	print_c_buchi(alt.sym_table, &cexpr, alt.sym_id); break;
+	case dot: 	print_dot_buchi(alt.sym_table, &cexpr); break;
 	case spin:
 	default:	print_spin_buchi(alt.sym_table); break;
 	}

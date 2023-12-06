@@ -589,7 +589,7 @@ void print_dot_state_name(BState *s) {
   }
 }
 
-void print_dot_buchi(char **sym_table) {
+void print_dot_buchi(char **sym_table, tl_Cexprtab *cexpr) {
   BTrans *t;
   BState *s;
   int accept_all = 0, init_count = 0;
@@ -631,12 +631,12 @@ void print_dot_buchi(char **sym_table) {
 		need_parens=1;
       print_dot_state_name(t->to);
 	  fprintf(tl_out, " [label=\""),
-      dot_print_set(sym_table, t->pos, t->neg,need_parens);
+      dot_print_set(sym_table, cexpr, t->pos, t->neg,need_parens);
       for(t1 = t; t1->nxt != s->trans; )
 	    if (t1->nxt->to->id == t->to->id &&
 	        t1->nxt->to->final == t->to->final) {
 	      fprintf(tl_out, "||");
-	      dot_print_set(sym_table, t1->nxt->pos, t1->nxt->neg,sym_size);
+	      dot_print_set(sym_table, cexpr, t1->nxt->pos, t1->nxt->neg,sym_size);
 	      t1->nxt = t1->nxt->nxt;
 	    }
 	    else
@@ -768,11 +768,8 @@ void mk_buchi()
   tl_out = f;
 }
 
-extern int cexpr_idx;
-extern char *cexpr_expr_table[];
-
 void
-print_c_headers(void)
+print_c_headers(tl_Cexprtab *cexpr)
 {
   int i;
 
@@ -794,8 +791,8 @@ print_c_headers(void)
   fprintf(tl_out, "int nondet_uint();\n\n");
 
   /* Pump out the C expressions we'll be using */
-  for (i = 0; i < cexpr_idx; i++) {
-    fprintf(tl_out, "char __ESBMC_property__ltl2ba_cexpr_%d[] = \"%s\";\n", i, cexpr_expr_table[i]);
+  for (i = 0; i < cexpr->cexpr_idx; i++) {
+    fprintf(tl_out, "char __ESBMC_property__ltl2ba_cexpr_%d[] = \"%s\";\n", i, cexpr->cexpr_expr_table[i]);
     fprintf(tl_out, "int %s_cexpr_%d_status;\n", c_sym_name_prefix, i);
   }
 
@@ -1094,7 +1091,7 @@ int * pess_reach(Slist **tr, int st, int depth) {
 }
 
 void
-print_behaviours(char **sym_table, int sym_id)
+print_behaviours(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
 {
     BState *s;
     BTrans *t;
@@ -1173,17 +1170,17 @@ print_behaviours(char **sym_table, int sym_id)
       pessimistic_transition[i]->nxt = (Slist*)0; }
     working_set = make_set(EMPTY_SET,state_size);
 
-/*    for (i=0; i<cexpr_idx; i++)
-      printf("%d\t%s\n",i,cexpr_expr_table[i]);
+/*    for (i=0; i<cexpr->cexpr_idx; i++)
+      printf("%d\t%s\n",i,cexpr->cexpr_expr_table[i]);
     fprintf(tl_out,"\n");
 */
     for(i=0; i<sym_id; i++) {
       fprintf(tl_out, "%d\t%s",i,sym_table[i]?sym_table[i]:"");
       if (sym_table[i] && sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
         /* Yes, scanning for a match here is horrid DAN */
-        fprintf(tl_out, "\t{ %s }\n", cexpr_expr_table[cex]);
-        else
-          fprintf(tl_out, "\n"); }
+        fprintf(tl_out, "\t{ %s }\n", cexpr->cexpr_expr_table[cex]);
+      else
+        fprintf(tl_out, "\n"); }
 
     fprintf(tl_out,"\nStuttering:\n\n");
     a=make_set(EMPTY_SET,sym_size);
@@ -1202,7 +1199,7 @@ print_behaviours(char **sym_table, int sym_id)
 	  if(!in_set(a,i))
 	    fprintf(tl_out,"!");
 	  if (sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
-	    fprintf(tl_out, "{%s}", cexpr_expr_table[cex]);
+	    fprintf(tl_out, "{%s}", cexpr->cexpr_expr_table[cex]);
 	  else
             fprintf(tl_out, "%s",sym_table[i]); }
 	fprintf(tl_out,"\n");
@@ -1374,7 +1371,7 @@ print_behaviours(char **sym_table, int sym_id)
 }
 
 void
-print_c_buchi(char **sym_table, int sym_id)
+print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id)
 {
   BTrans *t, *t1;
   BState *s;
@@ -1389,10 +1386,10 @@ print_c_buchi(char **sym_table, int sym_id)
   }
 
   fprintf(tl_out, "#if 0\n/* Precomputed transition data */\n");
-  print_behaviours(sym_table, sym_id);
+  print_behaviours(sym_table, cexpr, sym_id);
   fprintf(tl_out, "#endif\n");
 
-  print_c_headers();
+  print_c_headers(cexpr);
 
   num_states = print_enum_decl();
 

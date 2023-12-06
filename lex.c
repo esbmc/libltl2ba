@@ -14,9 +14,6 @@
 #include <ctype.h>
 #include "ltl2ba.h"
 
-int cexpr_idx = 0;
-char *cexpr_expr_table[256];
-
 #define Token(y)        lex->tl_yylval = tl_nn(y,ZN,ZN); return y
 
 static int
@@ -63,7 +60,7 @@ follow(tl_Lexer *lex, int tok, int ifyes, int ifno)
 }
 
 static int
-tl_lex(tl_Symtab symtab, tl_Lexer *lex)
+tl_lex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 {	int c;
 
 	do {
@@ -95,20 +92,20 @@ tl_lex(tl_Symtab symtab, tl_Lexer *lex)
 		} while (1);
 
 		lex->yytext[idx++] = '\0';
-		cexpr_expr_table[cexpr_idx] = (char *)strdup(lex->yytext);
+		cexpr->cexpr_expr_table[cexpr->cexpr_idx] = (char *)strdup(lex->yytext);
 
-		for (idx = 0; idx < cexpr_idx; idx++) {
-			if (!strcmp(cexpr_expr_table[cexpr_idx],
-			            cexpr_expr_table[idx])) {
+		for (idx = 0; idx < cexpr->cexpr_idx; idx++) {
+			if (!strcmp(cexpr->cexpr_expr_table[cexpr->cexpr_idx],
+			            cexpr->cexpr_expr_table[idx])) {
 				sprintf(buffer, "_ltl2ba_cexpr_%d_status",idx);
 				break;
 			}
 		}
 
-		if (idx == cexpr_idx)
-			sprintf(buffer, "_ltl2ba_cexpr_%d_status", cexpr_idx++);
+		if (idx == cexpr->cexpr_idx)
+			sprintf(buffer, "_ltl2ba_cexpr_%d_status", cexpr->cexpr_idx++);
 
-		if (cexpr_idx == 256)
+		if (cexpr->cexpr_idx == 256)
 			tl_yyerror(lex, "You have too many C expressions");
 
 		lex->tl_yylval = tl_nn(PREDICATE,ZN,ZN);
@@ -178,8 +175,8 @@ tl_lex(tl_Symtab symtab, tl_Lexer *lex)
 }
 
 int
-tl_yylex(tl_Symtab symtab, tl_Lexer *lex)
-{	int c = tl_lex(symtab, lex);
+tl_yylex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
+{	int c = tl_lex(symtab, cexpr, lex);
 #if 0
 	printf("c = %d\n", c);
 #endif

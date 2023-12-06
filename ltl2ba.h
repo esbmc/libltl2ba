@@ -158,6 +158,11 @@ enum {
 typedef Symbol *tl_Symtab[Nhash + 1];
 
 typedef struct {
+  int cexpr_idx;
+  char *cexpr_expr_table[256];
+} tl_Cexprtab;
+
+typedef struct {
   Node *tl_yylval;
   int tl_yychar;
   char yytext[2048];
@@ -200,7 +205,7 @@ void	releasenode(int, Node *);
 void	tfree(void *);
 void	tl_explain(int);
 void	tl_UnGetchar(void);
-Node *	tl_parse(tl_Symtab symtab);
+Node *	tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr);
 void	tl_yyerror(tl_Lexer *lex, char *);
 
 typedef struct {
@@ -211,12 +216,12 @@ typedef struct {
   char **sym_table;
 } Alternating;
 
-Alternating mk_alternating(Node *);
+Alternating mk_alternating(Node *, tl_Cexprtab *cexpr);
 void    mk_generalized(Alternating *);
 void    mk_buchi();
 
-void print_c_buchi(char **sym_table, int sym_id);
-void print_dot_buchi(char **sym_table);
+void print_c_buchi(char **sym_table, tl_Cexprtab *cexpr, int sym_id);
+void print_dot_buchi(char **sym_table, tl_Cexprtab *cexpr);
 void print_spin_buchi(char **sym_table);
 
 ATrans *dup_trans(ATrans *);
@@ -234,7 +239,7 @@ int  *intersect_sets(int *, int *, int);
 void add_set(int *, int);
 void rem_set(int *, int);
 void spin_print_set(char **sym_table, int *, int*);
-void dot_print_set(char **sym_table, int *, int*, int);
+void dot_print_set(char **sym_table, tl_Cexprtab *cexpr, int *, int*, int);
 void print_set(int *, int);
 int  empty_set(int *, int);
 int  empty_intersect_sets(int *, int *, int);
@@ -244,7 +249,7 @@ int  included_set(int *, int *, int);
 int  in_set(int *, int);
 int  *list_set(int *, int);
 
-void print_sym_set(char **sym_table, int *l, int size);
+void print_sym_set(char **sym_table, tl_Cexprtab *cexpr, int *l, int size);
 void print_c_accept_tables(char **sym_table, int sym_id);
 void print_c_epilog(void);
 

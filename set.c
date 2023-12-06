@@ -9,7 +9,6 @@
 #include "ltl2ba.h"
 
 extern FILE *tl_out;
-extern char *cexpr_expr_table[];
 extern int sym_size;
 
 static const int mod = 8 * sizeof(int);
@@ -122,7 +121,7 @@ void spin_print_set(char **sym_table, int *pos, int *neg) /* prints the content 
     fprintf(tl_out, "1");
 }
 
-void dot_print_set(char **sym_table, int *pos, int *neg,int need_parens) /* prints the content of a set for dot */
+void dot_print_set(char **sym_table, tl_Cexprtab *cexpr, int *pos, int *neg,int need_parens) /* prints the content of a set for dot */
 {
   int i, j, start = 1;
   int count = 0, cex;
@@ -139,7 +138,7 @@ void dot_print_set(char **sym_table, int *pos, int *neg,int need_parens) /* prin
 	  fprintf(tl_out, "&&");
 	if (sscanf(sym_table[mod * i + j],"_ltl2ba_cexpr_%d_status",&cex)==1)
 	/* Yes, scanning for a match here is horrid DAN */
-	  fprintf(tl_out, "{%s}", cexpr_expr_table[cex]);
+	  fprintf(tl_out, "{%s}", cexpr->cexpr_expr_table[cex]);
 	else
 	  fprintf(tl_out, "%s", sym_table[mod * i + j]);
 	start = 0;
@@ -149,7 +148,7 @@ void dot_print_set(char **sym_table, int *pos, int *neg,int need_parens) /* prin
 	  fprintf(tl_out, "&&");
 	if (sscanf(sym_table[mod * i + j],"_ltl2ba_cexpr_%d_status",&cex)==1)
 	/* And it's horrid here too DAN */
-	fprintf(tl_out, "!{%s}", cexpr_expr_table[cex]);
+	fprintf(tl_out, "!{%s}", cexpr->cexpr_expr_table[cex]);
 	else
       fprintf(tl_out, "!%s", sym_table[mod * i + j]);
 	start = 0;
@@ -174,7 +173,7 @@ void print_set(int *l, int size) /* prints the content of a set */
   fprintf(tl_out, "}");
 }
 
-void print_sym_set(char **sym_table, int *l, int size) /* prints the content of a symbol set */
+void print_sym_set(char **sym_table, tl_Cexprtab *cexpr, int *l, int size) /* prints the content of a symbol set */
 {
   int i, j, cex, start = 1;;
   for(i = 0; i < size; i++)
@@ -183,7 +182,7 @@ void print_sym_set(char **sym_table, int *l, int size) /* prints the content of 
         if(!start) fprintf(tl_out, " & ");
         if (sscanf(sym_table[mod * i + j],"_ltl2ba_cexpr_%d_status",&cex)==1)
         /* Yes, scanning for a match here is horrid DAN */
-          fprintf(tl_out, "{%s}", cexpr_expr_table[cex]);
+          fprintf(tl_out, "{%s}", cexpr->cexpr_expr_table[cex]);
         else
           fprintf(tl_out, "%s", sym_table[mod * i + j]);
         start = 0;
