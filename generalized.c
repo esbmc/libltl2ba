@@ -19,8 +19,6 @@ extern int node_size, sym_size;
 GState *gstates, **init;
 int init_size = 0, gstate_id = 1, *final, scc_size;
 
-static GState *gstack, *gremoved;
-
 struct gcounts {
   int gstate_count, gtrans_count;
 };
@@ -51,7 +49,8 @@ static void free_gstate(GState *s) /* frees a state and its transitions */
   tfree(s);
 }
 
-static GState *remove_gstate(GState *s, GState *s1) /* removes a state */
+/* removes a state */
+static GState *remove_gstate(GState *s, GState *s1, GState *gremoved)
 {
   GState *prv = s->prv;
   s->prv->nxt = s->nxt;
@@ -156,7 +155,7 @@ static int simplify_gtrans(tl_Flags flags, int *bad_scc)
 }
 
 /* redirects transitions before removing a state from the automaton */
-static void retarget_all_gtrans()
+static void retarget_all_gtrans(GState *gremoved)
 {
   GState *s;
   GTrans *t;
@@ -212,7 +211,7 @@ static int all_gtrans_match(GState *a, GState *b, int use_scc, int *bad_scc)
 }
 
 /* eliminates redundant states */
-static int simplify_gstates(tl_Flags flags, int *bad_scc)
+static int simplify_gstates(tl_Flags flags, int *bad_scc, GState *gremoved)
 {
   int changed = 0;
   GState *a, *b;
@@ -223,7 +222,7 @@ static int simplify_gstates(tl_Flags flags, int *bad_scc)
 
   for(a = gstates->nxt; a != gstates; a = a->nxt) {
     if(a->trans == a->trans->nxt) { /* a has no transitions */
-      a = remove_gstate(a, (GState *)0);
+      a = remove_gstate(a, (GState *)0, gremoved);
       changed++;
       continue;
     }
@@ -233,13 +232,13 @@ static int simplify_gstates(tl_Flags flags, int *bad_scc)
     if(b != gstates) { /* a and b are equivalent */
       /* if scc(a)>scc(b) and scc(a) is non-trivial then all_gtrans_match(a,b,use_scc) must fail */
       if(a->incoming > b->incoming) /* scc(a) is trivial */
-        a = remove_gstate(a, b);
+        a = remove_gstate(a, b, gremoved);
       else /* either scc(a)=scc(b) or scc(b) is trivial */
-        remove_gstate(b, a);
+        remove_gstate(b, a, gremoved);
       changed++;
     }
   }
-  retarget_all_gtrans();
+  retarget_all_gtrans(gremoved);
 
   if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
@@ -288,7 +287,7 @@ static int gdfs(GState *s, struct gdfs_state *st) {
   return scc->theta;
 }
 
-static void simplify_gscc(int *final_set, int **bad_scc)
+static void simplify_gscc(int *final_set, int **bad_scc, GState *gremoved)
 {
   GState *s;
   GTrans *t;
@@ -313,7 +312,7 @@ static void simplify_gscc(int *final_set, int **bad_scc)
 
   for(s = gstates->nxt; s != gstates; s = s->nxt)
     if(s->incoming == 0)
-      s = remove_gstate(s, 0);
+      s = remove_gstate(s, 0, gremoved);
     else
       for (t = s->trans->nxt; t != s->trans; t = t->nxt)
         if(t->to->incoming == s->incoming)
@@ -356,7 +355,8 @@ static int is_final(int *from, ATrans *at, int i,ATrans **transition, tl_Flags f
 }
 
 /* finds the corresponding state, or creates it */
-static GState *find_gstate(int *set, GState *s)
+static GState *find_gstate(int *set, GState *s, GState *gstack,
+                           GState *gremoved)
 {
 
   if(same_sets(set, s->nodes_set, node_size)) return s; /* same state */
@@ -392,7 +392,8 @@ static GState *find_gstate(int *set, GState *s)
 
 /* creates all the transitions from a state */
 static void make_gtrans(GState *s, ATrans **transition, tl_Flags flags,
-                        int *fin, struct gcounts *c, int *bad_scc)
+                        int *fin, struct gcounts *c, int *bad_scc,
+                        GState *gstack, GState *gremoved)
 {
   int i, *list, state_trans = 0, trans_exist = 1;
   GState *s1;
@@ -459,7 +460,7 @@ static void make_gtrans(GState *s, ATrans **transition, tl_Flags flags,
       }
       if(t2 == s->trans) { /* adds the transition */
 	trans = emalloc_gtrans();
-	trans->to = find_gstate(t1->to, s);
+	trans->to = find_gstate(t1->to, s, gstack, gremoved);
 	trans->to->incoming++;
 	copy_set(t1->pos, trans->pos, sym_size);
 	copy_set(t1->neg, trans->neg, sym_size);
@@ -577,7 +578,7 @@ static void print_generalized(void) {
 void mk_generalized(Alternating *alt, tl_Flags flags)
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
-  GState *s;
+  GState *s, *gstack = NULL, *gremoved = NULL;
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
   struct gcounts cnts;
@@ -621,10 +622,10 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
       free_gstate(s);
       continue;
     }
-    make_gtrans(s, alt->transition, flags, fin, &cnts, bad_scc);
+    make_gtrans(s, alt->transition, flags, fin, &cnts, bad_scc, gstack, gremoved);
   }
 
-  retarget_all_gtrans();
+  retarget_all_gtrans(gremoved);
 
   FILE *f = tl_out;
   tl_out = stderr;
@@ -649,13 +650,13 @@ void mk_generalized(Alternating *alt, tl_Flags flags)
   }
 
   if(flags & TL_SIMP_DIFF) {
-    if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set, &bad_scc);
+    if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set, &bad_scc, gremoved);
     simplify_gtrans(flags, bad_scc);
-    if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set, &bad_scc);
-    while(simplify_gstates(flags, bad_scc)) { /* simplifies as much as possible */
-      if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set, &bad_scc);
+    if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set, &bad_scc, gremoved);
+    while(simplify_gstates(flags, bad_scc, gremoved)) { /* simplifies as much as possible */
+      if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set, &bad_scc, gremoved);
       simplify_gtrans(flags, bad_scc);
-      if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set, &bad_scc);
+      if (flags & TL_SIMP_SCC) simplify_gscc(alt->final_set, &bad_scc, gremoved);
     }
 
     if(flags & TL_VERBOSE) {
