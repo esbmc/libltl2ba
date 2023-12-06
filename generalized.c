@@ -36,8 +36,6 @@ struct gdfs_state {
   GScc *scc_stack;
 };
 
-static void print_generalized(void);
-
 /********************************************************************\
 |*        Simplification of the generalized Buchi automaton         *|
 \********************************************************************/
