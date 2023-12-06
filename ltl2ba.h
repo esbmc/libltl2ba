@@ -219,12 +219,12 @@ typedef struct {
   int init_size, gstate_id, *final, scc_size;
 } Generalized;
 
-Alternating mk_alternating(const Node *, tl_Cexprtab *cexpr, tl_Flags flags);
+Alternating mk_alternating(const Node *, const tl_Cexprtab *cexpr, tl_Flags flags);
 Generalized mk_generalized(const Alternating *, tl_Flags flags);
 void    mk_buchi(Generalized *g, tl_Flags);
 
-void print_c_buchi(const char **sym_table, tl_Cexprtab *cexpr, int sym_id);
-void print_dot_buchi(const char **sym_table, tl_Cexprtab *cexpr);
+void print_c_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr, int sym_id);
+void print_dot_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr);
 void print_spin_buchi(const char **sym_table);
 
 ATrans *dup_trans(ATrans *);
@@ -241,8 +241,8 @@ void do_merge_sets(int *, int *, int *, int);
 int  *intersect_sets(int *, int *, int);
 void add_set(int *, int);
 void rem_set(int *, int);
-void spin_print_set(const char **sym_table, int *, int*);
-void dot_print_set(const char **sym_table, tl_Cexprtab *cexpr, int *, int*, int);
+void spin_print_set(const char *const *sym_table, int *, int*);
+void dot_print_set(const char *const *sym_table, const tl_Cexprtab *cexpr, int *, int*, int);
 void print_set(int *, int);
 int  empty_set(int *, int);
 int  empty_intersect_sets(int *, int *, int);
@@ -252,7 +252,7 @@ int  included_set(int *, int *, int);
 int  in_set(int *, int);
 int  *list_set(int *, int);
 
-void print_sym_set(const char **sym_table, tl_Cexprtab *cexpr, int *l, int size);
+void print_sym_set(const char *const *sym_table, const tl_Cexprtab *cexpr, int *l, int size);
 
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);
 

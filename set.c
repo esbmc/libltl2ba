@@ -100,7 +100,7 @@ void rem_set(int *l, int n) /* removes an element from a set */
 }
 
 /* prints the content of a set for spin */
-void spin_print_set(const char **sym_table, int *pos, int *neg)
+void spin_print_set(const char *const *sym_table, int *pos, int *neg)
 {
   int i, j, start = 1;
   for(i = 0; i < sym_size; i++)
@@ -123,8 +123,8 @@ void spin_print_set(const char **sym_table, int *pos, int *neg)
 }
 
 /* prints the content of a set for dot */
-void dot_print_set(const char **sym_table, tl_Cexprtab *cexpr, int *pos,
-                   int *neg, int need_parens)
+void dot_print_set(const char *const *sym_table, const tl_Cexprtab *cexpr,
+                   int *pos, int *neg, int need_parens)
 {
   int i, j, start = 1;
   int count = 0, cex;
@@ -177,7 +177,8 @@ void print_set(int *l, int size) /* prints the content of a set */
 }
 
 /* prints the content of a symbol set */
-void print_sym_set(const char **sym_table, tl_Cexprtab *cexpr, int *l, int size)
+void print_sym_set(const char *const *sym_table, const tl_Cexprtab *cexpr,
+                   int *l, int size)
 {
   int i, j, cex, start = 1;;
   for(i = 0; i < size; i++)
