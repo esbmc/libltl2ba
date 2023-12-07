@@ -86,6 +86,7 @@ usage: %s [-flag] -f 'formula'\n\
  -c            disable strongly (C)onnected components simplification\n\
  -a            disable trick in (A)ccepting conditions\n\
  -O mode       output mode; one of spin, c or dot\n\
+ -C            dump cache info at the end\n\
 ", progname, (int)strlen(progname), "");
 	alldone(code);
 }
