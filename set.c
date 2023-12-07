@@ -9,7 +9,6 @@
 #include "ltl2ba.h"
 
 extern FILE *tl_out;
-extern int sym_size;
 
 static const int mod = 8 * sizeof(int);
 
@@ -100,7 +99,7 @@ void rem_set(int *l, int n) /* removes an element from a set */
 }
 
 /* prints the content of a set for spin */
-void spin_print_set(const char *const *sym_table, int *pos, int *neg)
+void spin_print_set(const char *const *sym_table, int *pos, int *neg, int sym_size)
 {
   int i, j, start = 1;
   for(i = 0; i < sym_size; i++)
@@ -124,7 +123,7 @@ void spin_print_set(const char *const *sym_table, int *pos, int *neg)
 
 /* prints the content of a set for dot */
 void dot_print_set(const char *const *sym_table, const tl_Cexprtab *cexpr,
-                   int *pos, int *neg, int need_parens)
+                   int *pos, int *neg, int sym_size, int need_parens)
 {
   int i, j, start = 1;
   int count = 0, cex;
