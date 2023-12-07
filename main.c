@@ -134,14 +134,14 @@ tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 	Alternating alt = mk_alternating(p, &cexpr, flags);
 	releasenode(1, p);
 
-	Generalized gen = mk_generalized(&alt, flags);
+	Generalized gen = mk_generalized(&alt, flags, &cexpr);
 	// free the data from the alternating automaton
 	/* for(i = 0; i < alt->node_id; i++)
 		free_atrans(transition[i], 1); */
 	free_all_atrans();
 	tfree(alt.transition);
 
-	Buchi b = mk_buchi(&gen, flags);
+	Buchi b = mk_buchi(&gen, flags, alt.sym_table, &cexpr);
 
 	switch (outmode) {
 	case none:	break;

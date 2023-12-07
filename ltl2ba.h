@@ -201,8 +201,8 @@ Node *	tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags);
 void	tl_yyerror(tl_Lexer *lex, char *);
 
 Alternating mk_alternating(const Node *, const tl_Cexprtab *cexpr, tl_Flags flags);
-Generalized mk_generalized(const Alternating *, tl_Flags flags);
-Buchi       mk_buchi(Generalized *g, tl_Flags);
+Generalized mk_generalized(const Alternating *, tl_Flags flags, const tl_Cexprtab *cexpr);
+Buchi       mk_buchi(Generalized *g, tl_Flags, const char *const *sym_table, const tl_Cexprtab *cexpr);
 
 void print_c_buchi(const Buchi *b, const char *const *sym_table,
                    const tl_Cexprtab *cexpr, int sym_id,

@@ -536,12 +536,14 @@ static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
 \********************************************************************/
 
 /* dumps the generalized Buchi automaton */
-static void reverse_print_generalized(Generalized *g, GState *s)
+static void reverse_print_generalized(const char *const *sym_table,
+                                      const tl_Cexprtab *cexpr, Generalized *g,
+                                      GState *s)
 {
   GTrans *t;
   if(s == g->gstates) return;
 
-  reverse_print_generalized(g, s->nxt); /* begins with the last state */
+  reverse_print_generalized(sym_table, cexpr, g, s->nxt); /* begins with the last state */
 
   fprintf(tl_out, "state %i (", s->id);
   print_set(s->nodes_set, node_size);
@@ -549,9 +551,9 @@ static void reverse_print_generalized(Generalized *g, GState *s)
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
       fprintf(tl_out, "1");
-    print_set(t->pos, sym_size);
+    print_sym_set(sym_table, cexpr, t->pos, sym_size);
     if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(tl_out, " & ");
-    print_set(t->neg, sym_size);
+    print_sym_set(sym_table, cexpr, t->neg, sym_size);
     fprintf(tl_out, " -> %i : ", t->to->id);
     print_set(t->final, node_size);
     fprintf(tl_out, "\n");
@@ -559,20 +561,23 @@ static void reverse_print_generalized(Generalized *g, GState *s)
 }
 
 /* prints intial states and calls 'reverse_print' */
-static void print_generalized(Generalized *g) {
+static void print_generalized(const char *const *sym_table,
+                              const tl_Cexprtab *cexpr, Generalized *g)
+{
   int i;
   fprintf(tl_out, "init :\n");
   for(i = 0; i < g->init_size; i++)
     if(g->init[i])
       fprintf(tl_out, "%i\n", g->init[i]->id);
-  reverse_print_generalized(g, g->gstates->nxt);
+  reverse_print_generalized(sym_table, cexpr, g, g->gstates->nxt);
 }
 
 /********************************************************************\
 |*                       Main method                                *|
 \********************************************************************/
 
-Generalized mk_generalized(const Alternating *alt, tl_Flags flags)
+Generalized mk_generalized(const Alternating *alt, tl_Flags flags,
+                           const tl_Cexprtab *cexpr)
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
   GState *s, *gstack = NULL, *gremoved = NULL;
@@ -641,7 +646,7 @@ Generalized mk_generalized(const Alternating *alt, tl_Flags flags)
 
   if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nGeneralized Buchi automaton before simplification\n");
-    print_generalized(&g);
+    print_generalized(alt->sym_table, cexpr, &g);
   }
 
   if(flags & TL_SIMP_DIFF) {
@@ -656,7 +661,7 @@ Generalized mk_generalized(const Alternating *alt, tl_Flags flags)
 
     if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nGeneralized Buchi automaton after simplification\n");
-      print_generalized(&g);
+      print_generalized(alt->sym_table, cexpr, &g);
     }
   }
 

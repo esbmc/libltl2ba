@@ -500,12 +500,13 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
 \********************************************************************/
 
 /* dumps the Buchi automaton */
-static void print_buchi(Buchi *b, BState *s, int scc_size)
+static void print_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr,
+                        const Buchi *b, BState *s, int scc_size)
 {
   BTrans *t;
   if(s == b->bstates) return;
 
-  print_buchi(b, s->nxt, scc_size); /* begins with the last state */
+  print_buchi(sym_table, cexpr, b, s->nxt, scc_size); /* begins with the last state */
 
   fprintf(tl_out, "state ");
   if(s->id == -1)
@@ -521,9 +522,9 @@ static void print_buchi(Buchi *b, BState *s, int scc_size)
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
       fprintf(tl_out, "1");
-    print_set(t->pos, sym_size);
+    print_sym_set(sym_table, cexpr, t->pos, sym_size);
     if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(tl_out, " & ");
-    print_set(t->neg, scc_size);
+    print_sym_set(sym_table, cexpr, t->neg, sym_size);
     fprintf(tl_out, " -> ");
     if(t->to->id == -1)
       fprintf(tl_out, "init\n");
@@ -685,7 +686,7 @@ void print_dot_buchi(const Buchi *b, const char *const *sym_table, const tl_Cexp
 \********************************************************************/
 
 /* generates a Buchi automaton from the generalized Buchi automaton */
-Buchi mk_buchi(Generalized *g, tl_Flags flags)
+Buchi mk_buchi(Generalized *g, tl_Flags flags, const char *const *sym_table, const tl_Cexprtab *cexpr)
 {
   int i;
   BState *s = (BState *)tl_emalloc(sizeof(BState));
@@ -780,7 +781,7 @@ Buchi mk_buchi(Generalized *g, tl_Flags flags)
 
   if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nBuchi automaton before simplification\n");
-    print_buchi(&b, b.bstates->nxt, g->scc_size);
+    print_buchi(sym_table, cexpr, &b, b.bstates->nxt, g->scc_size);
     if(b.bstates == b.bstates->nxt)
       fprintf(tl_out, "empty automaton, refuses all words\n");
   }
@@ -795,7 +796,7 @@ Buchi mk_buchi(Generalized *g, tl_Flags flags)
 
     if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nBuchi automaton after simplification\n");
-      print_buchi(&b, b.bstates->nxt, g->scc_size);
+      print_buchi(sym_table, cexpr, &b, b.bstates->nxt, g->scc_size);
       if(b.bstates == b.bstates->nxt)
 	fprintf(tl_out, "empty automaton, refuses all words\n");
       fprintf(tl_out, "\n");
