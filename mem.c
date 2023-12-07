@@ -112,7 +112,7 @@ tfree(void *v)
 ATrans* emalloc_atrans() {
   ATrans *result;
   if(!atrans_list) {
-    result = (ATrans *)tl_emalloc(sizeof(GTrans));
+    result = (ATrans *)tl_emalloc(sizeof(ATrans));
     result->pos = new_set(sym_size);
     result->neg = new_set(sym_size);
     result->to  = new_set(node_size);
