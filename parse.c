@@ -19,9 +19,12 @@ static Node	*tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_
 static Node	*tl_factor(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags);
 static Node	*tl_level(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags, int);
 
-static const int prec[2][4] = {
-	{ U_OPER,  V_OPER, 0, 0},  /* left associative */
-	{ OR, AND, IMPLIES, EQUIV, },	/* left associative */
+static const int prec[][2] = {
+	{ U_OPER, V_OPER, },  /* left associative */
+	{ AND, },             /* left associative */
+	{ OR, },              /* left associative */
+	{ EQUIV, },
+	{ IMPLIES, },
 };
 
 static int
@@ -503,20 +506,24 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 
 static Node *
 tl_level(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags, int nr)
-{	int i; Node *ptr = ZN;
+{
+	unsigned i;
+	Node *ptr = ZN;
 
 	if (nr < 0)
 		return tl_factor(symtab, cexpr, lex, flags);
 
 	ptr = tl_level(symtab, cexpr, lex, flags, nr-1);
 again:
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < sizeof(prec[nr])/sizeof(*prec[nr]); i++)
 		if (lex->tl_yychar == prec[nr][i])
-		{	lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
-			ptr = tl_nn(prec[nr][i],
-				ptr, tl_level(symtab, cexpr, lex, flags, nr-1));
-			if(flags & TL_SIMP_LOG) ptr = bin_simpler(symtab, ptr);
-			else ptr = bin_minimal(symtab, ptr);
+		{
+			lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
+			ptr = tl_nn(prec[nr][i], ptr, tl_level(symtab, cexpr, lex, flags, nr-1));
+			if (flags & TL_SIMP_LOG)
+				ptr = bin_simpler(symtab, ptr);
+			else
+				ptr = bin_minimal(symtab, ptr);
 			goto again;
 		}
 	if (!ptr) tl_yyerror(lex, "syntax error");
@@ -531,7 +538,7 @@ again:
 static Node * tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 {
 	lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
-	return tl_level(symtab, cexpr, lex, flags, 1);	/* 2 precedence levels, 1 and 0 */
+	return tl_level(symtab, cexpr, lex, flags, sizeof(prec)/sizeof(*prec)-1); /* 5 precedence levels: 4 to 0 */
 }
 
 Node * tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags)
