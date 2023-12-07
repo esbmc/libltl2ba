@@ -1123,283 +1123,292 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
                              const tl_Cexprtab *cexpr, int sym_id,
                              struct accept_sets *as)
 {
-    BState *s;
-    BTrans *t;
-    int cex;
-    int *a;
-    int *transition_matrix, *optimistic_transition;
-    Slist **pessimistic_transition, *set_list;
-    int *working_set, *full_state_set;
-    int i, j, k;
-    int stut_accept_idx;
-    int state_count = 0;
-    int state_size;
+  BState *s;
+  BTrans *t;
+  int cex;
+  int *a;
+  int *transition_matrix, *optimistic_transition;
+  Slist **pessimistic_transition, *set_list;
+  int *working_set, *full_state_set;
+  int i, j, k;
+  int stut_accept_idx;
+  int state_count = 0;
+  int state_size;
 
-    /* Allocate a set of sets, each representing the accepting states for each
-     * input symbol combination */
-    as->stutter_accept_table = tl_emalloc(sizeof(int *) * (2<<sym_id) * (2<<sym_id));
-    stut_accept_idx = 0;
+  /* Allocate a set of sets, each representing the accepting states for each
+   * input symbol combination */
+  as->stutter_accept_table = tl_emalloc(sizeof(int *) * (2<<sym_id) * (2<<sym_id));
+  stut_accept_idx = 0;
 
-/*    if (bstates->nxt == bstates) {
-      fprintf(tl_out,"\nEmpty automaton---accepts nothing\n");
-      return;
-    } */
-    /* Horribly, if there is a state with id == 0, it can has a TRUE transition to itself,
-     * which may not be explicit . So we jam this in. It is also (magically) an
-     * accepting state                                                           */
-    {
-      int going = !0;
-      for (s = b->bstates->prv; s != b->bstates; s = s->prv) {
-        if (s -> id == 0) {
-	  for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {
-	    if ( !t->pos && ! t->neg)
-	      going = 0;
-	  }
-	  if (going) {
-	  /* It's missing so jam it in */
-	    BTrans *t2 = (BTrans*)tl_emalloc(sizeof(BTrans));
-	    t2->nxt = s->trans->nxt;
-	    s->trans->nxt = t2;
-	    t2->pos=(int*)0;
-	    t2->neg=(int*)0;
-	    t2->to = s;
-	  }
+  /*
+  if (bstates->nxt == bstates) {
+    fprintf(tl_out,"\nEmpty automaton---accepts nothing\n");
+    return;
+  } */
+
+  /* Horribly, if there is a state with id == 0, it can has a TRUE transition to itself,
+   * which may not be explicit . So we jam this in. It is also (magically) an
+   * accepting state                                                           */
+  {
+    int going = !0;
+    for (s = b->bstates->prv; s != b->bstates; s = s->prv) {
+      if (s -> id == 0) {
+        for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {
+          if ( !t->pos && ! t->neg)
+            going = 0;
+        }
+        if (going) {
+        /* It's missing so jam it in */
+          BTrans *t2 = (BTrans*)tl_emalloc(sizeof(BTrans));
+          t2->nxt = s->trans->nxt;
+          s->trans->nxt = t2;
+          t2->pos=(int*)0;
+          t2->neg=(int*)0;
+          t2->to = s;
         }
       }
     }
-    fprintf(tl_out,"States:\nlabel\tid\tfinal\n");
-    for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
-      s -> label = state_count;
-      state_count++;
-      fprintf(tl_out,"%d\t",s->label);
-      print_dot_state_name(b, s);
-      /* Horribly, the correct test for an accepting state is
-       *     s->final == accept || s -> id == 0
-       *     Here, "final" is a VARIABLE and the state with id=0 is magic       */
-      fprintf(tl_out,"\t%d\n",s->final == b->accept || s -> id == 0); } /* END Loop over states */
-    fprintf(tl_out,"\nSymbol table:\nid\tsymbol\t\t\tcexpr\n");
-    state_size = SET_SIZE(state_count);
-    full_state_set = make_set(EMPTY_SET,state_size);
-    for(i=0;i<state_count; i++)
-      add_set(full_state_set,i);
+  }
 
-/* transition_matrix is a per symbol matrix of permitted transitions */
-    transition_matrix = (int*) tl_emalloc(state_count*state_count*sizeof(int));
+  fprintf(tl_out,"States:\nlabel\tid\tfinal\n");
+  for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
+    s -> label = state_count;
+    state_count++;
+    fprintf(tl_out,"%d\t",s->label);
+    print_dot_state_name(b, s);
+    /* Horribly, the correct test for an accepting state is
+     *     s->final == accept || s -> id == 0
+     *     Here, "final" is a VARIABLE and the state with id=0 is magic       */
+    fprintf(tl_out,"\t%d\n",s->final == b->accept || s -> id == 0); } /* END Loop over states */
+  fprintf(tl_out,"\nSymbol table:\nid\tsymbol\t\t\tcexpr\n");
+  state_size = SET_SIZE(state_count);
+  full_state_set = make_set(EMPTY_SET,state_size);
+  for(i=0;i<state_count; i++)
+    add_set(full_state_set,i);
 
-/* optimistic_transition is the union of all transition_matricies,
-// i.e. transitions permitted under some symbol */
-    optimistic_transition = (int*) tl_emalloc(state_count*state_count*sizeof(int));
-    for (i=0;i<state_count*state_count;i++)
-        optimistic_transition[i]=0;
+  /* transition_matrix is a per symbol matrix of permitted transitions */
+  transition_matrix = (int*) tl_emalloc(state_count*state_count*sizeof(int));
 
-/* pessimistic_transition is a list of sets of transitions permitted under any symbol
-// i.e. after an externally chosen symbol, the machine is forced into one of the sets
-// but is free to chose a state within the set */
-    pessimistic_transition = (Slist**) tl_emalloc(state_count*sizeof(Slist*));
-    for (i=0;i<state_count;i++) {
-      pessimistic_transition[i] = (Slist*)tl_emalloc(sizeof(Slist));
-      pessimistic_transition[i]->set = dup_set(full_state_set, state_size);
-      pessimistic_transition[i]->nxt = (Slist*)0; }
-    working_set = make_set(EMPTY_SET,state_size);
+  /* optimistic_transition is the union of all transition_matricies,
+  // i.e. transitions permitted under some symbol */
+  optimistic_transition = (int*) tl_emalloc(state_count*state_count*sizeof(int));
+  for (i=0;i<state_count*state_count;i++)
+      optimistic_transition[i]=0;
 
-/*    for (i=0; i<cexpr->cexpr_idx; i++)
-      printf("%d\t%s\n",i,cexpr->cexpr_expr_table[i]);
+  /* pessimistic_transition is a list of sets of transitions permitted under any symbol
+  // i.e. after an externally chosen symbol, the machine is forced into one of the sets
+  // but is free to chose a state within the set */
+  pessimistic_transition = (Slist**) tl_emalloc(state_count*sizeof(Slist*));
+  for (i=0;i<state_count;i++) {
+    pessimistic_transition[i] = (Slist*)tl_emalloc(sizeof(Slist));
+    pessimistic_transition[i]->set = dup_set(full_state_set, state_size);
+    pessimistic_transition[i]->nxt = (Slist*)0; }
+  working_set = make_set(EMPTY_SET,state_size);
+
+  /*
+  for (i=0; i<cexpr->cexpr_idx; i++)
+    printf("%d\t%s\n",i,cexpr->cexpr_expr_table[i]);
+  fprintf(tl_out,"\n"); */
+
+  for(i=0; i<sym_id; i++) {
+    fprintf(tl_out, "%d\t%s",i,sym_table[i]?sym_table[i]:"");
+    if (sym_table[i] && sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
+      /* Yes, scanning for a match here is horrid DAN */
+      fprintf(tl_out, "\t{ %s }\n", cexpr->cexpr_expr_table[cex]);
+    else
+      fprintf(tl_out, "\n"); }
+
+  fprintf(tl_out,"\nStuttering:\n\n");
+  a=make_set(EMPTY_SET,sym_size);
+  do {                                     /* Loop over alphabet */
     fprintf(tl_out,"\n");
-*/
-    for(i=0; i<sym_id; i++) {
-      fprintf(tl_out, "%d\t%s",i,sym_table[i]?sym_table[i]:"");
-      if (sym_table[i] && sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
-        /* Yes, scanning for a match here is horrid DAN */
-        fprintf(tl_out, "\t{ %s }\n", cexpr->cexpr_expr_table[cex]);
-      else
-        fprintf(tl_out, "\n"); }
-
-    fprintf(tl_out,"\nStuttering:\n\n");
-    a=make_set(EMPTY_SET,sym_size);
-    do {                                     /* Loop over alphabet */
+    for (i=0;i<state_count*state_count;i++)   /* Loop over states, clearing transition matrix for this character */
+      transition_matrix[i]=0;                 /* END loop over states */
+    /* print_sym_set(a, sym_size); fprintf(tl_out,"\n"); */
+    {                                         /* Display the current symbol */
+      int first = !0;
+      int i, cex;
+      for(i=0; i<sym_id; i++) {
+        if (!first)
+          fprintf(tl_out,"&");
+        first = 0;
+        if(!in_set(a,i))
+          fprintf(tl_out,"!");
+        if (sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
+          fprintf(tl_out, "{%s}", cexpr->cexpr_expr_table[cex]);
+        else
+          fprintf(tl_out, "%s",sym_table[i]); }
       fprintf(tl_out,"\n");
-      for (i=0;i<state_count*state_count;i++)   /* Loop over states, clearing transition matrix for this character */
-        transition_matrix[i]=0;                 /* END loop over states */
-/*    print_sym_set(a, sym_size); fprintf(tl_out,"\n"); */
-      { 					/* Display the current symbol */
-        int first = !0;
-	int i, cex;
-        for(i=0; i<sym_id; i++) {
-	  if (!first)
-	    fprintf(tl_out,"&");
-	  first = 0;
-	  if(!in_set(a,i))
-	    fprintf(tl_out,"!");
-	  if (sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
-	    fprintf(tl_out, "{%s}", cexpr->cexpr_expr_table[cex]);
-	  else
-            fprintf(tl_out, "%s",sym_table[i]); }
-	fprintf(tl_out,"\n");
-      }
+    }
 
-      for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
-        (void)clear_set(working_set,sym_size);                    /* clear transition targets for this state and character */
-        for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {       /* Loop over transitions */
+    for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
+      (void)clear_set(working_set,sym_size);                    /* clear transition targets for this state and character */
+      for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {       /* Loop over transitions */
 #if 0
-	  fprintf(tl_out,"%d--[+",s->label);
-	  if(t->pos) print_sym_set(t->pos, sym_size);
-	   fprintf(tl_out," -");
-	  if(t->neg) print_sym_set(t->neg, sym_size);
-	  fprintf(tl_out,"]--> %d\t",t->to->label);
-	  fprintf(tl_out, "%s\n", (!t->neg || empty_intersect_sets(t->neg,a,sym_size))?
-	                             ((!t->pos || included_set(t->pos,a,sym_size))?"active":""):"suppressed");
+        fprintf(tl_out,"%d--[+",s->label);
+        if(t->pos) print_sym_set(t->pos, sym_size);
+         fprintf(tl_out," -");
+        if(t->neg) print_sym_set(t->neg, sym_size);
+        fprintf(tl_out,"]--> %d\t",t->to->label);
+        fprintf(tl_out, "%s\n", (!t->neg || empty_intersect_sets(t->neg,a,sym_size))?
+                                   ((!t->pos || included_set(t->pos,a,sym_size))?"active":""):"suppressed");
 #endif
 
-	  if ((!t->pos || included_set(t->pos,a,sym_size)) && (!t->neg || empty_intersect_sets(t->neg,a,sym_size))) {  /* Tests TRUE if this transition is enabled on this character of the alphabet */
-	    add_set(working_set,t->to->label);                                  /* update working set of transition targets enabled for this character on this state */
-	    transition_matrix[(s->label)*state_count + (t->to->label)] = 1;     /* update per-character transition matrix */
-            optimistic_transition[(s->label)*state_count + (t->to->label)] = 1; /* update optimistic (any character) transition matrix */
-	    }
-          }                                                     /* END Lop over transitions */
-          {                                                                     /* update pessimistic transition list for this state */
-	  set_list=pessimistic_transition[s->label];
-	  int add = 1;
-	  Slist *prev_set;
-	  while (set_list) {                                /* loop over list of pessimistic transitions */
-	    if(included_set(working_set,set_list->set, state_size)) {
-	      tfree(set_list->set);                                                 /* our new set is smaller than this set already in the list -> replace */
-	      set_list->set = dup_set(working_set, state_size); add = 0;
-	    } else if (included_set(set_list->set,working_set,state_size)) {
-	      add = 0;                                                              /* our new set is bigger than this set already in the list -> ignore */
-	      }
-	    prev_set = set_list;
-	    set_list = set_list->nxt; }
-	    if (add) {                                                              /* Our new set overlaps all existing sets, so add it */
-	      prev_set->nxt = (Slist*)tl_emalloc(sizeof(Slist));
-	      prev_set->nxt->set = dup_set(working_set, state_size);
-	      prev_set->nxt->nxt = (Slist*)0; }
+        if ((!t->pos || included_set(t->pos,a,sym_size)) && (!t->neg || empty_intersect_sets(t->neg,a,sym_size))) {  /* Tests TRUE if this transition is enabled on this character of the alphabet */
+          add_set(working_set,t->to->label);                                  /* update working set of transition targets enabled for this character on this state */
+          transition_matrix[(s->label)*state_count + (t->to->label)] = 1;     /* update per-character transition matrix */
+          optimistic_transition[(s->label)*state_count + (t->to->label)] = 1; /* update optimistic (any character) transition matrix */
+          }
+        }                                                     /* END Lop over transitions */
+        {                                                                     /* update pessimistic transition list for this state */
+          set_list=pessimistic_transition[s->label];
+          int add = 1;
+          Slist *prev_set;
+          while (set_list) {                                /* loop over list of pessimistic transitions */
+            if(included_set(working_set,set_list->set, state_size)) {
+              tfree(set_list->set);                                                 /* our new set is smaller than this set already in the list -> replace */
+              set_list->set = dup_set(working_set, state_size); add = 0;
+            } else if (included_set(set_list->set,working_set,state_size)) {
+              add = 0;                                                              /* our new set is bigger than this set already in the list -> ignore */
+              }
+            prev_set = set_list;
+            set_list = set_list->nxt; }
+          if (add) {                                                              /* Our new set overlaps all existing sets, so add it */
+            prev_set->nxt = (Slist*)tl_emalloc(sizeof(Slist));
+            prev_set->nxt->set = dup_set(working_set, state_size);
+            prev_set->nxt->nxt = (Slist*)0; }
 
-            {									    /* Eliminate duplicate sets in set list */
-	      Slist * set_list2 = pessimistic_transition[s->label];
-	      while(set_list2) {
-	        set_list = set_list2;
-	        while(set_list->nxt) {
-		  if(same_set(set_list->nxt->set,set_list2->set,state_size)) {
-		    Slist * drop = set_list->nxt;
-		    set_list->nxt = drop -> nxt;
-		    tfree(drop -> set);
-		    tfree(drop);
-		  } else
-		    set_list = set_list->nxt;
-		}
-		set_list2 = set_list2->nxt;
-	      }
-	    }                                                                      /* END Eliminate duplicate sets in set list */
-	      }                                                                 /* END update pessimistic transition list for this state */
-	  }                                                   /* END Loop over states */
+          {                                                                            /* Eliminate duplicate sets in set list */
+            Slist * set_list2 = pessimistic_transition[s->label];
+            while(set_list2) {
+              set_list = set_list2;
+              while(set_list->nxt) {
+                if(same_set(set_list->nxt->set,set_list2->set,state_size)) {
+                  Slist * drop = set_list->nxt;
+                  set_list->nxt = drop -> nxt;
+                  tfree(drop -> set);
+                  tfree(drop);
+                } else
+                  set_list = set_list->nxt;
+              }
+              set_list2 = set_list2->nxt;
+            }
+          }                                                                      /* END Eliminate duplicate sets in set list */
+            }                                                                 /* END update pessimistic transition list for this state */
+        }                                                   /* END Loop over states */
 
-      fprintf(tl_out,"Transitions:\n");
-      for(i=0; i<state_count; i++) {
-        for(j=0;j<state_count; j++)
-	  fprintf(tl_out,"%d\t",transition_matrix[i*state_count + j]);
-	fprintf(tl_out,"\n"); }
-      fprintf(tl_out,"\n");
-
-      int * reach = reachability(transition_matrix, state_count);
-
-      fprintf(tl_out,"Reachability:\n");
-      for(i=0; i<state_count; i++) {
-        for(j=0;j<state_count; j++)
-          fprintf(tl_out,"%d\t",reach[i*state_count + j]);
-        fprintf(tl_out,"\n"); }
-      fprintf(tl_out,"\n");
-      {
-        BState *s2;
-        int r, c;
-        int * accepting_cycles=make_set(EMPTY_SET,state_size);
-        for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
-          if((s2->final == b->accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)])
-            add_set(accepting_cycles,s2->label);
-        fprintf(tl_out,"Accepting cycles: ");
-        print_set(accepting_cycles,state_size);
-        int * accepting_states=make_set(EMPTY_SET,state_size);
-        for (r=0;r<state_count;r++)
-          for (c=0; c<state_count;c++) {
-	    /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
-            if(reach[r*state_count+c] && in_set(accepting_cycles,c))
-              add_set(accepting_states,r); }
-        fprintf(tl_out,"\nAccepting states: ");
-        print_set(accepting_states,state_size);
-	fprintf(tl_out,"\n");
-
-        as->stutter_accept_table[stut_accept_idx++] = accepting_states;
-
-        tfree(accepting_cycles);
-      }
-      tfree (reach);
-       } while (increment_symbol_set(a, sym_id));       /* END Loop over alphabet */
-
-    fprintf(tl_out,"\n\nOptimistic transitions:\n");
+    fprintf(tl_out,"Transitions:\n");
     for(i=0; i<state_count; i++) {
       for(j=0;j<state_count; j++)
-        fprintf(tl_out,"%d\t",optimistic_transition[i*state_count + j]);
+        fprintf(tl_out,"%d\t",transition_matrix[i*state_count + j]);
       fprintf(tl_out,"\n"); }
-
-    int * optimistic_reach = reachability(optimistic_transition, state_count);
-    fprintf(tl_out,"Optimistic reachability:\n");
-    for(i=0; i<state_count; i++) {
-      for(j=0;j<state_count; j++)
-        fprintf(tl_out,"%d\t",optimistic_reach[i*state_count + j]);
-      fprintf(tl_out,"\n"); }
-      {
-        BState *s2;
-        int r, c;
-        int * accepting_cycles=make_set(EMPTY_SET,state_size);
-        for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
-          if((s2->final == b->accept || s2 -> id == 0) && optimistic_reach[(s2->label)*(state_count+1)])
-            add_set(accepting_cycles,s2->label);
-        fprintf(tl_out,"\nAccepting optimistic cycles: ");
-        print_set(accepting_cycles,state_size);
-        int * accepting_states=make_set(EMPTY_SET,state_size);
-        for (r=0;r<state_count;r++)
-          for (c=0; c<state_count;c++) {
-            /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
-            if(optimistic_reach[r*state_count+c] && in_set(accepting_cycles,c))
-              add_set(accepting_states,r); }
-        fprintf(tl_out,"\nAccepting optimistic states: ");
-        print_set(accepting_states,state_size);
-        fprintf(tl_out,"\n");
-        tfree(accepting_cycles);
-
-        as->optimistic_accept_state_set = accepting_states;
-      }
-      tfree(optimistic_reach);
-
-    fprintf(tl_out,"\n\nPessimistic transitions:\n");
-    for(i=0; i<state_count; i++) {
-      fprintf(tl_out,"%2d: ",i);
-      set_list = pessimistic_transition[i];
-      while (set_list != (Slist*)0) {
-        print_set(set_list->set,state_size);
-	set_list = set_list->nxt; }
-      fprintf(tl_out,"\n"); }
-    int* pessimistic_reachable[state_count];
-    fprintf(tl_out,"\n\nPessimistic reachable:\n");
-    for(i=0; i<state_count; i++) {
-      fprintf(tl_out,"%2d: ",i);
-      pessimistic_reachable[i] = pess_reach(pessimistic_transition, i, state_count, state_count, state_size);
-      print_set(pessimistic_reachable[i],state_size);
-      fprintf(tl_out,"\n"); }
-    int *accepting_pessimistic_cycles=make_set(EMPTY_SET,state_size);
-    BState* s2;
-    for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
-      if((s2->final == b->accept || s2 -> id == 0) && in_set(pessimistic_reachable[s2->label],s2->label))
-        add_set(accepting_pessimistic_cycles,s2->label);
-    fprintf(tl_out,"\nAccepting pessimistic cycles: ");
-    print_set(accepting_pessimistic_cycles,state_size);
-    int *accepting_pessimistic_states=make_set(EMPTY_SET,state_size);
-    for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
-      if(!empty_intersect_sets(pessimistic_reachable[s2->label],accepting_pessimistic_cycles,state_size))
-        add_set(accepting_pessimistic_states,s2->label);
-    fprintf(tl_out,"\nAccepting pessimistic states: ");
-    print_set(accepting_pessimistic_states,state_size);
-    as->pessimistic_accept_state_set = accepting_pessimistic_states;
     fprintf(tl_out,"\n");
+
+    int * reach = reachability(transition_matrix, state_count);
+
+    fprintf(tl_out,"Reachability:\n");
+    for(i=0; i<state_count; i++) {
+      for(j=0;j<state_count; j++)
+        fprintf(tl_out,"%d\t",reach[i*state_count + j]);
+      fprintf(tl_out,"\n"); }
+    fprintf(tl_out,"\n");
+    {
+      BState *s2;
+      int r, c;
+      int * accepting_cycles=make_set(EMPTY_SET,state_size);
+      for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
+        if((s2->final == b->accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)])
+          add_set(accepting_cycles,s2->label);
+      fprintf(tl_out,"Accepting cycles: ");
+      print_set(accepting_cycles,state_size);
+      int * accepting_states=make_set(EMPTY_SET,state_size);
+      for (r=0;r<state_count;r++)
+        for (c=0; c<state_count;c++) {
+          /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
+          if(reach[r*state_count+c] && in_set(accepting_cycles,c))
+            add_set(accepting_states,r); }
+      fprintf(tl_out,"\nAccepting states: ");
+      print_set(accepting_states,state_size);
+      fprintf(tl_out,"\n");
+
+      as->stutter_accept_table[stut_accept_idx++] = accepting_states;
+
+      tfree(accepting_cycles);
+    }
+    tfree (reach);
+     } while (increment_symbol_set(a, sym_id));       /* END Loop over alphabet */
+
+  fprintf(tl_out,"\n\nOptimistic transitions:\n");
+  for(i=0; i<state_count; i++) {
+    for(j=0;j<state_count; j++)
+      fprintf(tl_out,"%d\t",optimistic_transition[i*state_count + j]);
+    fprintf(tl_out,"\n"); }
+
+  int *optimistic_reach = reachability(optimistic_transition, state_count);
+  fprintf(tl_out,"Optimistic reachability:\n");
+  for(i=0; i<state_count; i++) {
+    for(j=0;j<state_count; j++)
+      fprintf(tl_out,"%d\t",optimistic_reach[i*state_count + j]);
+    fprintf(tl_out,"\n"); }
+
+  {
+    BState *s2;
+    int r, c;
+    int * accepting_cycles=make_set(EMPTY_SET,state_size);
+    for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
+      if((s2->final == b->accept || s2 -> id == 0) && optimistic_reach[(s2->label)*(state_count+1)])
+        add_set(accepting_cycles,s2->label);
+    fprintf(tl_out,"\nAccepting optimistic cycles: ");
+    print_set(accepting_cycles,state_size);
+
+    int * accepting_states=make_set(EMPTY_SET,state_size);
+    for (r=0;r<state_count;r++)
+      for (c=0; c<state_count;c++) {
+        /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
+        if(optimistic_reach[r*state_count+c] && in_set(accepting_cycles,c))
+          add_set(accepting_states,r); }
+    fprintf(tl_out,"\nAccepting optimistic states: ");
+    print_set(accepting_states,state_size);
+    fprintf(tl_out,"\n");
+    tfree(accepting_cycles);
+
+    as->optimistic_accept_state_set = accepting_states;
+  }
+  tfree(optimistic_reach);
+
+  fprintf(tl_out,"\n\nPessimistic transitions:\n");
+  for(i=0; i<state_count; i++) {
+    fprintf(tl_out,"%2d: ",i);
+    set_list = pessimistic_transition[i];
+    while (set_list != (Slist*)0) {
+      print_set(set_list->set,state_size);
+      set_list = set_list->nxt; }
+    fprintf(tl_out,"\n"); }
+
+  int* pessimistic_reachable[state_count];
+  fprintf(tl_out,"\n\nPessimistic reachable:\n");
+  for(i=0; i<state_count; i++) {
+    fprintf(tl_out,"%2d: ",i);
+    pessimistic_reachable[i] = pess_reach(pessimistic_transition, i, state_count, state_count, state_size);
+    print_set(pessimistic_reachable[i],state_size);
+    fprintf(tl_out,"\n"); }
+
+  int *accepting_pessimistic_cycles=make_set(EMPTY_SET,state_size);
+  BState* s2;
+  for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
+    if((s2->final == b->accept || s2 -> id == 0) && in_set(pessimistic_reachable[s2->label],s2->label))
+      add_set(accepting_pessimistic_cycles,s2->label);
+  fprintf(tl_out,"\nAccepting pessimistic cycles: ");
+  print_set(accepting_pessimistic_cycles,state_size);
+
+  int *accepting_pessimistic_states=make_set(EMPTY_SET,state_size);
+  for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
+    if(!empty_intersect_sets(pessimistic_reachable[s2->label],accepting_pessimistic_cycles,state_size))
+      add_set(accepting_pessimistic_states,s2->label);
+  fprintf(tl_out,"\nAccepting pessimistic states: ");
+  print_set(accepting_pessimistic_states,state_size);
+  as->pessimistic_accept_state_set = accepting_pessimistic_states;
+  fprintf(tl_out,"\n");
 }
 
 static void print_c_accept_tables(const char *const *sym_table, int sym_id,
