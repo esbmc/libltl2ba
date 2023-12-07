@@ -39,6 +39,17 @@ struct accept_sets {
   int *pessimistic_accept_state_set;
 };
 
+typedef struct Slist {
+  int * set;
+  struct Slist * nxt; } Slist;
+
+struct pess_data {
+  int state_count;
+  int state_size;
+  int *full_state_set;
+  Slist **tr;
+};
+
 /********************************************************************\
 |*        Simplification of the generalized Buchi automaton         *|
 \********************************************************************/
@@ -1023,10 +1034,6 @@ static int increment_symbol_set(int *s, int sym_id)
   return !0;
 }
 
-typedef struct Slist {
-  int * set;
-  struct Slist * nxt; } Slist;
-
 static int * reachability(int * m, int rows)
 {
 /* This function takes a rows * cols integer array and repeatedly applies the transformation
@@ -1055,60 +1062,61 @@ static int * reachability(int * m, int rows)
   tfree(m2);
   return m1; }
 
-static int state_count=0;
+static int *pess_recurse1(const struct pess_data *d, Slist* sl, int depth);
 
-int state_size;
-int *full_state_set;
-
-static int *pess_recurse1(Slist **tr, Slist* sl, int depth);
-
-static int* pess_recurse3(Slist **tr, int i, int depth) {
+static int* pess_recurse3(const struct pess_data *d, int i, int depth) {
 /* Okay, we've now pessimistically picked a set and optimistically picked
  * an element within it. So we just have to iterate the depth */
   depth--;
   if (depth == 0)
-    return make_set(i, state_size);
-  return pess_recurse1(tr, tr[i], depth);
+    return make_set(i, d->state_size);
+  return pess_recurse1(d, d->tr[i], depth);
 }
 
-
-static int* pess_recurse2(Slist **tr, int * s, int depth) {
+static int* pess_recurse2(const struct pess_data *d, int *s, int depth) {
 /* Optimistically pick an element out of the set */
   int i;
   int *t;
-  int *reach=make_set(EMPTY_SET,state_size);
-  for(i=0; i< state_count; i++)
+  int *reach=make_set(EMPTY_SET, d->state_size);
+  for(i = 0; i < d->state_count; i++)
     if (in_set(s, i)) {
-      merge_sets(reach,t=pess_recurse3(tr, i, depth),state_size);
+      merge_sets(reach,
+                 t=pess_recurse3(d, i, depth),
+                 d->state_size);
       tfree(t); }
   return reach;
 }
 
-
-
-static int *pess_recurse1(Slist **tr, Slist* sl, int depth) {
+static int *pess_recurse1(const struct pess_data *d, Slist* sl, int depth) {
 /* Pessimistically pick a set out of p->slist */
-  int * reach = dup_set(full_state_set,state_size);
+  int *reach = dup_set(d->full_state_set, d->state_size);
   int *t, *t1;
   while (sl) {
-    reach = intersect_sets(t1=reach, t=pess_recurse2(tr, sl->set, depth), state_size);
+    reach = intersect_sets(t1=reach,
+                           t=pess_recurse2(d, sl->set, depth),
+                           d->state_size);
     tfree(t);
     tfree(t1);
     sl = sl->nxt; }
   return reach;
 }
 
-
-static int * pess_reach(Slist **tr, int st, int depth) {
-/* We are looking for states which are reachable down _all_ the imposed Slist elements
- * So, the one-step reachable states are simply the intersection of all the Slist elements.
- * The two-step reachable states are those for which we can pick an element of each slist element and replace it
- * with with the target slist, such that the state is in the intersection of all of the new slists. */
+/* We are looking for states which are reachable down _all_ the imposed Slist
+ * elements. So, the one-step reachable states are simply the intersection of
+ * all the Slist elements. The two-step reachable states are those for which we
+ * can pick an element of each slist element and replace it with with the target
+ * slist, such that the state is in the intersection of all of the new slists.
+ */
+static int * pess_reach(Slist **tr, int st, int depth, int state_count, int state_size) {
   int i;
-  full_state_set = make_set(EMPTY_SET,state_size);
-  for(i=0; i< state_count; i++)
-    add_set(full_state_set, i);
-  return pess_recurse1(tr, tr[st], depth);
+  struct pess_data d;
+  d.state_count = state_count;
+  d.state_size = state_size;
+  d.full_state_set = make_set(EMPTY_SET, d.state_size);
+  d.tr = tr;
+  for(i=0; i < d.state_count; i++)
+    add_set(d.full_state_set, i);
+  return pess_recurse1(&d, tr[st], depth);
 }
 
 static void print_behaviours(const Buchi *b, const char *const *sym_table,
@@ -1124,6 +1132,8 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
     int *working_set, *full_state_set;
     int i, j, k;
     int stut_accept_idx;
+    int state_count = 0;
+    int state_size;
 
     /* Allocate a set of sets, each representing the accepting states for each
      * input symbol combination */
@@ -1372,7 +1382,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
     fprintf(tl_out,"\n\nPessimistic reachable:\n");
     for(i=0; i<state_count; i++) {
       fprintf(tl_out,"%2d: ",i);
-      pessimistic_reachable[i] = pess_reach(pessimistic_transition, i, state_count);
+      pessimistic_reachable[i] = pess_reach(pessimistic_transition, i, state_count, state_count, state_size);
       print_set(pessimistic_reachable[i],state_size);
       fprintf(tl_out,"\n"); }
     int *accepting_pessimistic_cycles=make_set(EMPTY_SET,state_size);
