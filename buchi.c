@@ -28,15 +28,15 @@ struct bdfs_state {
   BScc *scc_stack;
 };
 
-/* Record of what states stutter-accept, according to each input symbol. */
-static int **stutter_accept_table = NULL;
-static int *optimistic_accept_state_set = NULL;
-static int *pessimistic_accept_state_set = NULL;
-
-static int state_count=0;
-
 struct bcounts {
   int bstate_count, btrans_count;
+};
+
+/* Record of what states stutter-accept, according to each input symbol. */
+struct accept_sets {
+  int **stutter_accept_table;
+  int *optimistic_accept_state_set;
+  int *pessimistic_accept_state_set;
 };
 
 /********************************************************************\
@@ -796,6 +796,7 @@ Buchi mk_buchi(Generalized *g, tl_Flags flags)
   return b;
 }
 
+
 static void print_c_headers(const tl_Cexprtab *cexpr,
                             const char *c_sym_name_prefix)
 {
@@ -1022,8 +1023,6 @@ static int increment_symbol_set(int *s, int sym_id)
   return !0;
 }
 
-
-
 typedef struct Slist {
   int * set;
   struct Slist * nxt; } Slist;
@@ -1055,6 +1054,8 @@ static int * reachability(int * m, int rows)
     m2 = (m1==t1)?t2:t1; }
   tfree(m2);
   return m1; }
+
+static int state_count=0;
 
 int state_size;
 int *full_state_set;
@@ -1111,7 +1112,8 @@ static int * pess_reach(Slist **tr, int st, int depth) {
 }
 
 static void print_behaviours(const Buchi *b, const char *const *sym_table,
-                             const tl_Cexprtab *cexpr, int sym_id)
+                             const tl_Cexprtab *cexpr, int sym_id,
+                             struct accept_sets *as)
 {
     BState *s;
     BTrans *t;
@@ -1125,7 +1127,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
 
     /* Allocate a set of sets, each representing the accepting states for each
      * input symbol combination */
-    stutter_accept_table = tl_emalloc(sizeof(int *) * (2<<sym_id) * (2<<sym_id));
+    as->stutter_accept_table = tl_emalloc(sizeof(int *) * (2<<sym_id) * (2<<sym_id));
     stut_accept_idx = 0;
 
 /*    if (bstates->nxt == bstates) {
@@ -1315,7 +1317,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
         print_set(accepting_states,state_size);
 	fprintf(tl_out,"\n");
 
-        stutter_accept_table[stut_accept_idx++] = accepting_states;
+        as->stutter_accept_table[stut_accept_idx++] = accepting_states;
 
         tfree(accepting_cycles);
       }
@@ -1354,7 +1356,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
         fprintf(tl_out,"\n");
         tfree(accepting_cycles);
 
-        optimistic_accept_state_set = accepting_states;
+        as->optimistic_accept_state_set = accepting_states;
       }
       tfree(optimistic_reach);
 
@@ -1386,12 +1388,13 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
         add_set(accepting_pessimistic_states,s2->label);
     fprintf(tl_out,"\nAccepting pessimistic states: ");
     print_set(accepting_pessimistic_states,state_size);
-    pessimistic_accept_state_set = accepting_pessimistic_states;
+    as->pessimistic_accept_state_set = accepting_pessimistic_states;
     fprintf(tl_out,"\n");
 }
 
 static void print_c_accept_tables(const char *const *sym_table, int sym_id,
                                   int g_num_states,
+                                  const struct accept_sets *as,
                                   const char *c_sym_name_prefix)
 {
   int sym_comb, state, i;
@@ -1404,7 +1407,7 @@ static void print_c_accept_tables(const char *const *sym_table, int sym_id,
   for (sym_comb = 0; sym_comb < num_sym_combs; sym_comb++) {
     fprintf(tl_out, "{\n  ");
     for (state = 0; state < g_num_states; state++) {
-      if (in_set(stutter_accept_table[sym_comb], state))
+      if (in_set(as->stutter_accept_table[sym_comb], state))
         fprintf(tl_out, "true, ");
       else
         fprintf(tl_out, "false, ");
@@ -1416,7 +1419,7 @@ static void print_c_accept_tables(const char *const *sym_table, int sym_id,
   fprintf(tl_out, "_Bool %s_good_prefix_excluded_states[%d] = {\n",
 		  c_sym_name_prefix, g_num_states);
   for (state = 0; state < g_num_states; state++) {
-    if (in_set(optimistic_accept_state_set, state))
+    if (in_set(as->optimistic_accept_state_set, state))
       fprintf(tl_out, "true, ");
     else
       fprintf(tl_out, "false, ");
@@ -1426,7 +1429,7 @@ static void print_c_accept_tables(const char *const *sym_table, int sym_id,
   fprintf(tl_out, "_Bool %s_bad_prefix_states[%d] = {\n",
 		  c_sym_name_prefix, g_num_states);
   for (state = 0; state < g_num_states; state++) {
-    if (in_set(pessimistic_accept_state_set, state))
+    if (in_set(as->pessimistic_accept_state_set, state))
       fprintf(tl_out, "true, ");
     else
       fprintf(tl_out, "false, ");
@@ -1475,6 +1478,7 @@ void print_c_buchi(const Buchi *b, const char *const *sym_table,
 {
   BTrans *t, *t1;
   BState *s;
+  struct accept_sets as;
   int i, num_states;
 
   if (b->bstates->nxt == b->bstates) {
@@ -1486,7 +1490,7 @@ void print_c_buchi(const Buchi *b, const char *const *sym_table,
   }
 
   fprintf(tl_out, "#if 0\n/* Precomputed transition data */\n");
-  print_behaviours(b, sym_table, cexpr, sym_id);
+  print_behaviours(b, sym_table, cexpr, sym_id, &as);
   fprintf(tl_out, "#endif\n");
 
   print_c_headers(cexpr, c_sym_name_prefix);
@@ -1506,7 +1510,7 @@ void print_c_buchi(const Buchi *b, const char *const *sym_table,
   /* Some things vaguely in the shape of a modelling api */
   print_c_buchi_util_funcs(c_sym_name_prefix);
 
-  print_c_accept_tables(sym_table, sym_id, g_num_states, c_sym_name_prefix);
+  print_c_accept_tables(sym_table, sym_id, g_num_states, &as, c_sym_name_prefix);
 
   print_c_epilog(c_sym_name_prefix);
   return;
