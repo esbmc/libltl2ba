@@ -168,13 +168,14 @@ main(int argc, char *argv[])
 	               | TL_SIMP_SCC
 	               | TL_FJTOFJ;
 	const char *c_sym_name_prefix = "_ltl2ba";
+	int display_cache = 0;
 	tl_out = stdout;
 
 	progname = argv[0] ? basename(argv[0]) : "";
 	if (!strcmp(progname, "ltl2c"))
 		outmode = c;
 
-	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:Pi")) != -1;)
+	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:PiC")) != -1;)
 		switch (opt) {
 		case 'h': usage(0); break;
 		case 'F': ltl_file = optarg; break;
@@ -198,6 +199,7 @@ main(int argc, char *argv[])
 			break;
 		case 'P': c_sym_name_prefix = optarg; break;
 		case 'i': invert_formula = 1; break;
+		case 'C': display_cache = 1; break;
 		case ':':
 		case '?': usage(1); break;
 		}
@@ -241,6 +243,9 @@ main(int argc, char *argv[])
 
 	free(formula);
 	free(inv_formula);
+
+	if (display_cache)
+		cache_dump();
 
 	return tl_errs != 0;
 }

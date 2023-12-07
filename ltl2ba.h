@@ -240,3 +240,5 @@ void print_sym_set(const char *const *sym_table, const tl_Cexprtab *cexpr, int *
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);
 
 void put_uform(void);
+
+void cache_dump(void);
