@@ -202,13 +202,13 @@ void	tl_yyerror(tl_Lexer *lex, char *);
 
 Alternating mk_alternating(const Node *, FILE *, const tl_Cexprtab *cexpr, tl_Flags flags);
 Generalized mk_generalized(const Alternating *, FILE *, tl_Flags flags, const tl_Cexprtab *cexpr);
-Buchi       mk_buchi(Generalized *g, tl_Flags, const char *const *sym_table, const tl_Cexprtab *cexpr);
+Buchi       mk_buchi(Generalized *g, FILE *, tl_Flags, const char *const *sym_table, const tl_Cexprtab *cexpr);
 
-void print_c_buchi(const Buchi *b, const char *const *sym_table,
+void print_c_buchi(FILE *f, const Buchi *b, const char *const *sym_table,
                    const tl_Cexprtab *cexpr, int sym_id,
                    const char *c_sym_name_prefix);
-void print_dot_buchi(const Buchi *b, const char *const *sym_table, const tl_Cexprtab *cexpr);
-void print_spin_buchi(const Buchi *b, const char **sym_table);
+void print_dot_buchi(FILE *f, const Buchi *b, const char *const *sym_table, const tl_Cexprtab *cexpr);
+void print_spin_buchi(FILE *f, const Buchi *b, const char **sym_table);
 
 ATrans *dup_trans(const ATrans *);
 ATrans *merge_trans(const ATrans *, const ATrans *);

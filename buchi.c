@@ -14,8 +14,6 @@
 
 extern int sym_size;
 
-extern FILE *tl_out;
-
 typedef struct BScc {
   struct BState *bstate;
   int rank;
@@ -84,7 +82,7 @@ static void copy_btrans(BTrans *from, BTrans *to) {
 }
 
 /* simplifies the transitions */
-static int simplify_btrans(Buchi *b, tl_Flags flags)
+static int simplify_btrans(Buchi *b, FILE *f, tl_Flags flags)
 {
   BState *s;
   BTrans *t, *t1;
@@ -119,9 +117,9 @@ static int simplify_btrans(Buchi *b, tl_Flags flags)
   if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
-    fprintf(tl_out, "\nSimplification of the Buchi automaton - transitions: %ld.%06lis",
+    fprintf(f, "\nSimplification of the Buchi automaton - transitions: %ld.%06lis",
 		t_diff.tv_sec, t_diff.tv_usec);
-    fprintf(tl_out, "\n%i transitions removed\n", changed);
+    fprintf(f, "\n%i transitions removed\n", changed);
 
   }
   return changed;
@@ -216,7 +214,7 @@ static int all_btrans_match(Buchi *buchi, BState *a, BState *b)
 }
 
 /* eliminates redundant states */
-static int simplify_bstates(Buchi *b, tl_Flags flags, int *gstate_id,
+static int simplify_bstates(Buchi *b, FILE *f, tl_Flags flags, int *gstate_id,
                             BState *const bremoved)
 {
   BState *s, *s1, *s2;
@@ -292,9 +290,9 @@ static int simplify_bstates(Buchi *b, tl_Flags flags, int *gstate_id,
   if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
-    fprintf(tl_out, "\nSimplification of the Buchi automaton - states: %ld.%06lis",
+    fprintf(f, "\nSimplification of the Buchi automaton - states: %ld.%06lis",
 		t_diff.tv_sec, t_diff.tv_usec);
-    fprintf(tl_out, "\n%i states removed\n", changed);
+    fprintf(f, "\n%i states removed\n", changed);
   }
 
   return changed;
@@ -500,185 +498,186 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
 \********************************************************************/
 
 /* dumps the Buchi automaton */
-static void print_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr,
-                        const Buchi *b, BState *s, int scc_size)
+static void print_buchi(FILE *f, const char *const *sym_table,
+                        const tl_Cexprtab *cexpr, const Buchi *b, BState *s,
+                        int scc_size)
 {
   BTrans *t;
   if(s == b->bstates) return;
 
-  print_buchi(sym_table, cexpr, b, s->nxt, scc_size); /* begins with the last state */
+  print_buchi(f, sym_table, cexpr, b, s->nxt, scc_size); /* begins with the last state */
 
-  fprintf(tl_out, "state ");
+  fprintf(f, "state ");
   if(s->id == -1)
-    fprintf(tl_out, "init");
+    fprintf(f, "init");
   else {
     if(s->final == b->accept)
-      fprintf(tl_out, "accept");
+      fprintf(f, "accept");
     else
-      fprintf(tl_out, "T%i", s->final);
-    fprintf(tl_out, "_%i", s->id);
+      fprintf(f, "T%i", s->final);
+    fprintf(f, "_%i", s->id);
   }
-  fprintf(tl_out, "\n");
+  fprintf(f, "\n");
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
-      fprintf(tl_out, "1");
-    print_sym_set(tl_out, sym_table, cexpr, t->pos, sym_size);
-    if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(tl_out, " & ");
-    print_sym_set(tl_out, sym_table, cexpr, t->neg, sym_size);
-    fprintf(tl_out, " -> ");
+      fprintf(f, "1");
+    print_sym_set(f, sym_table, cexpr, t->pos, sym_size);
+    if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(f, " & ");
+    print_sym_set(f, sym_table, cexpr, t->neg, sym_size);
+    fprintf(f, " -> ");
     if(t->to->id == -1)
-      fprintf(tl_out, "init\n");
+      fprintf(f, "init\n");
     else {
       if(t->to->final == b->accept)
-	fprintf(tl_out, "accept");
+	fprintf(f, "accept");
       else
-	fprintf(tl_out, "T%i", t->to->final);
-      fprintf(tl_out, "_%i\n", t->to->id);
+	fprintf(f, "T%i", t->to->final);
+      fprintf(f, "_%i\n", t->to->id);
     }
   }
 }
 
-void print_spin_buchi(const Buchi *b, const char **sym_table) {
+void print_spin_buchi(FILE *f, const Buchi *b, const char **sym_table) {
   BTrans *t;
   BState *s;
   int accept_all = 0;
   if(b->bstates->nxt == b->bstates) { /* empty automaton */
-    fprintf(tl_out, "never {    /* ");
-    put_uform(tl_out);
-    fprintf(tl_out, " */\n");
-    fprintf(tl_out, "T0_init:\n");
-    fprintf(tl_out, "\tfalse;\n");
-    fprintf(tl_out, "}\n");
+    fprintf(f, "never {    /* ");
+    put_uform(f);
+    fprintf(f, " */\n");
+    fprintf(f, "T0_init:\n");
+    fprintf(f, "\tfalse;\n");
+    fprintf(f, "}\n");
     return;
   }
   if(b->bstates->nxt->nxt == b->bstates && b->bstates->nxt->id == 0) { /* true */
-    fprintf(tl_out, "never {    /* ");
-    put_uform(tl_out);
-    fprintf(tl_out, " */\n");
-    fprintf(tl_out, "accept_init:\n");
-    fprintf(tl_out, "\tif\n");
-    fprintf(tl_out, "\t:: (1) -> goto accept_init\n");
-    fprintf(tl_out, "\tfi;\n");
-    fprintf(tl_out, "}\n");
+    fprintf(f, "never {    /* ");
+    put_uform(f);
+    fprintf(f, " */\n");
+    fprintf(f, "accept_init:\n");
+    fprintf(f, "\tif\n");
+    fprintf(f, "\t:: (1) -> goto accept_init\n");
+    fprintf(f, "\tfi;\n");
+    fprintf(f, "}\n");
     return;
   }
 
-  fprintf(tl_out, "never { /* ");
-  put_uform(tl_out);
-  fprintf(tl_out, " */\n");
+  fprintf(f, "never { /* ");
+  put_uform(f);
+  fprintf(f, " */\n");
   for(s = b->bstates->prv; s != b->bstates; s = s->prv) {
     if(s->id == 0) { /* accept_all at the end */
       accept_all = 1;
       continue;
     }
     if(s->final == b->accept)
-      fprintf(tl_out, "accept_");
-    else fprintf(tl_out, "T%i_", s->final);
+      fprintf(f, "accept_");
+    else fprintf(f, "T%i_", s->final);
     if(s->id == -1)
-      fprintf(tl_out, "init:\n");
-    else fprintf(tl_out, "S%i:\n", s->id);
+      fprintf(f, "init:\n");
+    else fprintf(f, "S%i:\n", s->id);
     if(s->trans->nxt == s->trans) {
-      fprintf(tl_out, "\tfalse;\n");
+      fprintf(f, "\tfalse;\n");
       continue;
     }
-    fprintf(tl_out, "\tif\n");
+    fprintf(f, "\tif\n");
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
       BTrans *t1;
-      fprintf(tl_out, "\t:: (");
-      spin_print_set(tl_out, sym_table, t->pos, t->neg, sym_size);
+      fprintf(f, "\t:: (");
+      spin_print_set(f, sym_table, t->pos, t->neg, sym_size);
       for(t1 = t; t1->nxt != s->trans; )
 	if (t1->nxt->to->id == t->to->id &&
 	    t1->nxt->to->final == t->to->final) {
-	  fprintf(tl_out, ") || (");
-	  spin_print_set(tl_out, sym_table, t1->nxt->pos, t1->nxt->neg, sym_size);
+	  fprintf(f, ") || (");
+	  spin_print_set(f, sym_table, t1->nxt->pos, t1->nxt->neg, sym_size);
 	  t1->nxt = t1->nxt->nxt;
 	}
 	else  t1 = t1->nxt;
-      fprintf(tl_out, ") -> goto ");
+      fprintf(f, ") -> goto ");
       if(t->to->final == b->accept)
-	fprintf(tl_out, "accept_");
-      else fprintf(tl_out, "T%i_", t->to->final);
+	fprintf(f, "accept_");
+      else fprintf(f, "T%i_", t->to->final);
       if(t->to->id == 0)
-	fprintf(tl_out, "all\n");
+	fprintf(f, "all\n");
       else if(t->to->id == -1)
-	fprintf(tl_out, "init\n");
-      else fprintf(tl_out, "S%i\n", t->to->id);
+	fprintf(f, "init\n");
+      else fprintf(f, "S%i\n", t->to->id);
     }
-    fprintf(tl_out, "\tfi;\n");
+    fprintf(f, "\tfi;\n");
   }
   if(accept_all) {
-    fprintf(tl_out, "accept_all:\n");
-    fprintf(tl_out, "\tskip\n");
+    fprintf(f, "accept_all:\n");
+    fprintf(f, "\tskip\n");
   }
-  fprintf(tl_out, "}\n");
+  fprintf(f, "}\n");
 }
 
-static void print_dot_state_name(const Buchi *b, BState *s) {
-  if (s->id == -1) fprintf(tl_out, "init");
-  else if (s->id == 0) fprintf(tl_out,"all");
+static void print_dot_state_name(FILE *f, const Buchi *b, BState *s) {
+  if (s->id == -1) fprintf(f, "init");
+  else if (s->id == 0) fprintf(f,"all");
   else {
-    if (s->final != b->accept) fprintf(tl_out,"T%i_",s->final);
-	fprintf(tl_out,"%i",s->id);
+    if (s->final != b->accept) fprintf(f,"T%i_",s->final);
+	fprintf(f,"%i",s->id);
   }
 }
 
-void print_dot_buchi(const Buchi *b, const char *const *sym_table, const tl_Cexprtab *cexpr) {
+void print_dot_buchi(FILE *f, const Buchi *b, const char *const *sym_table, const tl_Cexprtab *cexpr) {
   BTrans *t;
   BState *s;
   int accept_all = 0, init_count = 0;
   if(b->bstates->nxt == b->bstates) { /* empty automaton */
-    fprintf(tl_out, "digraph G {\n");
-    fprintf(tl_out, "init [shape=circle]\n");
-    fprintf(tl_out, "}\n");
+    fprintf(f, "digraph G {\n");
+    fprintf(f, "init [shape=circle]\n");
+    fprintf(f, "}\n");
     return;
   }
   if(b->bstates->nxt->nxt == b->bstates && b->bstates->nxt->id == 0) { /* true */
-    fprintf(tl_out, "digraph G {\n");
-    fprintf(tl_out, "init -> init [label=\"{true}\",font=\"courier\"]\n");
-    fprintf(tl_out, "init [shape=doublecircle]\n");
-    fprintf(tl_out, "}\n");
+    fprintf(f, "digraph G {\n");
+    fprintf(f, "init -> init [label=\"{true}\",font=\"courier\"]\n");
+    fprintf(f, "init [shape=doublecircle]\n");
+    fprintf(f, "}\n");
     return;
   }
 
-  fprintf(tl_out, "digraph G {\n");
+  fprintf(f, "digraph G {\n");
   for(s = b->bstates->prv; s != b->bstates; s = s->prv) {
     if(s->id == 0) { /* accept_all at the end */
-      fprintf(tl_out, "all [shape=doublecircle]\n");
-	  fprintf(tl_out,"all -> all [label=\"true\", fontname=\"Courier\", fontcolor=blue]");
+      fprintf(f, "all [shape=doublecircle]\n");
+	  fprintf(f,"all -> all [label=\"true\", fontname=\"Courier\", fontcolor=blue]");
       continue;
     }
-	print_dot_state_name(b, s);
+	print_dot_state_name(f, b, s);
     if(s->final == b->accept)
-      fprintf(tl_out, " [shape=doublecircle]\n");
-    else fprintf(tl_out, " [shape=circle]\n");
+      fprintf(f, " [shape=doublecircle]\n");
+    else fprintf(f, " [shape=circle]\n");
     if(s->trans->nxt == s->trans) {
       continue;
     }
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
 	  int need_parens=0;
       BTrans *t1;
-      print_dot_state_name(b, s);
-      fprintf(tl_out, " -> ");
+      print_dot_state_name(f, b, s);
+      fprintf(f, " -> ");
 	  if (t->nxt->to->id == t->to->id &&
 	        t->nxt->to->final == t->to->final)
 		need_parens=1;
-      print_dot_state_name(b, t->to);
-	  fprintf(tl_out, " [label=\""),
-      dot_print_set(tl_out, sym_table, cexpr, t->pos, t->neg, sym_size, need_parens);
+      print_dot_state_name(f, b, t->to);
+	  fprintf(f, " [label=\""),
+      dot_print_set(f, sym_table, cexpr, t->pos, t->neg, sym_size, need_parens);
       for(t1 = t; t1->nxt != s->trans; )
 	    if (t1->nxt->to->id == t->to->id &&
 	        t1->nxt->to->final == t->to->final) {
-	      fprintf(tl_out, "||");
-	      dot_print_set(tl_out, sym_table, cexpr, t1->nxt->pos, t1->nxt->neg, sym_size, sym_size); /* TODO: need_parens == (sym_size != 0)? */
+	      fprintf(f, "||");
+	      dot_print_set(f, sym_table, cexpr, t1->nxt->pos, t1->nxt->neg, sym_size, sym_size); /* TODO: need_parens == (sym_size != 0)? */
 	      t1->nxt = t1->nxt->nxt;
 	    }
 	    else
 		  t1 = t1->nxt;
-        fprintf(tl_out, "\", fontname=\"Courier\", fontcolor=blue]\n");
+        fprintf(f, "\", fontname=\"Courier\", fontcolor=blue]\n");
 
     }
   }
-  fprintf(tl_out, "}\n");
+  fprintf(f, "}\n");
 }
 
 /********************************************************************\
@@ -686,7 +685,7 @@ void print_dot_buchi(const Buchi *b, const char *const *sym_table, const tl_Cexp
 \********************************************************************/
 
 /* generates a Buchi automaton from the generalized Buchi automaton */
-Buchi mk_buchi(Generalized *g, tl_Flags flags, const char *const *sym_table, const tl_Cexprtab *cexpr)
+Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_table, const tl_Cexprtab *cexpr)
 {
   int i;
   BState *s = (BState *)tl_emalloc(sizeof(BState));
@@ -768,146 +767,140 @@ Buchi mk_buchi(Generalized *g, tl_Flags flags, const char *const *sym_table, con
 
   retarget_all_btrans(&b, bremoved);
 
-  FILE *f = tl_out;
-  tl_out = stderr;
-
   if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
-    fprintf(tl_out, "\nBuilding the Buchi automaton : %ld.%06lis",
+    fprintf(f, "\nBuilding the Buchi automaton : %ld.%06lis",
 		t_diff.tv_sec, t_diff.tv_usec);
-    fprintf(tl_out, "\n%i states, %i transitions\n", cnts.bstate_count, cnts.btrans_count);
+    fprintf(f, "\n%i states, %i transitions\n", cnts.bstate_count, cnts.btrans_count);
   }
 
   if(flags & TL_VERBOSE) {
-    fprintf(tl_out, "\nBuchi automaton before simplification\n");
-    print_buchi(sym_table, cexpr, &b, b.bstates->nxt, g->scc_size);
+    fprintf(f, "\nBuchi automaton before simplification\n");
+    print_buchi(f, sym_table, cexpr, &b, b.bstates->nxt, g->scc_size);
     if(b.bstates == b.bstates->nxt)
-      fprintf(tl_out, "empty automaton, refuses all words\n");
+      fprintf(f, "empty automaton, refuses all words\n");
   }
 
   if(flags & TL_SIMP_DIFF) {
-    simplify_btrans(&b, flags);
+    simplify_btrans(&b, f, flags);
     if(flags & TL_SIMP_SCC) simplify_bscc(&b, bremoved);
-    while(simplify_bstates(&b, flags, &g->gstate_id, bremoved)) { /* simplifies as much as possible */
-      simplify_btrans(&b, flags);
+    while(simplify_bstates(&b, f, flags, &g->gstate_id, bremoved)) { /* simplifies as much as possible */
+      simplify_btrans(&b, f, flags);
       if(flags & TL_SIMP_SCC) simplify_bscc(&b, bremoved);
     }
 
     if(flags & TL_VERBOSE) {
-      fprintf(tl_out, "\nBuchi automaton after simplification\n");
-      print_buchi(sym_table, cexpr, &b, b.bstates->nxt, g->scc_size);
+      fprintf(f, "\nBuchi automaton after simplification\n");
+      print_buchi(f, sym_table, cexpr, &b, b.bstates->nxt, g->scc_size);
       if(b.bstates == b.bstates->nxt)
-	fprintf(tl_out, "empty automaton, refuses all words\n");
-      fprintf(tl_out, "\n");
+	fprintf(f, "empty automaton, refuses all words\n");
+      fprintf(f, "\n");
     }
   }
-
-  tl_out = f;
 
   return b;
 }
 
 
-static void print_c_headers(const tl_Cexprtab *cexpr,
+static void print_c_headers(FILE *f, const tl_Cexprtab *cexpr,
                             const char *c_sym_name_prefix)
 {
   int i;
 
   /* Need some headers... */
-  fprintf(tl_out, "#include <pthread.h>\n");
-  fprintf(tl_out, "#include <stdbool.h>\n");
-  fprintf(tl_out, "#include <stdint.h>\n\n");
+  fprintf(f, "#include <pthread.h>\n");
+  fprintf(f, "#include <stdbool.h>\n");
+  fprintf(f, "#include <stdint.h>\n\n");
 
   /* Declare ESBMC routines we'll be using too */
-  fprintf(tl_out, "void __ESBMC_switch_to_monitor(void);\n");
-  fprintf(tl_out, "void __ESBMC_switch_from_monitor(void);\n");
-  fprintf(tl_out, "void __ESBMC_register_monitor(pthread_t t);\n");
-  fprintf(tl_out, "void __ESBMC_really_atomic_begin();\n");
-  fprintf(tl_out, "void __ESBMC_really_atomic_end();\n");
-  fprintf(tl_out, "void __ESBMC_atomic_begin();\n");
-  fprintf(tl_out, "void __ESBMC_atomic_end();\n");
-  fprintf(tl_out, "void __ESBMC_assume(bool prop);\n");
-  fprintf(tl_out, "void __ESBMC_kill_monitor();\n");
-  fprintf(tl_out, "int nondet_uint();\n\n");
+  fprintf(f, "void __ESBMC_switch_to_monitor(void);\n");
+  fprintf(f, "void __ESBMC_switch_from_monitor(void);\n");
+  fprintf(f, "void __ESBMC_register_monitor(pthread_t t);\n");
+  fprintf(f, "void __ESBMC_really_atomic_begin();\n");
+  fprintf(f, "void __ESBMC_really_atomic_end();\n");
+  fprintf(f, "void __ESBMC_atomic_begin();\n");
+  fprintf(f, "void __ESBMC_atomic_end();\n");
+  fprintf(f, "void __ESBMC_assume(bool prop);\n");
+  fprintf(f, "void __ESBMC_kill_monitor();\n");
+  fprintf(f, "int nondet_uint();\n\n");
 
   /* Pump out the C expressions we'll be using */
   for (i = 0; i < cexpr->cexpr_idx; i++) {
-    fprintf(tl_out, "char __ESBMC_property__ltl2ba_cexpr_%d[] = \"%s\";\n", i, cexpr->cexpr_expr_table[i]);
-    fprintf(tl_out, "int %s_cexpr_%d_status;\n", c_sym_name_prefix, i);
+    fprintf(f, "char __ESBMC_property__ltl2ba_cexpr_%d[] = \"%s\";\n", i, cexpr->cexpr_expr_table[i]);
+    fprintf(f, "int %s_cexpr_%d_status;\n", c_sym_name_prefix, i);
   }
 }
 
-static int print_enum_decl(const Buchi *b, const char *c_sym_name_prefix)
+static int print_enum_decl(FILE *f, const Buchi *b,
+                           const char *c_sym_name_prefix)
 {
   BState *s;
   int num_states = 0;
 
   /* Generate enumeration of states */
 
-  fprintf(tl_out, "\ntypedef enum {\n");
+  fprintf(f, "\ntypedef enum {\n");
   for (s = b->bstates->prv; s != b->bstates; s = s->prv) {
     num_states++;
-    fprintf(tl_out, "\t%s_state_%d,\n", c_sym_name_prefix, s->label);
+    fprintf(f, "\t%s_state_%d,\n", c_sym_name_prefix, s->label);
   }
 
-  fprintf(tl_out, "} %s_state;\n\n", c_sym_name_prefix);
+  fprintf(f, "} %s_state;\n\n", c_sym_name_prefix);
 
   return num_states;
 }
 
-static void print_buchi_statevars(const Buchi *b, const char *prefix,
+static void print_buchi_statevars(FILE *f, const Buchi *b, const char *prefix,
                                   int num_states)
 {
   BState *s;
 
-  fprintf(tl_out, "%s_state %s_statevar =", prefix, prefix);
+  fprintf(f, "%s_state %s_statevar =", prefix, prefix);
 
   s = b->bstates->prv;
-  fprintf(tl_out, "%s_state_0;\n\n", prefix);
+  fprintf(f, "%s_state_0;\n\n", prefix);
 
-  fprintf(tl_out, "unsigned int %s_visited_states[%d];\n\n",
-		  prefix, num_states);
+  fprintf(f, "unsigned int %s_visited_states[%d];\n\n", prefix, num_states);
 }
 
-static void print_fsm_func_opener(void)
+static void print_fsm_func_opener(FILE *f)
 {
+  fprintf(f, "void\nltl2ba_fsm(bool state_stats, unsigned int num_iters)\n{\n");
+  fprintf(f, "\tunsigned int choice;\n");
+  fprintf(f, "\tunsigned int iters;\n");
+  fprintf(f, "\t_Bool state_is_viable;\n\n");
 
-  fprintf(tl_out, "void\nltl2ba_fsm(bool state_stats, unsigned int num_iters)\n{\n");
-  fprintf(tl_out, "\tunsigned int choice;\n");
-  fprintf(tl_out, "\tunsigned int iters;\n");
-  fprintf(tl_out, "\t_Bool state_is_viable;\n\n");
+  fprintf(f, "\t/* Original formula:\n\t * ");
+  put_uform(f);
+  fprintf(f, "\n\t */\n\n");
 
-  fprintf(tl_out, "\t/* Original formula:\n\t * ");
-  put_uform(tl_out);
-  fprintf(tl_out, "\n\t */\n\n");
-
-  fprintf(tl_out, "\tfor (iters = 0; iters < num_iters; iters++) {\n");
+  fprintf(f, "\tfor (iters = 0; iters < num_iters; iters++) {\n");
 
   return;
 }
 
-static void print_transition_guard(BTrans *t, BState *state,
+static void print_transition_guard(FILE *f, BTrans *t, BState *state,
                                    const char *const *sym_table)
 {
   BTrans *t1;
-  spin_print_set(tl_out, sym_table, t->pos, t->neg, sym_size);
+  spin_print_set(f, sym_table, t->pos, t->neg, sym_size);
   for(t1 = t->nxt; t1 != state->trans; t1=t1->nxt) {
     if (t1->to->id == t->to->id && t1->to->final == t->to->final){
-      fprintf(tl_out, ") || (");
-      spin_print_set(tl_out, sym_table, t1->pos, t1->neg, sym_size);
+      fprintf(f, ") || (");
+      spin_print_set(f, sym_table, t1->pos, t1->neg, sym_size);
     }
   }
 }
 
-static void print_state_name(BState *s, const char *prefix)
+static void print_state_name(FILE *f, BState *s, const char *prefix)
 {
-  fprintf(tl_out, "%s_state_%d", prefix, s->label);
+  fprintf(f, "%s_state_%d", prefix, s->label);
   return;
 }
 
-static int print_c_buchi_body(const Buchi *b, const char *const *sym_table,
-                              const char *prefix)
+static int print_c_buchi_body(FILE *f, const Buchi *b,
+                              const char *const *sym_table, const char *prefix)
 {
   BTrans *t, *t1;
   BState *s;
@@ -921,26 +914,26 @@ static int print_c_buchi_body(const Buchi *b, const char *const *sym_table,
   /* Start in first state? From loops, ltl2ba reverses order...*/
   s = b->bstates->prv;
 
-  fprintf(tl_out, "\t\tchoice = nondet_uint();\n\n");
-  fprintf(tl_out, "\t\t__ESBMC_atomic_begin();\n\n");
-  fprintf(tl_out, "\t\tswitch(%s_statevar) {\n", prefix);
+  fprintf(f, "\t\tchoice = nondet_uint();\n\n");
+  fprintf(f, "\t\t__ESBMC_atomic_begin();\n\n");
+  fprintf(f, "\t\tswitch(%s_statevar) {\n", prefix);
 
   for (s = b->bstates->prv; s != b->bstates; s = s->prv) {
     choice_count = 0;
 
     /* In each state... */
-    fprintf(tl_out, "\t\tcase ");
-    print_state_name(s, prefix);
-    fprintf(tl_out, ":\n");
+    fprintf(f, "\t\tcase ");
+    print_state_name(f, s, prefix);
+    fprintf(f, ":\n");
 
-    fprintf(tl_out, "\t\t\tstate_is_viable = (((");
+    fprintf(f, "\t\t\tstate_is_viable = (((");
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
-      print_transition_guard(t, s, sym_table);
-      fprintf(tl_out, ")) || ((");
+      print_transition_guard(f, t, s, sym_table);
+      fprintf(f, ")) || ((");
     }
-    fprintf(tl_out, "false)));\n");
+    fprintf(f, "false)));\n");
 
-    fprintf(tl_out, "\t\t\t");
+    fprintf(f, "\t\t\t");
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
 #if 0
       if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size)) {
@@ -948,39 +941,39 @@ static int print_c_buchi_body(const Buchi *b, const char *const *sym_table,
       }
 #endif
 
-      fprintf(tl_out, "if (choice == %d) {\n", choice_count++);
+      fprintf(f, "if (choice == %d) {\n", choice_count++);
 
-      fprintf(tl_out, "\t\t\t\t__ESBMC_assume(((");
-      print_transition_guard(t, s, sym_table);
-      fprintf(tl_out, ")));\n");
+      fprintf(f, "\t\t\t\t__ESBMC_assume(((");
+      print_transition_guard(f, t, s, sym_table);
+      fprintf(f, ")));\n");
 
-      fprintf(tl_out, "\t\t\t\t%s_statevar = ", prefix);
+      fprintf(f, "\t\t\t\t%s_statevar = ", prefix);
 
-      print_state_name(t->to, prefix);
-      fprintf(tl_out, ";\n", prefix);
+      print_state_name(f, t->to, prefix);
+      fprintf(f, ";\n", prefix);
 
-      fprintf(tl_out, "\t\t\t} else ");
+      fprintf(f, "\t\t\t} else ");
     }
 
     /* And finally, a clause for if none of those transitions are viable */
-    fprintf(tl_out, "{\n");
-    fprintf(tl_out, "\t\t\t\t__ESBMC_assume(0);\n");
-    fprintf(tl_out, "\t\t\t}\n");
+    fprintf(f, "{\n");
+    fprintf(f, "\t\t\t\t__ESBMC_assume(0);\n");
+    fprintf(f, "\t\t\t}\n");
 
-    fprintf(tl_out, "\t\t\tbreak;\n");
+    fprintf(f, "\t\t\tbreak;\n");
   }
 
-  fprintf(tl_out, "\t\t}\n");
-  fprintf(tl_out, "\t\tif (state_stats)\n");
-  fprintf(tl_out, "\t\t\t%s_visited_states[%s_statevar]++;\n\n", prefix, prefix);
-  fprintf(tl_out, "\t\t__ESBMC_really_atomic_end();\n");
+  fprintf(f, "\t\t}\n");
+  fprintf(f, "\t\tif (state_stats)\n");
+  fprintf(f, "\t\t\t%s_visited_states[%s_statevar]++;\n\n", prefix, prefix);
+  fprintf(f, "\t\t__ESBMC_really_atomic_end();\n");
 
   return g_num_states;
 }
 
-static void print_c_buchi_body_tail(void)
+static void print_c_buchi_body_tail(FILE *f)
 {
-  fprintf(tl_out, "\
+  fprintf(f, "\
 		__ESBMC_switch_from_monitor();\n\
 	}\n\
 \n\
@@ -992,9 +985,9 @@ static void print_c_buchi_body_tail(void)
 ");
 }
 
-static void print_c_buchi_util_funcs(const char *prefix)
+static void print_c_buchi_util_funcs(FILE *f, const char *prefix)
 {
-  fprintf(tl_out, "\
+  fprintf(f, "\
 #ifndef LTL_PREFIX_BOUND\n\
 #define LTL_PREFIX_BOUND 2147483648\n\
 #endif\n\
@@ -1120,7 +1113,8 @@ static int * pess_reach(Slist **tr, int st, int depth, int state_count, int stat
   return pess_recurse1(&d, tr[st], depth);
 }
 
-static void print_behaviours(const Buchi *b, const char *const *sym_table,
+static void print_behaviours(const Buchi *b, FILE *f,
+                             const char *const *sym_table,
                              const tl_Cexprtab *cexpr, int sym_id,
                              struct accept_sets *as)
 {
@@ -1171,17 +1165,17 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
     }
   }
 
-  fprintf(tl_out,"States:\nlabel\tid\tfinal\n");
+  fprintf(f,"States:\nlabel\tid\tfinal\n");
   for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
     s -> label = state_count;
     state_count++;
-    fprintf(tl_out,"%d\t",s->label);
-    print_dot_state_name(b, s);
+    fprintf(f,"%d\t",s->label);
+    print_dot_state_name(f, b, s);
     /* Horribly, the correct test for an accepting state is
      *     s->final == accept || s -> id == 0
      *     Here, "final" is a VARIABLE and the state with id=0 is magic       */
-    fprintf(tl_out,"\t%d\n",s->final == b->accept || s -> id == 0); } /* END Loop over states */
-  fprintf(tl_out,"\nSymbol table:\nid\tsymbol\t\t\tcexpr\n");
+    fprintf(f,"\t%d\n",s->final == b->accept || s -> id == 0); } /* END Loop over states */
+  fprintf(f,"\nSymbol table:\nid\tsymbol\t\t\tcexpr\n");
   state_size = SET_SIZE(state_count);
   full_state_set = make_set(EMPTY_SET,state_size);
   for(i=0;i<state_count; i++)
@@ -1212,17 +1206,17 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
   fprintf(tl_out,"\n"); */
 
   for(i=0; i<sym_id; i++) {
-    fprintf(tl_out, "%d\t%s",i,sym_table[i]?sym_table[i]:"");
+    fprintf(f, "%d\t%s",i,sym_table[i]?sym_table[i]:"");
     if (sym_table[i] && sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
       /* Yes, scanning for a match here is horrid DAN */
-      fprintf(tl_out, "\t{ %s }\n", cexpr->cexpr_expr_table[cex]);
+      fprintf(f, "\t{ %s }\n", cexpr->cexpr_expr_table[cex]);
     else
-      fprintf(tl_out, "\n"); }
+      fprintf(f, "\n"); }
 
-  fprintf(tl_out,"\nStuttering:\n\n");
+  fprintf(f,"\nStuttering:\n\n");
   a=make_set(EMPTY_SET,sym_size);
   do {                                     /* Loop over alphabet */
-    fprintf(tl_out,"\n");
+    fprintf(f,"\n");
     for (i=0;i<state_count*state_count;i++)   /* Loop over states, clearing transition matrix for this character */
       transition_matrix[i]=0;                 /* END loop over states */
     /* print_sym_set(a, sym_size); fprintf(tl_out,"\n"); */
@@ -1231,27 +1225,27 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
       int i, cex;
       for(i=0; i<sym_id; i++) {
         if (!first)
-          fprintf(tl_out,"&");
+          fprintf(f,"&");
         first = 0;
         if(!in_set(a,i))
-          fprintf(tl_out,"!");
+          fprintf(f,"!");
         if (sscanf(sym_table[i],"_ltl2ba_cexpr_%d_status",&cex)==1)
-          fprintf(tl_out, "{%s}", cexpr->cexpr_expr_table[cex]);
+          fprintf(f, "{%s}", cexpr->cexpr_expr_table[cex]);
         else
-          fprintf(tl_out, "%s",sym_table[i]); }
-      fprintf(tl_out,"\n");
+          fprintf(f, "%s",sym_table[i]); }
+      fprintf(f,"\n");
     }
 
     for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
       (void)clear_set(working_set,sym_size);                    /* clear transition targets for this state and character */
       for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {       /* Loop over transitions */
 #if 0
-        fprintf(tl_out,"%d--[+",s->label);
-        if(t->pos) print_sym_set(t->pos, sym_size);
-         fprintf(tl_out," -");
-        if(t->neg) print_sym_set(t->neg, sym_size);
-        fprintf(tl_out,"]--> %d\t",t->to->label);
-        fprintf(tl_out, "%s\n", (!t->neg || empty_intersect_sets(t->neg,a,sym_size))?
+        fprintf(f,"%d--[+",s->label);
+        if(t->pos) print_sym_set(f, t->pos, sym_size);
+         fprintf(f," -");
+        if(t->neg) print_sym_set(f, t->neg, sym_size);
+        fprintf(f,"]--> %d\t",t->to->label);
+        fprintf(f, "%s\n", (!t->neg || empty_intersect_sets(t->neg,a,sym_size))?
                                    ((!t->pos || included_set(t->pos,a,sym_size))?"active":""):"suppressed");
 #endif
 
@@ -1298,21 +1292,21 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
             }                                                                 /* END update pessimistic transition list for this state */
         }                                                   /* END Loop over states */
 
-    fprintf(tl_out,"Transitions:\n");
+    fprintf(f,"Transitions:\n");
     for(i=0; i<state_count; i++) {
       for(j=0;j<state_count; j++)
-        fprintf(tl_out,"%d\t",transition_matrix[i*state_count + j]);
-      fprintf(tl_out,"\n"); }
-    fprintf(tl_out,"\n");
+        fprintf(f,"%d\t",transition_matrix[i*state_count + j]);
+      fprintf(f,"\n"); }
+    fprintf(f,"\n");
 
     int * reach = reachability(transition_matrix, state_count);
 
-    fprintf(tl_out,"Reachability:\n");
+    fprintf(f,"Reachability:\n");
     for(i=0; i<state_count; i++) {
       for(j=0;j<state_count; j++)
-        fprintf(tl_out,"%d\t",reach[i*state_count + j]);
-      fprintf(tl_out,"\n"); }
-    fprintf(tl_out,"\n");
+        fprintf(f,"%d\t",reach[i*state_count + j]);
+      fprintf(f,"\n"); }
+    fprintf(f,"\n");
     {
       BState *s2;
       int r, c;
@@ -1320,17 +1314,17 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
       for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
         if((s2->final == b->accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)])
           add_set(accepting_cycles,s2->label);
-      fprintf(tl_out,"Accepting cycles: ");
-      print_set(tl_out, accepting_cycles,state_size);
+      fprintf(f,"Accepting cycles: ");
+      print_set(f, accepting_cycles,state_size);
       int * accepting_states=make_set(EMPTY_SET,state_size);
       for (r=0;r<state_count;r++)
         for (c=0; c<state_count;c++) {
           /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
           if(reach[r*state_count+c] && in_set(accepting_cycles,c))
             add_set(accepting_states,r); }
-      fprintf(tl_out,"\nAccepting states: ");
-      print_set(tl_out, accepting_states,state_size);
-      fprintf(tl_out,"\n");
+      fprintf(f,"\nAccepting states: ");
+      print_set(f, accepting_states,state_size);
+      fprintf(f,"\n");
 
       as->stutter_accept_table[stut_accept_idx++] = accepting_states;
 
@@ -1339,18 +1333,18 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
     tfree (reach);
      } while (increment_symbol_set(a, sym_id));       /* END Loop over alphabet */
 
-  fprintf(tl_out,"\n\nOptimistic transitions:\n");
+  fprintf(f,"\n\nOptimistic transitions:\n");
   for(i=0; i<state_count; i++) {
     for(j=0;j<state_count; j++)
-      fprintf(tl_out,"%d\t",optimistic_transition[i*state_count + j]);
-    fprintf(tl_out,"\n"); }
+      fprintf(f,"%d\t",optimistic_transition[i*state_count + j]);
+    fprintf(f,"\n"); }
 
   int *optimistic_reach = reachability(optimistic_transition, state_count);
-  fprintf(tl_out,"Optimistic reachability:\n");
+  fprintf(f,"Optimistic reachability:\n");
   for(i=0; i<state_count; i++) {
     for(j=0;j<state_count; j++)
-      fprintf(tl_out,"%d\t",optimistic_reach[i*state_count + j]);
-    fprintf(tl_out,"\n"); }
+      fprintf(f,"%d\t",optimistic_reach[i*state_count + j]);
+    fprintf(f,"\n"); }
 
   {
     BState *s2;
@@ -1359,8 +1353,8 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
     for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
       if((s2->final == b->accept || s2 -> id == 0) && optimistic_reach[(s2->label)*(state_count+1)])
         add_set(accepting_cycles,s2->label);
-    fprintf(tl_out,"\nAccepting optimistic cycles: ");
-    print_set(tl_out, accepting_cycles,state_size);
+    fprintf(f,"\nAccepting optimistic cycles: ");
+    print_set(f, accepting_cycles,state_size);
 
     int * accepting_states=make_set(EMPTY_SET,state_size);
     for (r=0;r<state_count;r++)
@@ -1368,52 +1362,52 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
         /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
         if(optimistic_reach[r*state_count+c] && in_set(accepting_cycles,c))
           add_set(accepting_states,r); }
-    fprintf(tl_out,"\nAccepting optimistic states: ");
-    print_set(tl_out, accepting_states,state_size);
-    fprintf(tl_out,"\n");
+    fprintf(f,"\nAccepting optimistic states: ");
+    print_set(f, accepting_states,state_size);
+    fprintf(f,"\n");
     tfree(accepting_cycles);
 
     as->optimistic_accept_state_set = accepting_states;
   }
   tfree(optimistic_reach);
 
-  fprintf(tl_out,"\n\nPessimistic transitions:\n");
+  fprintf(f,"\n\nPessimistic transitions:\n");
   for(i=0; i<state_count; i++) {
-    fprintf(tl_out,"%2d: ",i);
+    fprintf(f,"%2d: ",i);
     set_list = pessimistic_transition[i];
     while (set_list != (Slist*)0) {
-      print_set(tl_out, set_list->set,state_size);
+      print_set(f, set_list->set,state_size);
       set_list = set_list->nxt; }
-    fprintf(tl_out,"\n"); }
+    fprintf(f,"\n"); }
 
   int* pessimistic_reachable[state_count];
-  fprintf(tl_out,"\n\nPessimistic reachable:\n");
+  fprintf(f,"\n\nPessimistic reachable:\n");
   for(i=0; i<state_count; i++) {
-    fprintf(tl_out,"%2d: ",i);
+    fprintf(f,"%2d: ",i);
     pessimistic_reachable[i] = pess_reach(pessimistic_transition, i, state_count, state_count, state_size);
-    print_set(tl_out, pessimistic_reachable[i],state_size);
-    fprintf(tl_out,"\n"); }
+    print_set(f, pessimistic_reachable[i],state_size);
+    fprintf(f,"\n"); }
 
   int *accepting_pessimistic_cycles=make_set(EMPTY_SET,state_size);
   BState* s2;
   for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
     if((s2->final == b->accept || s2 -> id == 0) && in_set(pessimistic_reachable[s2->label],s2->label))
       add_set(accepting_pessimistic_cycles,s2->label);
-  fprintf(tl_out,"\nAccepting pessimistic cycles: ");
-  print_set(tl_out, accepting_pessimistic_cycles,state_size);
+  fprintf(f,"\nAccepting pessimistic cycles: ");
+  print_set(f, accepting_pessimistic_cycles,state_size);
 
   int *accepting_pessimistic_states=make_set(EMPTY_SET,state_size);
   for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
     if(!empty_intersect_sets(pessimistic_reachable[s2->label],accepting_pessimistic_cycles,state_size))
       add_set(accepting_pessimistic_states,s2->label);
-  fprintf(tl_out,"\nAccepting pessimistic states: ");
-  print_set(tl_out, accepting_pessimistic_states,state_size);
+  fprintf(f,"\nAccepting pessimistic states: ");
+  print_set(f, accepting_pessimistic_states,state_size);
   as->pessimistic_accept_state_set = accepting_pessimistic_states;
-  fprintf(tl_out,"\n");
+  fprintf(f,"\n");
 }
 
-static void print_c_accept_tables(const char *const *sym_table, int sym_id,
-                                  int g_num_states,
+static void print_c_accept_tables(FILE *f, const char *const *sym_table,
+                                  int sym_id, int g_num_states,
                                   const struct accept_sets *as,
                                   const char *c_sym_name_prefix)
 {
@@ -1422,77 +1416,72 @@ static void print_c_accept_tables(const char *const *sym_table, int sym_id,
   int num_sym_combs = 1 << sym_id;
 
   /* Print static table of whether states accept, given an input symbol. */
-  fprintf(tl_out, "_Bool %s_stutter_accept_table[%d][%d] = {\n",
+  fprintf(f, "_Bool %s_stutter_accept_table[%d][%d] = {\n",
 		  c_sym_name_prefix, num_sym_combs, g_num_states);
   for (sym_comb = 0; sym_comb < num_sym_combs; sym_comb++) {
-    fprintf(tl_out, "{\n  ");
+    fprintf(f, "{\n  ");
     for (state = 0; state < g_num_states; state++) {
       if (in_set(as->stutter_accept_table[sym_comb], state))
-        fprintf(tl_out, "true, ");
+        fprintf(f, "true, ");
       else
-        fprintf(tl_out, "false, ");
+        fprintf(f, "false, ");
     }
-    fprintf(tl_out, "\n},\n");
+    fprintf(f, "\n},\n");
   }
-  fprintf(tl_out, "};\n\n");
+  fprintf(f, "};\n\n");
 
-  fprintf(tl_out, "_Bool %s_good_prefix_excluded_states[%d] = {\n",
+  fprintf(f, "_Bool %s_good_prefix_excluded_states[%d] = {\n",
 		  c_sym_name_prefix, g_num_states);
   for (state = 0; state < g_num_states; state++) {
     if (in_set(as->optimistic_accept_state_set, state))
-      fprintf(tl_out, "true, ");
+      fprintf(f, "true, ");
     else
-      fprintf(tl_out, "false, ");
+      fprintf(f, "false, ");
   }
-  fprintf(tl_out, "\n};\n\n");
+  fprintf(f, "\n};\n\n");
 
-  fprintf(tl_out, "_Bool %s_bad_prefix_states[%d] = {\n",
+  fprintf(f, "_Bool %s_bad_prefix_states[%d] = {\n",
 		  c_sym_name_prefix, g_num_states);
   for (state = 0; state < g_num_states; state++) {
     if (in_set(as->pessimistic_accept_state_set, state))
-      fprintf(tl_out, "true, ");
+      fprintf(f, "true, ");
     else
-      fprintf(tl_out, "false, ");
+      fprintf(f, "false, ");
   }
-  fprintf(tl_out, "\n};\n\n");
+  fprintf(f, "\n};\n\n");
 
-  fprintf(tl_out, "unsigned int\n%s_sym_to_idx(void)\n{\n", c_sym_name_prefix);
-  fprintf(tl_out, "\tunsigned int idx = 0;\n");
+  fprintf(f, "unsigned int\n%s_sym_to_idx(void)\n{\n", c_sym_name_prefix);
+  fprintf(f, "\tunsigned int idx = 0;\n");
   for (i = 0; i < sym_id; i++) {
-    fprintf(tl_out, "\tidx |= (%s) ? %d : 0;\n", sym_table[i], 1 << i);
+    fprintf(f, "\tidx |= (%s) ? %d : 0;\n", sym_table[i], 1 << i);
   }
-  fprintf(tl_out, "\treturn idx;\n}\n\n");
-
-  return;
+  fprintf(f, "\treturn idx;\n}\n\n");
 }
 
-static void print_c_epilog(const char *c_sym_name_prefix)
+static void print_c_epilog(FILE *f, const char *c_sym_name_prefix)
 {
-
-  fprintf(tl_out, "void\nltl2ba_finish_monitor(pthread_t t)\n{\n");
-  fprintf(tl_out, "\n\t__ESBMC_kill_monitor();\n\n");
+  fprintf(f, "void\nltl2ba_finish_monitor(pthread_t t)\n{\n");
+  fprintf(f, "\n\t__ESBMC_kill_monitor();\n\n");
 
   /* Assert we're not in a bad trap. */
-  fprintf(tl_out, "\t__ESBMC_assert(!%s_bad_prefix_states[%s_statevar],"
+  fprintf(f, "\t__ESBMC_assert(!%s_bad_prefix_states[%s_statevar],"
 		  "\"LTL_BAD\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
 
   /* Assert whether we're in a failing state */
-  fprintf(tl_out, "\t__ESBMC_assert(!%s_stutter_accept_table[%s_sym_to_idx()][%s_statevar],"
+  fprintf(f, "\t__ESBMC_assert(!%s_stutter_accept_table[%s_sym_to_idx()][%s_statevar],"
 		  "\"LTL_FAILING\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
 
   /* Assert whether we're in a succeeding state */
-  fprintf(tl_out, "\t__ESBMC_assert(!%s_good_prefix_excluded_states[%s_statevar],"
+  fprintf(f, "\t__ESBMC_assert(!%s_good_prefix_excluded_states[%s_statevar],"
 		  "\"LTL_SUCCEEDING\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
 
-  fprintf(tl_out, "\treturn;\n}\n");
-
-  return;
+  fprintf(f, "\treturn;\n}\n");
 }
 
-void print_c_buchi(const Buchi *b, const char *const *sym_table,
+void print_c_buchi(FILE *f, const Buchi *b, const char *const *sym_table,
                    const tl_Cexprtab *cexpr, int sym_id,
                    const char *c_sym_name_prefix)
 {
@@ -1502,36 +1491,35 @@ void print_c_buchi(const Buchi *b, const char *const *sym_table,
   int i, num_states;
 
   if (b->bstates->nxt == b->bstates) {
-    fprintf(tl_out, "#error Empty Buchi automaton\n");
+    fprintf(f, "#error Empty Buchi automaton\n");
     return;
   } else if (b->bstates->nxt->nxt == b->bstates && b->bstates->nxt->id == 0) {
-    fprintf(tl_out, "#error Always-true Buchi automaton\n");
+    fprintf(f, "#error Always-true Buchi automaton\n");
     return;
   }
 
-  fprintf(tl_out, "#if 0\n/* Precomputed transition data */\n");
-  print_behaviours(b, sym_table, cexpr, sym_id, &as);
-  fprintf(tl_out, "#endif\n");
+  fprintf(f, "#if 0\n/* Precomputed transition data */\n");
+  print_behaviours(b, f, sym_table, cexpr, sym_id, &as);
+  fprintf(f, "#endif\n");
 
-  print_c_headers(cexpr, c_sym_name_prefix);
+  print_c_headers(f, cexpr, c_sym_name_prefix);
 
-  num_states = print_enum_decl(b, c_sym_name_prefix);
+  num_states = print_enum_decl(f, b, c_sym_name_prefix);
 
-  print_buchi_statevars(b, c_sym_name_prefix, num_states);
+  print_buchi_statevars(f, b, c_sym_name_prefix, num_states);
 
   /* And now produce state machine */
 
-  print_fsm_func_opener();
+  print_fsm_func_opener(f);
 
-  int g_num_states = print_c_buchi_body(b, sym_table, c_sym_name_prefix);
+  int g_num_states = print_c_buchi_body(f, b, sym_table, c_sym_name_prefix);
 
-  print_c_buchi_body_tail();
+  print_c_buchi_body_tail(f);
 
   /* Some things vaguely in the shape of a modelling api */
-  print_c_buchi_util_funcs(c_sym_name_prefix);
+  print_c_buchi_util_funcs(f, c_sym_name_prefix);
 
-  print_c_accept_tables(sym_table, sym_id, g_num_states, &as, c_sym_name_prefix);
+  print_c_accept_tables(f, sym_table, sym_id, g_num_states, &as, c_sym_name_prefix);
 
-  print_c_epilog(c_sym_name_prefix);
-  return;
+  print_c_epilog(f, c_sym_name_prefix);
 }

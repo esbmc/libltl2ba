@@ -13,8 +13,6 @@
 #include <libgen.h>	/* basename() */
 #include "ltl2ba.h"
 
-FILE	*tl_out;
-
 int	tl_errs      = 0;
 
 unsigned long	All_Mem = 0;
@@ -134,14 +132,14 @@ tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 	free_all_atrans();
 	tfree(alt.transition);
 
-	Buchi b = mk_buchi(&gen, flags, alt.sym_table, &cexpr);
+	Buchi b = mk_buchi(&gen, stderr, flags, alt.sym_table, &cexpr);
 
 	switch (outmode) {
 	case none:	break;
-	case c: 	print_c_buchi(&b, alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix); break;
-	case dot: 	print_dot_buchi(&b, alt.sym_table, &cexpr); break;
+	case c: 	print_c_buchi(stdout, &b, alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix); break;
+	case dot: 	print_dot_buchi(stdout, &b, alt.sym_table, &cexpr); break;
 	case spin:
-	default:	print_spin_buchi(&b, alt.sym_table); break;
+	default:	print_spin_buchi(stdout, &b, alt.sym_table); break;
 	}
 
 	if (flags & TL_STATS)
@@ -163,7 +161,6 @@ main(int argc, char *argv[])
 	               | TL_FJTOFJ;
 	const char *c_sym_name_prefix = "_ltl2ba";
 	int display_cache = 0;
-	tl_out = stdout;
 
 	progname = argv[0] ? basename(argv[0]) : "";
 	if (!strcmp(progname, "ltl2c"))
