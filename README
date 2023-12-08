@@ -72,7 +72,9 @@ Temporal operators:
         V       (release)
         X       (next)
 
-Use spaces between any symbols.
+Use spaces between any symbols. The precedence of binary operators (high to low)
+is as follows: U and V, &&, ||, <->, -> (all are still left-associative, which
+may^W must change in the future).
 
 The result is a 'never' claim in Promela that can be given to the Spin model
 checker to verify properties on a system.
@@ -97,73 +99,3 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-
-5. CHANGES
-
-* LTL2BA - Version 1.0 - October 2001
-  Written by Denis Oddoux, LIAFA, France
-  Copyright (c) 2001  Denis Oddoux
-
-* LTL2BA - Version 1.1 - August 2007
-  Modified by Paul Gastin, LSV, France
-  Copyright (c) 2007  Paul Gastin
-  Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
-
-  - fixing a bug in the way sets were used for strongly connected components.
-    Thanks to Joachim Klein (klein@tcs.inf.tu-dresden.de) who found the bug and
-    proposed a patch to fix it.
-  - fixing a bug in the simplification with strongly connected components for
-    the generalized Büchi automaton.
-  - improving the simplification with strongly connected components for the
-    generalized Büchi automaton.
-  - using getrusage to compute running times for the statistics
-  - some other minor updates.
-
-* LTL2C - Version 1.0 - October 2013
-  Modified by Jeremy Morse
-  Copyright (c) 2013  Jeremy Morse
-
-  - Two additional output formats besides spin selected by option -O:
-    c  : an interpretation of the Büchi automaton in terms of a C program using
-         ESBMC intrinsics
-    dot: the format understood by the dot family of tools for drawing the Büchi
-         automaton as a graph (the default sink state is omitted here for
-         brevity)
-
-* LTL2BA - Version 1.2 - May 2018
-  Modified by Paul Gastin, LSV, France
-  Copyright (c) 2018  Paul Gastin
-  Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
-
-* LTL2BA - Version 1.3 - June 2020
-  Modified by Paul Gastin, LSV, France
-  Copyright (c) 2018  Paul Gastin
-  Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
-
-  Thanks to Jerry James for the patches addressing the following issues
-  - compatibility with gcc 10 (link-time failure for identically named variables
-    in different files)
-  - Remove unused function and variable declarations
-  - Make (f)printf format declarations match the types of the corresponding
-    expressions
-  - Remove the second argument to Fatal(), fatal() and non_fatal(), since it is
-    always NULL
-  - Make main() return something (since it is supposed to return int)
-
-* libltl2ba - Version 2.0 - December 2023
-  Modified by Franz Brauße, University of Manchester, UK
-  Copyright (c) 2023  Franz Brauße
-  Available at https://github.com/fbrausse/libltl2ba
-
-  - Various fixes in printing alternating, generalized and Büchi automata
-  - Parsing input formulas with the following precedence order for binary
-    operators (high to low): U and V, &&, ||, <->, -> (all are still
-    left-associative, which may^W must change in the future)
-  - Additional debugging information (-d) is output to stderr
-  - Many non-semantic changes to the internal API in order for libltl2ba to
-    become usable as a library, too; this includes defining and exporting the
-    data structures corresponding to the 3 representations of automata used
-    internally as well as removing global state and renaming/moving some
-    functions
-  - Provide a symlink ltl2c to the ltl2ba binary, which defaults to the 'c'
-    output mode from LTL2C
