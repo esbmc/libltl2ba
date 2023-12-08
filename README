@@ -7,8 +7,8 @@ form of a library while maintaining compatibility with the original algorithms.
 For bug-reports and/or questions about libltl2ba, please contact Franz Brauße:
 <franz.brausse@manchester.ac.uk>
 
-LTL2C is based on LTL2BA version 1.1 and added output formats for dot and the
-ESBMC model checker.
+LTL2C has been written by Jeremy Morse. It is based on LTL2BA version 1.1 and
+adds output formats for dot and the ESBMC model checker.
 
 LTL2BA has originally been written by Denis Oddoux and modified by Paul Gastin.
 It is based on the translation algorithm presented at CAV '01:
@@ -120,6 +120,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
   - some other minor updates.
 
 * LTL2C - Version 1.0 - October 2013
+  Modified by Jeremy Morse
+  Copyright (c) 2013  Jeremy Morse
 
   - Two additional output formats besides spin selected by option -O:
     c  : an interpretation of the Büchi automaton in terms of a C program using
