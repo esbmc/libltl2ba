@@ -26,7 +26,7 @@
 #define FREE		2
 #define NREVENT		3
 
-extern int sym_size, node_size;
+extern int sym_size;
 
 static ATrans *atrans_list = (ATrans *)0;
 static GTrans *gtrans_list = (GTrans *)0;
