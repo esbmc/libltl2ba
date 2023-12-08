@@ -93,12 +93,20 @@ install: ltl2c ltl2ba ltl2ba.h libltl2ba.a
 	$(MAKE) libltl2ba.pc && \
 	$(INSTALL) -D -m 0644 -t $(DESTDIR)$(libdir)/pkgconfig libltl2ba.pc
 
+uninstall:
+	$(RM) \
+		$(DESTDIR)$(includedir)/ltl2ba.h \
+		$(DESTDIR)$(libdir)/libltl2ba.a \
+		$(DESTDIR)$(bindir)/ltl2ba \
+		$(DESTDIR)$(bindir)/ltl2c \
+		$(DESTDIR)$(libdir)/pkgconfig/libltl2ba.pc \
+
 clean:
 	$(RM) -f ltl2c ltl2ba \
 		libltl2ba.a libltl2ba.pc \
 		main.o $(LTL2C) \
 		main.d $(LTL2C:.o=.d) \
 
-.PHONY: all clean install
+.PHONY: all clean install uninstall
 
 -include $(wildcard *.d)
