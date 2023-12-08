@@ -109,7 +109,7 @@ tfree(void *v)
 	}
 }
 
-ATrans* emalloc_atrans() {
+ATrans* emalloc_atrans(int sym_size, int node_size) {
   ATrans *result;
   if(!atrans_list) {
     result = (ATrans *)tl_emalloc(sizeof(ATrans));

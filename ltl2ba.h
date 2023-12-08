@@ -181,7 +181,7 @@ int	isequal(const Node *, const Node *);
 int	tl_Getchar(void);
 
 void	*tl_emalloc(int);
-ATrans  *emalloc_atrans();
+ATrans  *emalloc_atrans(int sym_size, int node_size);
 void    free_atrans(ATrans *, int);
 void    free_all_atrans();
 GTrans  *emalloc_gtrans();

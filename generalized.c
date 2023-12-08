@@ -396,7 +396,7 @@ static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
   AProd *prod = (AProd *)tl_emalloc(sizeof(AProd)); /* initialization */
   prod->nxt = prod;
   prod->prv = prod;
-  prod->prod = emalloc_atrans();
+  prod->prod = emalloc_atrans(sym_size, node_size);
   clear_set(prod->prod->to,  node_size);
   clear_set(prod->prod->pos, sym_size);
   clear_set(prod->prod->neg, sym_size);

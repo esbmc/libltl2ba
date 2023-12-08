@@ -66,7 +66,7 @@ ATrans *dup_trans(const ATrans *trans)  /* returns the copy of a transition */
 {
   ATrans *result;
   if(!trans) return NULL;
-  result = emalloc_atrans();
+  result = emalloc_atrans(sym_size, node_size);
   copy_set(trans->to,  result->to,  node_size);
   copy_set(trans->pos, result->pos, sym_size);
   copy_set(trans->neg, result->neg, sym_size);
@@ -81,7 +81,7 @@ void do_merge_trans(ATrans **result, const ATrans *trans1, const ATrans *trans2)
     return;
   }
   if(!*result)
-    *result = emalloc_atrans();
+    *result = emalloc_atrans(sym_size, node_size);
   do_merge_sets((*result)->to, trans1->to,  trans2->to,  node_size);
   do_merge_sets((*result)->pos, trans1->pos, trans2->pos, sym_size);
   do_merge_sets((*result)->neg, trans1->neg, trans2->neg, sym_size);
@@ -94,7 +94,7 @@ void do_merge_trans(ATrans **result, const ATrans *trans1, const ATrans *trans2)
 /* merges two transitions */
 ATrans *merge_trans(const ATrans *trans1, const ATrans *trans2)
 {
-  ATrans *result = emalloc_atrans();
+  ATrans *result = emalloc_atrans(sym_size, node_size);
   do_merge_trans(&result, trans1, trans2);
   return result;
 }
@@ -126,7 +126,7 @@ static ATrans *boolean(const Node *p, const Node **label, Alternating *alt)
   ATrans *t1, *t2, *lft, *rgt, *result = (ATrans *)0;
   switch(p->ntyp) {
   case TRUE:
-    result = emalloc_atrans();
+    result = emalloc_atrans(sym_size, node_size);
     clear_set(result->to,  node_size);
     clear_set(result->pos, sym_size);
     clear_set(result->neg, sym_size);
@@ -165,7 +165,7 @@ static ATrans *boolean(const Node *p, const Node **label, Alternating *alt)
     break;
   default:
     build_alternating(p, label, alt);
-    result = emalloc_atrans();
+    result = emalloc_atrans(sym_size, node_size);
     clear_set(result->to,  node_size);
     clear_set(result->pos, sym_size);
     clear_set(result->neg, sym_size);
@@ -185,7 +185,7 @@ static ATrans *build_alternating(const Node *p, const Node **label,
   switch (p->ntyp) {
 
   case TRUE:
-    t = emalloc_atrans();
+    t = emalloc_atrans(sym_size, node_size);
     clear_set(t->to,  node_size);
     clear_set(t->pos, sym_size);
     clear_set(t->neg, sym_size);
@@ -193,7 +193,7 @@ static ATrans *build_alternating(const Node *p, const Node **label,
     break;
 
   case PREDICATE:
-    t = emalloc_atrans();
+    t = emalloc_atrans(sym_size, node_size);
     clear_set(t->to,  node_size);
     clear_set(t->pos, sym_size);
     clear_set(t->neg, sym_size);
@@ -201,7 +201,7 @@ static ATrans *build_alternating(const Node *p, const Node **label,
     break;
 
   case NOT:
-    t = emalloc_atrans();
+    t = emalloc_atrans(sym_size, node_size);
     clear_set(t->to,  node_size);
     clear_set(t->pos, sym_size);
     clear_set(t->neg, sym_size);
