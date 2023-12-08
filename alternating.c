@@ -370,8 +370,9 @@ static void print_alternating(FILE *f, const Node **label,
       if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
 	fprintf(f, "1");
       print_sym_set(f, alt->sym_table, cexpr, t->pos, sym_size);
-      if (!empty_set(t->pos,sym_size) && !empty_set(t->neg,sym_size)) fprintf(f, " & ");
-      print_set(f, t->neg, sym_size);
+      if (!empty_set(t->pos,sym_size) && !empty_set(t->neg,sym_size))
+        fprintf(f, " & ");
+      print_sym_set(f, alt->sym_table, cexpr, t->neg, sym_size);
       fprintf(f, " -> ");
       print_set(f, t->to, node_size);
       fprintf(f, "\n");
