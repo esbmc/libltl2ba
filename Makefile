@@ -50,6 +50,8 @@ WARNS  = -Wall -Wextra -Wno-unused
 LTL2C =	parse.o lex.o buchi.o set.o \
 	mem.o rewrt.o cache.o alternating.o generalized.o
 
+DEPS = $(LTL2C:.o=.d) main.d
+
 # rules
 all: ltl2c libltl2ba.a
 
@@ -60,7 +62,7 @@ libltl2ba.a: $(LTL2C)
 	$(AR) rcs $@ $^
 
 ltl2ba: main.o libltl2ba.a
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(LTL2C): Makefile
 
@@ -104,9 +106,9 @@ uninstall:
 clean:
 	$(RM) -f ltl2c ltl2ba \
 		libltl2ba.a libltl2ba.pc \
-		main.o $(LTL2C) \
-		main.d $(LTL2C:.o=.d) \
+		main.o $(LTL2C)
+		$(DEPS) \
 
 .PHONY: all clean install uninstall
 
--include $(wildcard *.d)
+-include $(DEPS)
