@@ -1,55 +1,21 @@
-1. LICENSE
+1. ABOUT
 
-LTL2BA - Version 1.0 - October 2001
-Written by Denis Oddoux, LIAFA, France
-Copyright (c) 2001  Denis Oddoux
+The LTL2C software is a modification of LTL2BA. It aims at making the
+functionality of LTL2BA available in form of a library while maintaining
+compatibility with the original algorithms. Besides that, LTL2C also adds some
+features like different output formats that are not related to Spin.
 
-LTL2BA - Version 1.1 - August 2007
-Modified by Paul Gastin, LSV, France
-Copyright (c) 2007  Paul Gastin
-Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
+For bug-reports and/or questions about LTL2C, please contact Franz Brauße:
+<franz.brausse@manchester.ac.uk>
 
-LTL2BA - Version 1.2 - May 2018
-Modified by Paul Gastin, LSV, France
-Copyright (c) 2018  Paul Gastin
-Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
-
-LTL2BA - Version 1.3 - June 2020
-Modified by Paul Gastin, LSV, France
-Copyright (c) 2018  Paul Gastin
-Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
-
-LTL2C - Version 2.0 - December 2023
-Modified by Franz Brauße, University of Manchester, UK
-Copyright (c) 2023  Franz Brauße
-Available at https://github.com/fbrausse/ltl2c
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version. GNU GPL is included in this
-distribution, in a file called 'LICENSE'
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-
-The LTL2BA software was written by Denis Oddoux and modified by Paul
-Gastin.  It is based on the translation algorithm presented at CAV '01:
+LTL2BA has originally been written by Denis Oddoux and modified by Paul Gastin.
+It is based on the translation algorithm presented at CAV '01:
 	P.Gastin and D.Oddoux
 	"Fast LTL to Büchi Automata Translation"
 	in 13th International Conference on Computer Aided Verification, CAV 2001,
 	G. Berry, H. Comon, A. Finkel (Eds.)
 	Paris, France, July 18-22, 2001,
 	Proceedings - LNCS 2102, pp. 53-65
-
-Send bug-reports and/or questions to Paul Gastin
-http://www.lsv.ens-cachan.fr/~gastin
 
 Part of the code included is issued from the SPIN software Version 3.4.1
 The SPIN software is written by Gerard J. Holzmann, originally as part
@@ -112,7 +78,50 @@ run the command
 > ./ltl2ba
 to see the possible options for executing the program
 
-4. CHANGES IN VERSION 1.1
+4. LICENSE
+
+LTL2BA - Version 1.0 - October 2001
+Written by Denis Oddoux, LIAFA, France
+Copyright (c) 2001  Denis Oddoux
+
+LTL2BA - Version 1.1 - August 2007
+Modified by Paul Gastin, LSV, France
+Copyright (c) 2007  Paul Gastin
+Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
+
+LTL2BA - Version 1.2 - May 2018
+Modified by Paul Gastin, LSV, France
+Copyright (c) 2018  Paul Gastin
+Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
+
+LTL2BA - Version 1.3 - June 2020
+Modified by Paul Gastin, LSV, France
+Copyright (c) 2018  Paul Gastin
+Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
+
+LTL2C - Version 2.0 - December 2023
+Modified by Franz Brauße, University of Manchester, UK
+Copyright (c) 2023  Franz Brauße
+Available at https://github.com/fbrausse/ltl2c
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version. GNU GPL is included in this
+distribution, in a file called 'LICENSE'
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+5. CHANGES
+
+VERSION 1.1
 
 - fixing a bug in the way sets were used for strongly connected components. Thanks to Joachim Klein (klein@tcs.inf.tu-dresden.de) who found the bug and proposed a patch to fix it.
 - fixing a bug in the simplification with strongly connected components for the generalized Büchi automaton.
@@ -120,7 +129,7 @@ to see the possible options for executing the program
 - using getrusage to compute running times for the statistics
 - some other minor updates.
 
-5. CHANGES IN VERSION 1.3
+VERSION 1.3
 
 Thanks to Jerry James for the patches addressing the following issues
 - compatibility with gcc 10 (link-time failure for identically named
@@ -130,7 +139,7 @@ variables in different files)
 - Remove the second argument to Fatal(), fatal() and non_fatal(), since it is always NULL
 - Make main() return something (since it is supposed to return int)
 
-6. CHANGES IN VERSION ltl2c 2.0
+VERSION ltl2c 2.0
 
 - Various fixes in printing alternating, generalized and Büchi automata
 - Parsing input formulas with the following precedence order for binary
