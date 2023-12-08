@@ -108,7 +108,7 @@ static int simplify_gtrans(Generalized *g, FILE *f, tl_Flags flags, int *bad_scc
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & LTL2BA_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   for(s = g->gstates->nxt; s != g->gstates; s = s->nxt) {
     t = s->trans->nxt;
@@ -120,7 +120,7 @@ static int simplify_gtrans(Generalized *g, FILE *f, tl_Flags flags, int *bad_scc
           && included_set(t1->pos, t->pos, g->sz.sym_size)
           && included_set(t1->neg, t->neg, g->sz.sym_size)
           && (included_set(t->final, t1->final, g->sz.node_size)  /* acceptance conditions of t are also in t1 or may be ignored */
-              || ((flags & TL_SIMP_SCC) && ((s->incoming != t->to->incoming) || in_set(bad_scc, s->incoming))))) )
+              || ((flags & LTL2BA_SIMP_SCC) && ((s->incoming != t->to->incoming) || in_set(bad_scc, s->incoming))))) )
         t1 = t1->nxt;
       if(t1 != s->trans) { /* remove transition t */
         GTrans *free = t->nxt;
@@ -138,7 +138,7 @@ static int simplify_gtrans(Generalized *g, FILE *f, tl_Flags flags, int *bad_scc
     }
   }
 
-  if(flags & TL_STATS) {
+  if(flags & LTL2BA_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(f, "\nSimplification of the generalized Buchi automaton - transitions: %ld.%06lis",
@@ -216,7 +216,7 @@ static int simplify_gstates(Generalized *g, FILE *f, tl_Flags flags, int *bad_sc
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & LTL2BA_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   for(a = g->gstates->nxt; a != g->gstates; a = a->nxt) {
     if(a->trans == a->trans->nxt) { /* a has no transitions */
@@ -226,7 +226,7 @@ static int simplify_gstates(Generalized *g, FILE *f, tl_Flags flags, int *bad_sc
     }
     g->gstates->trans = a->trans;
     b = a->nxt;
-    while(!all_gtrans_match(g, a, b, (flags & TL_SIMP_SCC) != 0, bad_scc)) b = b->nxt;
+    while(!all_gtrans_match(g, a, b, (flags & LTL2BA_SIMP_SCC) != 0, bad_scc)) b = b->nxt;
     if(b != g->gstates) { /* a and b are equivalent */
       /* if scc(a)>scc(b) and scc(a) is non-trivial then all_gtrans_match(a,b,use_scc) must fail */
       if(a->incoming > b->incoming) /* scc(a) is trivial */
@@ -238,7 +238,7 @@ static int simplify_gstates(Generalized *g, FILE *f, tl_Flags flags, int *bad_sc
   }
   retarget_all_gtrans(g, gremoved);
 
-  if(flags & TL_STATS) {
+  if(flags & LTL2BA_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(f, "\nSimplification of the generalized Buchi automaton - states: %ld.%06lis",
@@ -339,8 +339,8 @@ static int is_final(const struct set_sizes *sz, int *from, ATrans *at, int i,
 {
   ATrans *t;
   int in_to;
-  if(((flags & TL_FJTOFJ) && !in_set(at->to, i)) ||
-    (!(flags & TL_FJTOFJ) && !in_set(from,  i))) return 1;
+  if(((flags & LTL2BA_FJTOFJ) && !in_set(at->to, i)) ||
+    (!(flags & LTL2BA_FJTOFJ) && !in_set(from,  i))) return 1;
   in_to = in_set(at->to, i);
   rem_set(at->to, i);
   for(t = transition[i]; t; t = t->nxt)
@@ -431,7 +431,7 @@ static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
 	if(is_final(&g->sz, s->nodes_set, t1, g->final[i], transition, flags))
 	  add_set(fin, g->final[i]);
       for(t2 = s->trans->nxt; t2 != s->trans;) {
-	if((flags & TL_SIMP_FLY) &&
+	if((flags & LTL2BA_SIMP_FLY) &&
 	   included_set(t1->to, t2->to->nodes_set, g->sz.node_size) &&
 	   included_set(t1->pos, t2->pos, g->sz.sym_size) &&
 	   included_set(t1->neg, t2->neg, g->sz.sym_size) &&
@@ -447,7 +447,7 @@ static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
 	  free_gtrans(free, 0, 0);
 	  state_trans--;
 	}
-	else if((flags & TL_SIMP_FLY) &&
+	else if((flags & LTL2BA_SIMP_FLY) &&
 		included_set(t2->to->nodes_set, t1->to, g->sz.node_size) &&
 		included_set(t2->pos, t1->pos, g->sz.sym_size) &&
 		included_set(t2->neg, t1->neg, g->sz.sym_size) &&
@@ -496,7 +496,7 @@ static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
   free_atrans(prod->prod, 0);
   tfree(prod);
 
-  if(flags & TL_SIMP_FLY) {
+  if(flags & LTL2BA_SIMP_FLY) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
       free_gtrans(s->trans->nxt, s->trans, 1);
       s->trans = (GTrans *)0;
@@ -592,7 +592,7 @@ Generalized mk_generalized(const Alternating *alt, FILE * tl_out, tl_Flags flags
 
   Generalized g = { .gstate_id = 1, .sz = alt->sz, };
 
-  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & LTL2BA_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   int *fin = new_set(g.sz.node_size);
   int *bad_scc = NULL; /* will be initialized in simplify_gscc */
@@ -635,7 +635,7 @@ Generalized mk_generalized(const Alternating *alt, FILE * tl_out, tl_Flags flags
 
   retarget_all_gtrans(&g, gremoved);
 
-  if(flags & TL_STATS) {
+  if(flags & LTL2BA_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nBuilding the generalized Buchi automaton : %ld.%06lis",
@@ -645,22 +645,22 @@ Generalized mk_generalized(const Alternating *alt, FILE * tl_out, tl_Flags flags
 
   tfree(gstack);
 
-  if(flags & TL_VERBOSE) {
+  if(flags & LTL2BA_VERBOSE) {
     fprintf(tl_out, "\nGeneralized Buchi automaton before simplification\n");
     print_generalized(tl_out, alt->sym_table, cexpr, &g);
   }
 
-  if(flags & TL_SIMP_DIFF) {
-    if (flags & TL_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
+  if(flags & LTL2BA_SIMP_DIFF) {
+    if (flags & LTL2BA_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
     simplify_gtrans(&g, tl_out, flags, bad_scc);
-    if (flags & TL_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
+    if (flags & LTL2BA_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
     while(simplify_gstates(&g, tl_out, flags, bad_scc, gremoved)) { /* simplifies as much as possible */
-      if (flags & TL_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
+      if (flags & LTL2BA_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
       simplify_gtrans(&g, tl_out, flags, bad_scc);
-      if (flags & TL_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
+      if (flags & LTL2BA_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
     }
 
-    if(flags & TL_VERBOSE) {
+    if(flags & LTL2BA_VERBOSE) {
       fprintf(tl_out, "\nGeneralized Buchi automaton after simplification\n");
       print_generalized(tl_out, alt->sym_table, cexpr, &g);
     }

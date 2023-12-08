@@ -430,7 +430,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 
 		ptr = tl_factor(symtab, cexpr, lex, flags);
 
-		if(flags & TL_SIMP_LOG) {
+		if(flags & LTL2BA_SIMP_LOG) {
 		  if (ptr->ntyp == FALSE
 		      ||  ptr->ntyp == TRUE)
 		    break;	/* [] false == false */
@@ -451,7 +451,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 
 		ptr = tl_factor(symtab, cexpr, lex, flags);
 
-		if ((ptr->ntyp == TRUE || ptr->ntyp == FALSE)&& (flags & TL_SIMP_LOG))
+		if ((ptr->ntyp == TRUE || ptr->ntyp == FALSE)&& (flags & LTL2BA_SIMP_LOG))
 			break;	/* X true = true , X false = false */
 
 		ptr = tl_nn(NEXT, ptr, LTL2BA_ZN);
@@ -462,7 +462,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 
 		ptr = tl_factor(symtab, cexpr, lex, flags);
 
-		if(flags & TL_SIMP_LOG) {
+		if(flags & LTL2BA_SIMP_LOG) {
 		  if (ptr->ntyp == TRUE
 		      ||  ptr->ntyp == FALSE)
 		    break;	/* <> true == true */
@@ -480,7 +480,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 
 		ptr = tl_nn(U_OPER, LTL2BA_True, ptr);
 	simpl:
-		if (flags & TL_SIMP_LOG)
+		if (flags & LTL2BA_SIMP_LOG)
 		  ptr = bin_simpler(symtab, ptr);
 		break;
 	case PREDICATE:
@@ -518,7 +518,7 @@ again:
 		{
 			lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
 			ptr = tl_nn(prec[nr][i], ptr, tl_level(symtab, cexpr, lex, flags, nr-1));
-			if (flags & TL_SIMP_LOG)
+			if (flags & LTL2BA_SIMP_LOG)
 				ptr = bin_simpler(symtab, ptr);
 			else
 				ptr = bin_minimal(symtab, ptr);

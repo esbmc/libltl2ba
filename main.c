@@ -107,7 +107,7 @@ static void tl_main(char *formula, enum out outmode, tl_Flags flags,
 	memset(&cexpr, 0, sizeof(cexpr));
 
 	Node *p = tl_parse(symtab, &cexpr, flags);
-	if (flags & TL_VERBOSE)
+	if (flags & LTL2BA_VERBOSE)
 	{
 		fprintf(stderr, "formula: ");
 		put_uform(stderr);
@@ -117,7 +117,7 @@ static void tl_main(char *formula, enum out outmode, tl_Flags flags,
 	if (!p || tl_errs)
 		return;
 
-	if (flags & TL_VERBOSE) {
+	if (flags & LTL2BA_VERBOSE) {
 		fprintf(stderr, "\t/* Normlzd: ");
 		dump(stderr, p);
 		fprintf(stderr, " */\n");
@@ -147,7 +147,7 @@ static void tl_main(char *formula, enum out outmode, tl_Flags flags,
 		break;
 	}
 
-	if (flags & TL_STATS)
+	if (flags & LTL2BA_STATS)
 		tl_endstats();
 }
 
@@ -158,11 +158,11 @@ int main(int argc, char *argv[])
 	char *ltl_file = NULL;
 	char *add_ltl  = NULL;
 	char *formula  = NULL, *inv_formula = NULL;
-	tl_Flags flags = TL_SIMP_LOG
-	               | TL_SIMP_DIFF
-	               | TL_SIMP_FLY
-	               | TL_SIMP_SCC
-	               | TL_FJTOFJ;
+	tl_Flags flags = LTL2BA_SIMP_LOG
+	               | LTL2BA_SIMP_DIFF
+	               | LTL2BA_SIMP_FLY
+	               | LTL2BA_SIMP_SCC
+	               | LTL2BA_FJTOFJ;
 	enum out outmode = OUT_SPIN;
 	const char *c_sym_name_prefix = "_ltl2ba";
 	int display_cache = 0;
@@ -176,13 +176,13 @@ int main(int argc, char *argv[])
 		case 'h': usage(0); break;
 		case 'F': ltl_file = optarg; break;
 		case 'f': add_ltl = optarg; break;
-		case 'a': flags &= ~TL_FJTOFJ; break;
-		case 'c': flags &= ~TL_SIMP_SCC; break;
-		case 'o': flags &= ~TL_SIMP_FLY; break;
-		case 'p': flags &= ~TL_SIMP_DIFF; break;
-		case 'l': flags &= ~TL_SIMP_LOG; break;
-		case 'd': flags |= TL_VERBOSE; break;
-		case 's': flags |= TL_STATS; break;
+		case 'a': flags &= ~LTL2BA_FJTOFJ; break;
+		case 'c': flags &= ~LTL2BA_SIMP_SCC; break;
+		case 'o': flags &= ~LTL2BA_SIMP_FLY; break;
+		case 'p': flags &= ~LTL2BA_SIMP_DIFF; break;
+		case 'l': flags &= ~LTL2BA_SIMP_LOG; break;
+		case 'd': flags |= LTL2BA_VERBOSE; break;
+		case 's': flags |= LTL2BA_STATS; break;
 		case 'O':
 			if (strcmp("spin", optarg) == 0)
 				outmode = OUT_SPIN;

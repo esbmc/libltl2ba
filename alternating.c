@@ -398,7 +398,7 @@ Alternating mk_alternating(const Node *p, FILE *tl_out, const tl_Cexprtab *cexpr
   alt.node_id = 1;
   alt.sym_id = 0;
 
-  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & LTL2BA_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   int the_node_size = calculate_node_size(p) + 1; /* number of states in the automaton */
   const Node **label = tl_emalloc(the_node_size * sizeof(Node *));
@@ -412,20 +412,20 @@ Alternating mk_alternating(const Node *p, FILE *tl_out, const tl_Cexprtab *cexpr
   alt.final_set = make_set(-1, alt.sz.node_size);
   alt.transition[0] = boolean(p, label, &alt); /* generates the alternating automaton */
 
-  if(flags & TL_VERBOSE) {
+  if(flags & LTL2BA_VERBOSE) {
     fprintf(tl_out, "\nAlternating automaton before simplification\n");
     print_alternating(tl_out, label, cexpr, &alt);
   }
 
-  if(flags & TL_SIMP_DIFF) {
+  if(flags & LTL2BA_SIMP_DIFF) {
     simplify_astates(label, &alt, &cnts); /* keeps only accessible states */
-    if(flags & TL_VERBOSE) {
+    if(flags & LTL2BA_VERBOSE) {
       fprintf(tl_out, "\nAlternating automaton after simplification\n");
       print_alternating(tl_out, label, cexpr, &alt);
     }
   }
 
-  if(flags & TL_STATS) {
+  if(flags & LTL2BA_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(tl_out, "\nBuilding and simplification of the alternating automaton: %ld.%06lis",

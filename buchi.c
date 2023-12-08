@@ -91,7 +91,7 @@ static int simplify_btrans(Buchi *b, FILE *f, tl_Flags flags)
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & LTL2BA_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   for (s = b->bstates->nxt; s != b->bstates; s = s->nxt)
     for (t = s->trans->nxt; t != s->trans;) {
@@ -115,7 +115,7 @@ static int simplify_btrans(Buchi *b, FILE *f, tl_Flags flags)
         t = t->nxt;
     }
 
-  if(flags & TL_STATS) {
+  if(flags & LTL2BA_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(f, "\nSimplification of the Buchi automaton - transitions: %ld.%06lis",
@@ -223,7 +223,7 @@ static int simplify_bstates(Buchi *b, FILE *f, tl_Flags flags, int *gstate_id,
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
 
-  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & LTL2BA_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   for (s = b->bstates->nxt; s != b->bstates; s = s->nxt) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
@@ -288,7 +288,7 @@ static int simplify_bstates(Buchi *b, FILE *f, tl_Flags flags, int *gstate_id,
     }
   }
 
-  if(flags & TL_STATS) {
+  if(flags & LTL2BA_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(f, "\nSimplification of the Buchi automaton - states: %ld.%06lis",
@@ -423,7 +423,7 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
       BState *to = find_bstate(b, &t->to, fin, s, bstack, bremoved);
 
       for(t1 = s->trans->nxt; t1 != s->trans;) {
-	if((flags & TL_SIMP_FLY) &&
+	if((flags & LTL2BA_SIMP_FLY) &&
 	   (to == t1->to) &&
 	   included_set(t->pos, t1->pos, b->sz.sym_size) &&
 	   included_set(t->neg, t1->neg, b->sz.sym_size)) { /* t1 is redondant */
@@ -437,7 +437,7 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
 	  free_btrans(free, 0, 0);
 	  state_trans--;
 	}
-	else if((flags & TL_SIMP_FLY) &&
+	else if((flags & LTL2BA_SIMP_FLY) &&
 		(t1->to == to ) &&
 		included_set(t1->pos, t->pos, b->sz.sym_size) &&
 		included_set(t1->neg, t->neg, b->sz.sym_size)) /* t is redondant */
@@ -457,7 +457,7 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
       }
     }
 
-  if(flags & TL_SIMP_FLY) {
+  if(flags & LTL2BA_SIMP_FLY) {
     if(s->trans == s->trans->nxt) { /* s has no transitions */
       free_btrans(s->trans->nxt, s->trans, 1);
       s->trans = (BTrans *)0;
@@ -700,7 +700,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
 
   BState *bstack, *bremoved;
 
-  if(flags & TL_STATS) getrusage(RUSAGE_SELF, &tr_debut);
+  if(flags & LTL2BA_STATS) getrusage(RUSAGE_SELF, &tr_debut);
 
   bstack         = (BState *)tl_emalloc(sizeof(BState)); /* sentinel */
   bstack->nxt    = bstack;
@@ -724,7 +724,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
 	int fin = next_final(&b, t->final, 0, g->final);
 	BState *to = find_bstate(&b, &t->to, fin, s, bstack, bremoved);
 	for(t1 = s->trans->nxt; t1 != s->trans;) {
-	  if((flags & TL_SIMP_FLY) &&
+	  if((flags & LTL2BA_SIMP_FLY) &&
 	     (to == t1->to) &&
 	     included_set(t->pos, t1->pos, b.sz.sym_size) &&
 	     included_set(t->neg, t1->neg, b.sz.sym_size)) { /* t1 is redondant */
@@ -737,7 +737,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
 	    if(free == s->trans) s->trans = t1;
 	    free_btrans(free, 0, 0);
 	  }
-	else if((flags & TL_SIMP_FLY) &&
+	else if((flags & LTL2BA_SIMP_FLY) &&
 		(t1->to == to ) &&
 		included_set(t1->pos, t->pos, b.sz.sym_size) &&
 		included_set(t1->neg, t->neg, b.sz.sym_size)) /* t is redondant */
@@ -768,7 +768,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
 
   retarget_all_btrans(&b, bremoved);
 
-  if(flags & TL_STATS) {
+  if(flags & LTL2BA_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
     fprintf(f, "\nBuilding the Buchi automaton : %ld.%06lis",
@@ -776,22 +776,22 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
     fprintf(f, "\n%i states, %i transitions\n", cnts.bstate_count, cnts.btrans_count);
   }
 
-  if(flags & TL_VERBOSE) {
+  if(flags & LTL2BA_VERBOSE) {
     fprintf(f, "\nBuchi automaton before simplification\n");
     print_buchi(f, sym_table, cexpr, &b, b.bstates->nxt, g->scc_size);
     if(b.bstates == b.bstates->nxt)
       fprintf(f, "empty automaton, refuses all words\n");
   }
 
-  if(flags & TL_SIMP_DIFF) {
+  if(flags & LTL2BA_SIMP_DIFF) {
     simplify_btrans(&b, f, flags);
-    if(flags & TL_SIMP_SCC) simplify_bscc(&b, bremoved);
+    if(flags & LTL2BA_SIMP_SCC) simplify_bscc(&b, bremoved);
     while(simplify_bstates(&b, f, flags, &g->gstate_id, bremoved)) { /* simplifies as much as possible */
       simplify_btrans(&b, f, flags);
-      if(flags & TL_SIMP_SCC) simplify_bscc(&b, bremoved);
+      if(flags & LTL2BA_SIMP_SCC) simplify_bscc(&b, bremoved);
     }
 
-    if(flags & TL_VERBOSE) {
+    if(flags & LTL2BA_VERBOSE) {
       fprintf(f, "\nBuchi automaton after simplification\n");
       print_buchi(f, sym_table, cexpr, &b, b.bstates->nxt, g->scc_size);
       if(b.bstates == b.bstates->nxt)
