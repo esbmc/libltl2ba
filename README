@@ -19,6 +19,11 @@ Modified by Paul Gastin, LSV, France
 Copyright (c) 2018  Paul Gastin
 Available at http://www.lsv.ens-cachan.fr/~gastin/ltl2ba
 
+LTL2C - Version 2.0 - December 2023
+Modified by Franz Brauße, University of Manchester, UK
+Copyright (c) 2023  Franz Brauße
+Available at https://github.com/fbrausse/ltl2c
+
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -125,3 +130,21 @@ variables in different files)
 - Remove the second argument to Fatal(), fatal() and non_fatal(), since it is always NULL
 - Make main() return something (since it is supposed to return int)
 
+6. CHANGES IN VERSION ltl2c 2.0
+
+- Various fixes in printing alternating, generalized and Büchi automata
+- Parsing input formulas with the following precedence order for binary
+  operators (high to low): U and V, &&, ||, <->, -> (all are still
+  left-associative, which may^W must change in the future)
+- Additional debugging information (-d) is output to stderr
+- 2 additional output formats besides spin selected by option -O:
+  c: an interpretation of the Büchi automaton in terms of a C program using
+     ESBMC intrinsics
+  dot: the format understood by the dot family of tools for drawing the Büchi
+       automaton as a graph (the default sink state is omitted here for brevity)
+- Many non-semantic changes to the internal API in order for ltl2c to become
+  usable as a library, too; this includes defining and exporting the data
+  structures corresponding to the 3 representations of automata used internally
+  as well as removing global state and renaming/moving some functions
+- Provide a symlink ltl2c to the ltl2ba binary, which defaults to the 'c' output
+  mode (see above)
