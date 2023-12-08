@@ -378,7 +378,7 @@ static GState *find_gstate(Generalized *g, int *set, GState *s, GState *gstack,
   s->id = (empty_set(set, node_size)) ? 0 : g->gstate_id++;
   s->incoming = 0;
   s->nodes_set = dup_set(set, node_size);
-  s->trans = emalloc_gtrans(); /* sentinel */
+  s->trans = emalloc_gtrans(sym_size, node_size); /* sentinel */
   s->trans->nxt = s->trans;
   s->nxt = gstack->nxt;
   gstack->nxt = s;
@@ -454,7 +454,7 @@ static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
 	}
       }
       if(t2 == s->trans) { /* adds the transition */
-	trans = emalloc_gtrans();
+	trans = emalloc_gtrans(sym_size, node_size);
 	trans->to = find_gstate(g, t1->to, s, gstack, gremoved);
 	trans->to->incoming++;
 	copy_set(t1->pos, trans->pos, sym_size);
@@ -606,7 +606,7 @@ Generalized mk_generalized(const Alternating *alt, FILE * tl_out, tl_Flags flags
     s->id = (empty_set(t->to, node_size)) ? 0 : g.gstate_id++;
     s->incoming = 1;
     s->nodes_set = dup_set(t->to, node_size);
-    s->trans = emalloc_gtrans(); /* sentinel */
+    s->trans = emalloc_gtrans(sym_size, node_size); /* sentinel */
     s->trans->nxt = s->trans;
     s->nxt = gstack->nxt;
     gstack->nxt = s;

@@ -147,7 +147,7 @@ void free_all_atrans() {
   }
 }
 
-GTrans* emalloc_gtrans() {
+GTrans* emalloc_gtrans(int sym_size, int node_size) {
   GTrans *result;
   if(!gtrans_list) {
     result = (GTrans *)tl_emalloc(sizeof(GTrans));

@@ -184,7 +184,7 @@ void	*tl_emalloc(int);
 ATrans  *emalloc_atrans(int sym_size, int node_size);
 void    free_atrans(ATrans *, int);
 void    free_all_atrans();
-GTrans  *emalloc_gtrans();
+GTrans  *emalloc_gtrans(int sym_size, int node_size);
 void    free_gtrans(GTrans *, GTrans *, int);
 BTrans  *emalloc_btrans();
 void    free_btrans(BTrans *, BTrans *, int);
