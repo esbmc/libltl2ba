@@ -32,7 +32,6 @@ Here are the files that contain some code from Spin v3.4.1 :
 	mem.c.   (           tl_mem.c  )
 	parse.c  (           tl_parse.c)
 	rewrt.c  (           tl_rewrt.c)
-	trans.c	 (           tl_trans.c)
 
 2. COMPILING
 
