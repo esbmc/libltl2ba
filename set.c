@@ -179,6 +179,7 @@ void print_sym_set(FILE *f, const char *const *sym_table,
                    const tl_Cexprtab *cexpr, int *l, int size)
 {
   int i, j, cex, start = 1;;
+  fprintf(f, "{");
   for(i = 0; i < size; i++)
     for(j = 0; j < mod; j++)
       if(l[i] & (1 << j)) {
@@ -190,6 +191,7 @@ void print_sym_set(FILE *f, const char *const *sym_table,
           fprintf(f, "%s", sym_table[mod * i + j]);
         start = 0;
       }
+  fprintf(f, "}");
 }
 
 
