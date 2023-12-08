@@ -186,7 +186,7 @@ void    free_atrans(ATrans *, int);
 void    free_all_atrans();
 GTrans  *emalloc_gtrans(int sym_size, int node_size);
 void    free_gtrans(GTrans *, GTrans *, int);
-BTrans  *emalloc_btrans();
+BTrans  *emalloc_btrans(int sym_size);
 void    free_btrans(BTrans *, BTrans *, int);
 void	a_stats(void);
 void	cache_stats(void);

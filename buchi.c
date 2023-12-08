@@ -393,7 +393,7 @@ static BState *find_bstate(Buchi *b, GState **state, int final, BState *s,
   s->id = (*state)->id;
   s->incoming = 0;
   s->final = final;
-  s->trans = emalloc_btrans(); /* sentinel */
+  s->trans = emalloc_btrans(sym_size); /* sentinel */
   s->trans->nxt = s->trans;
   s->nxt = bstack->nxt;
   bstack->nxt = s;
@@ -445,7 +445,7 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
 	  t1 = t1->nxt;
       }
       if(t1 == s->trans) {
-	BTrans *trans = emalloc_btrans();
+	BTrans *trans = emalloc_btrans(sym_size);
 	trans->to = to;
 	trans->to->incoming++;
 	copy_set(t->pos, trans->pos, sym_size);
@@ -715,7 +715,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
   s->incoming = 1;
   s->final = 0;
   s->gstate = 0;
-  s->trans = emalloc_btrans(); /* sentinel */
+  s->trans = emalloc_btrans(sym_size); /* sentinel */
   s->trans->nxt = s->trans;
   for(i = 0; i < g->init_size; i++)
     if(g->init[i])
@@ -745,7 +745,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
 	    t1 = t1->nxt;
 	}
 	if(t1 == s->trans) {
-	  BTrans *trans = emalloc_btrans();
+	  BTrans *trans = emalloc_btrans(sym_size);
 	  trans->to = to;
 	  trans->to->incoming++;
 	  copy_set(t->pos, trans->pos, sym_size);

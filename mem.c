@@ -174,7 +174,7 @@ void free_gtrans(GTrans *t, GTrans *sentinel, int fly) {
   gtrans_list = t;
 }
 
-BTrans* emalloc_btrans() {
+BTrans* emalloc_btrans(int sym_size) {
   BTrans *result;
   if(!btrans_list) {
     result = (BTrans *)tl_emalloc(sizeof(BTrans));
