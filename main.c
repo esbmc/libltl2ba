@@ -13,7 +13,7 @@
 #include <libgen.h>	/* basename() */
 #include "ltl2ba.h"
 
-int	tl_errs      = 0;
+static int	tl_errs      = 0;
 
 static char	uform[4096];
 static int	hasuform=0, cnt=0;
@@ -27,7 +27,6 @@ enum out {
 static const char *progname;
 
 static void	tl_endstats(void);
-static void	non_fatal(int tl_yychar, const char *);
 
 static void
 alldone(int estatus)
