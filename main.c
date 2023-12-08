@@ -15,8 +15,6 @@
 
 int	tl_errs      = 0;
 
-unsigned long	All_Mem = 0;
-
 static char	uform[4096];
 static int	hasuform=0, cnt=0;
 
@@ -272,9 +270,6 @@ struct timeval *result, *x, *y;
 static void
 tl_endstats(void)
 {
-	/*extern int Stack_mx;*/
-	fprintf(stderr, "\ntotal memory used: %9ld\n", All_Mem);
-	/*fprintf(stderr, "largest stack sze: %9d\n", Stack_mx);*/
 	/*cache_stats();*/
 	a_stats();
 }

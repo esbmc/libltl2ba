@@ -26,8 +26,6 @@
 #define FREE		2
 #define NREVENT		3
 
-extern	unsigned long All_Mem;
-
 extern int sym_size, node_size;
 
 ATrans *atrans_list = (ATrans *)0;
@@ -37,6 +35,8 @@ BTrans *btrans_list = (BTrans *)0;
 int aallocs = 0, afrees = 0, apool = 0;
 int gallocs = 0, gfrees = 0, gpool = 0;
 int ballocs = 0, bfrees = 0, bpool = 0;
+
+static unsigned long All_Mem = 0;
 
 union M {
 	long size;
@@ -200,10 +200,14 @@ void free_btrans(BTrans *t, BTrans *sentinel, int fly) {
   btrans_list = t;
 }
 
-void
-a_stats(void)
-{	long	p, a, f;
-	int	i;
+void a_stats(void)
+{
+	long p, a, f;
+	int i;
+
+	/*extern int Stack_mx;*/
+	fprintf(stderr, "\ntotal memory used: %9ld\n", All_Mem);
+	/*fprintf(stderr, "largest stack sze: %9d\n", Stack_mx);*/
 
 	fprintf(stderr, " size\t  pool\tallocs\t frees\n");
 
