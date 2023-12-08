@@ -18,24 +18,24 @@
 #include <sys/resource.h>
 #include <assert.h>
 
-/* EMPTY_SET is passed to make_set() to create empty */
-#define EMPTY_SET (-1)
-#define SET_SIZE(elements) (elements/(8 * sizeof(int)) + 1)
+/* LTL2BA_EMPTY_SET is passed to make_set() to create empty */
+#define LTL2BA_EMPTY_SET (-1)
+#define LTL2BA_SET_SIZE(elements) (elements/(8 * sizeof(int)) + 1)
 
-#define ZN	(Node *)0
-#define ZS	(Symbol *)0
-#define Nhash	255
-#define True	tl_nn(TRUE,  ZN, ZN)
-#define False	tl_nn(FALSE, ZN, ZN)
-#define Not(a)	push_negation(symtab, tl_nn(NOT, a, ZN))
-#define rewrite(n)	canonical(symtab, right_linked(n))
+#define LTL2BA_ZN	(Node *)0
+#define LTL2BA_ZS	(Symbol *)0
+#define LTL2BA_Nhash	255
+#define LTL2BA_True	tl_nn(TRUE,  LTL2BA_ZN, LTL2BA_ZN)
+#define LTL2BA_False	tl_nn(FALSE, LTL2BA_ZN, LTL2BA_ZN)
+#define LTL2BA_Not(a)	push_negation(symtab, tl_nn(NOT, a, LTL2BA_ZN))
+#define LTL2BA_rewrite(n)	canonical(symtab, right_linked(n))
 
-#define Debug(x)	{ if (0) fprintf(stderr, x); }
-#define Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
-#define Dump(x)		{ if (0) dump(stderr, x); }
-#define Explain(x)	{ if (tl_verbose) tl_explain(x); }
+#define LTL2BA_Debug(x)	{ if (0) fprintf(stderr, x); }
+#define LTL2BA_Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
+#define LTL2BA_Dump(x)		{ if (0) dump(stderr, x); }
+#define LTL2BA_Explain(x)	{ if (tl_verbose) tl_explain(x); }
 
-#define Assert(x, y)	{ if (!(x)) { tl_explain(y); \
+#define LTL2BA_Assert(x, y)	{ if (!(x)) { tl_explain(y); \
 			  fatal(": assertion failed\n"); } }
 #define min(x,y)        ((x<y)?x:y)
 
@@ -120,7 +120,7 @@ enum {
 	NEXT,		/* 269 */
 };
 
-typedef Symbol *tl_Symtab[Nhash + 1];
+typedef Symbol *tl_Symtab[LTL2BA_Nhash + 1];
 
 typedef struct {
   int cexpr_idx;
@@ -144,8 +144,8 @@ typedef enum {
 } tl_Flags;
 
 struct set_sizes {
-	int sym_size;  /* SET_SIZE() of an upper bound on the number of predicates */
-	int node_size; /* SET_SIZE() of the number of states */
+	int sym_size;  /* LTL2BA_SET_SIZE() of an upper bound on the number of predicates */
+	int node_size; /* LTL2BA_SET_SIZE() of the number of states */
 };
 
 typedef struct {

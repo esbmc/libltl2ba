@@ -80,14 +80,14 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		{	ptr = tl_nn(NEXT,
 				tl_nn(U_OPER,
 					ptr->lft->lft,
-					ptr->rgt->lft), ZN);
+					ptr->rgt->lft), LTL2BA_ZN);
 		        break;
 		}
 
 		/* NEW : F X p == X F p */
 		if (ptr->lft->ntyp == TRUE &&
 		    ptr->rgt->ntyp == NEXT) {
-		  ptr = tl_nn(NEXT, tl_nn(U_OPER, True, ptr->rgt->lft), ZN);
+		  ptr = tl_nn(NEXT, tl_nn(U_OPER, LTL2BA_True, ptr->rgt->lft), LTL2BA_ZN);
 		  break;
 		}
 
@@ -103,9 +103,9 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 
 		/* NEW */
 		if (ptr->lft->ntyp != TRUE &&
-		    implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), ZN)),
+		    implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), LTL2BA_ZN)),
 			    ptr->lft))
-		{       ptr->lft = True;
+		{       ptr->lft = LTL2BA_True;
 		        break;
 		}
 		break;
@@ -131,7 +131,7 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		/* NEW : G X p == X G p */
 		if (ptr->lft->ntyp == FALSE &&
 		    ptr->rgt->ntyp == NEXT) {
-		  ptr = tl_nn(NEXT, tl_nn(V_OPER, False, ptr->rgt->lft), ZN);
+		  ptr = tl_nn(NEXT, tl_nn(V_OPER, LTL2BA_False, ptr->rgt->lft), LTL2BA_ZN);
 		  break;
 		}
 
@@ -155,8 +155,8 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		/* NEW */
 		if (ptr->lft->ntyp != FALSE &&
 		    implies(ptr->lft,
-			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), ZN))))
-		{       ptr->lft = False;
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), LTL2BA_ZN))))
+		{       ptr->lft = LTL2BA_False;
 		        break;
 		}
 		break;
@@ -182,26 +182,26 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 
 	case IMPLIES:
 		if (implies(ptr->lft, ptr->rgt))
-		  {	ptr = True;
+		  {	ptr = LTL2BA_True;
 			break;
 		}
-		ptr = tl_nn(OR, Not(ptr->lft), ptr->rgt);
-		ptr = rewrite(ptr);
+		ptr = tl_nn(OR, LTL2BA_Not(ptr->lft), ptr->rgt);
+		ptr = LTL2BA_rewrite(ptr);
 		break;
 	case EQUIV:
 		if (implies(ptr->lft, ptr->rgt) &&
 		    implies(ptr->rgt, ptr->lft))
-		  {	ptr = True;
+		  {	ptr = LTL2BA_True;
 			break;
 		}
-		a = rewrite(tl_nn(AND,
+		a = LTL2BA_rewrite(tl_nn(AND,
 			dupnode(ptr->lft),
 			dupnode(ptr->rgt)));
-		b = rewrite(tl_nn(AND,
-			Not(ptr->lft),
-			Not(ptr->rgt)));
+		b = LTL2BA_rewrite(tl_nn(AND,
+			LTL2BA_Not(ptr->lft),
+			LTL2BA_Not(ptr->rgt)));
 		ptr = tl_nn(OR, a, b);
-		ptr = rewrite(ptr);
+		ptr = LTL2BA_rewrite(ptr);
 		break;
 	case AND:
 		/* p && (q U p) = p */
@@ -254,7 +254,7 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		{	ptr = tl_nn(NEXT,
 				tl_nn(AND,
 					ptr->rgt->lft,
-					ptr->lft->lft), ZN);
+					ptr->lft->lft), LTL2BA_ZN);
 			break;
 		}
 
@@ -290,8 +290,8 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		    ptr->rgt->rgt->ntyp == V_OPER &&
 		    ptr->rgt->rgt->lft->ntyp == FALSE)
 		  {
-		    ptr = tl_nn(U_OPER, True,
-				tl_nn(V_OPER, False,
+		    ptr = tl_nn(U_OPER, LTL2BA_True,
+				tl_nn(V_OPER, LTL2BA_False,
 				      tl_nn(AND, ptr->lft->rgt->rgt,
 					    ptr->rgt->rgt->rgt)));
 		    break;
@@ -299,10 +299,10 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 
 		/* NEW */
 		if (implies(ptr->lft,
-			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), ZN)))
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), LTL2BA_ZN)))
 		 || implies(ptr->rgt,
-			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), ZN))))
-		{       ptr = False;
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), LTL2BA_ZN))))
+		{       ptr = LTL2BA_False;
 		        break;
 		}
 		break;
@@ -374,19 +374,19 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		    ptr->rgt->rgt->ntyp == U_OPER &&
 		    ptr->rgt->rgt->lft->ntyp == TRUE)
 		  {
-		    ptr = tl_nn(V_OPER, False,
-				tl_nn(U_OPER, True,
+		    ptr = tl_nn(V_OPER, LTL2BA_False,
+				tl_nn(U_OPER, LTL2BA_True,
 				      tl_nn(OR, ptr->lft->rgt->rgt,
 					    ptr->rgt->rgt->rgt)));
 		    break;
 		  }
 
 		/* NEW */
-		if (implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), ZN)),
+		if (implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), LTL2BA_ZN)),
 			    ptr->lft)
-		 || implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), ZN)),
+		 || implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), LTL2BA_ZN)),
 			    ptr->rgt))
-		{       ptr = True;
+		{       ptr = LTL2BA_True;
 		        break;
 		}
 		break;
@@ -399,18 +399,18 @@ bin_minimal(tl_Symtab symtab, Node *ptr)
 {       if (ptr)
 	switch (ptr->ntyp) {
 	case IMPLIES:
-		return tl_nn(OR, Not(ptr->lft), ptr->rgt);
+		return tl_nn(OR, LTL2BA_Not(ptr->lft), ptr->rgt);
 	case EQUIV:
 		return tl_nn(OR,
 			     tl_nn(AND,dupnode(ptr->lft),dupnode(ptr->rgt)),
-			     tl_nn(AND,Not(ptr->lft),Not(ptr->rgt)));
+			     tl_nn(AND,LTL2BA_Not(ptr->lft),LTL2BA_Not(ptr->rgt)));
 	}
 	return ptr;
 }
 
 static Node *
 tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
-{	Node *ptr = ZN;
+{	Node *ptr = LTL2BA_ZN;
 
 	switch (lex->tl_yychar) {
 	case '(':
@@ -443,7 +443,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 		    }
 		}
 
-		ptr = tl_nn(V_OPER, False, ptr);
+		ptr = tl_nn(V_OPER, LTL2BA_False, ptr);
 		goto simpl;
 
 	case NEXT:
@@ -454,7 +454,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 		if ((ptr->ntyp == TRUE || ptr->ntyp == FALSE)&& (flags & TL_SIMP_LOG))
 			break;	/* X true = true , X false = false */
 
-		ptr = tl_nn(NEXT, ptr, ZN);
+		ptr = tl_nn(NEXT, ptr, LTL2BA_ZN);
 		goto simpl;
 
 	case EVENTUALLY:
@@ -478,7 +478,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 		    }
 		}
 
-		ptr = tl_nn(U_OPER, True, ptr);
+		ptr = tl_nn(U_OPER, LTL2BA_True, ptr);
 	simpl:
 		if (flags & TL_SIMP_LOG)
 		  ptr = bin_simpler(symtab, ptr);
@@ -506,7 +506,7 @@ static Node *
 tl_level(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags, int nr)
 {
 	unsigned i;
-	Node *ptr = ZN;
+	Node *ptr = LTL2BA_ZN;
 
 	if (nr < 0)
 		return tl_factor(symtab, cexpr, lex, flags);

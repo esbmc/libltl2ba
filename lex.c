@@ -14,7 +14,7 @@
 #include <ctype.h>
 #include "ltl2ba.h"
 
-#define Token(y)        lex->tl_yylval = tl_nn(y,ZN,ZN); return y
+#define Token(y)        lex->tl_yylval = tl_nn(y,LTL2BA_ZN,LTL2BA_ZN); return y
 
 static int
 isalnum_(int c)
@@ -28,10 +28,10 @@ static int hash(const char *s)
         while (*s)
         {       h += *s++;
                 h <<= 1;
-                if (h&(Nhash+1))
+                if (h&(LTL2BA_Nhash+1))
                         h |= 1;
         }
-        return h&Nhash;
+        return h&LTL2BA_Nhash;
 }
 
 static void
@@ -108,7 +108,7 @@ tl_lex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 		if (cexpr->cexpr_idx == 256)
 			tl_yyerror(lex, "You have too many C expressions");
 
-		lex->tl_yylval = tl_nn(PREDICATE,ZN,ZN);
+		lex->tl_yylval = tl_nn(PREDICATE,LTL2BA_ZN,LTL2BA_ZN);
 		lex->tl_yylval->sym = tl_lookup(symtab, buffer);
 		return PREDICATE;
 	}
@@ -122,7 +122,7 @@ tl_lex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 		if (strcmp("false", lex->yytext) == 0)
 		{	Token(FALSE);
 		}
-		lex->tl_yylval = tl_nn(PREDICATE,ZN,ZN);
+		lex->tl_yylval = tl_nn(PREDICATE,LTL2BA_ZN,LTL2BA_ZN);
 		lex->tl_yylval->sym = tl_lookup(symtab, lex->yytext);
 		return PREDICATE;
 	}

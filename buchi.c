@@ -1069,7 +1069,7 @@ static int* pess_recurse2(const struct pess_data *d, int *s, int depth) {
 /* Optimistically pick an element out of the set */
   int i;
   int *t;
-  int *reach=make_set(EMPTY_SET, d->state_size);
+  int *reach=make_set(LTL2BA_EMPTY_SET, d->state_size);
   for(i = 0; i < d->state_count; i++)
     if (in_set(s, i)) {
       merge_sets(reach,
@@ -1104,7 +1104,7 @@ static int * pess_reach(Slist **tr, int st, int depth, int state_count, int stat
   struct pess_data d;
   d.state_count = state_count;
   d.state_size = state_size;
-  d.full_state_set = make_set(EMPTY_SET, d.state_size);
+  d.full_state_set = make_set(LTL2BA_EMPTY_SET, d.state_size);
   d.tr = tr;
   for(i=0; i < d.state_count; i++)
     add_set(d.full_state_set, i);
@@ -1174,8 +1174,8 @@ static void print_behaviours(const Buchi *b, FILE *f,
      *     Here, "final" is a VARIABLE and the state with id=0 is magic       */
     fprintf(f,"\t%d\n",s->final == b->accept || s -> id == 0); } /* END Loop over states */
   fprintf(f,"\nSymbol table:\nid\tsymbol\t\t\tcexpr\n");
-  state_size = SET_SIZE(state_count);
-  full_state_set = make_set(EMPTY_SET,state_size);
+  state_size = LTL2BA_SET_SIZE(state_count);
+  full_state_set = make_set(LTL2BA_EMPTY_SET,state_size);
   for(i=0;i<state_count; i++)
     add_set(full_state_set,i);
 
@@ -1196,7 +1196,7 @@ static void print_behaviours(const Buchi *b, FILE *f,
     pessimistic_transition[i] = (Slist*)tl_emalloc(sizeof(Slist));
     pessimistic_transition[i]->set = dup_set(full_state_set, state_size);
     pessimistic_transition[i]->nxt = (Slist*)0; }
-  working_set = make_set(EMPTY_SET,state_size);
+  working_set = make_set(LTL2BA_EMPTY_SET,state_size);
 
   /*
   for (i=0; i<cexpr->cexpr_idx; i++)
@@ -1212,7 +1212,7 @@ static void print_behaviours(const Buchi *b, FILE *f,
       fprintf(f, "\n"); }
 
   fprintf(f,"\nStuttering:\n\n");
-  a=make_set(EMPTY_SET,b->sz.sym_size);
+  a=make_set(LTL2BA_EMPTY_SET,b->sz.sym_size);
   do {                                     /* Loop over alphabet */
     fprintf(f,"\n");
     for (i=0;i<state_count*state_count;i++)   /* Loop over states, clearing transition matrix for this character */
@@ -1308,13 +1308,13 @@ static void print_behaviours(const Buchi *b, FILE *f,
     {
       BState *s2;
       int r, c;
-      int * accepting_cycles=make_set(EMPTY_SET,state_size);
+      int * accepting_cycles=make_set(LTL2BA_EMPTY_SET,state_size);
       for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
         if((s2->final == b->accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)])
           add_set(accepting_cycles,s2->label);
       fprintf(f,"Accepting cycles: ");
       print_set(f, accepting_cycles,state_size);
-      int * accepting_states=make_set(EMPTY_SET,state_size);
+      int * accepting_states=make_set(LTL2BA_EMPTY_SET,state_size);
       for (r=0;r<state_count;r++)
         for (c=0; c<state_count;c++) {
           /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
@@ -1347,14 +1347,14 @@ static void print_behaviours(const Buchi *b, FILE *f,
   {
     BState *s2;
     int r, c;
-    int * accepting_cycles=make_set(EMPTY_SET,state_size);
+    int * accepting_cycles=make_set(LTL2BA_EMPTY_SET,state_size);
     for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
       if((s2->final == b->accept || s2 -> id == 0) && optimistic_reach[(s2->label)*(state_count+1)])
         add_set(accepting_cycles,s2->label);
     fprintf(f,"\nAccepting optimistic cycles: ");
     print_set(f, accepting_cycles,state_size);
 
-    int * accepting_states=make_set(EMPTY_SET,state_size);
+    int * accepting_states=make_set(LTL2BA_EMPTY_SET,state_size);
     for (r=0;r<state_count;r++)
       for (c=0; c<state_count;c++) {
         /* fprintf(tl_out,"\n*** r:%d c:%d reach:%d in_set:%d\n",r,c,reach[r*state_count+c],in_set(accepting_cycles,c)); */
@@ -1386,7 +1386,7 @@ static void print_behaviours(const Buchi *b, FILE *f,
     print_set(f, pessimistic_reachable[i],state_size);
     fprintf(f,"\n"); }
 
-  int *accepting_pessimistic_cycles=make_set(EMPTY_SET,state_size);
+  int *accepting_pessimistic_cycles=make_set(LTL2BA_EMPTY_SET,state_size);
   BState* s2;
   for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
     if((s2->final == b->accept || s2 -> id == 0) && in_set(pessimistic_reachable[s2->label],s2->label))
@@ -1394,7 +1394,7 @@ static void print_behaviours(const Buchi *b, FILE *f,
   fprintf(f,"\nAccepting pessimistic cycles: ");
   print_set(f, accepting_pessimistic_cycles,state_size);
 
-  int *accepting_pessimistic_states=make_set(EMPTY_SET,state_size);
+  int *accepting_pessimistic_states=make_set(LTL2BA_EMPTY_SET,state_size);
   for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
     if(!empty_intersect_sets(pessimistic_reachable[s2->label],accepting_pessimistic_cycles,state_size))
       add_set(accepting_pessimistic_states,s2->label);
@@ -1461,17 +1461,17 @@ static void print_c_epilog(FILE *f, const char *c_sym_name_prefix)
   fprintf(f, "void\nltl2ba_finish_monitor(pthread_t t)\n{\n");
   fprintf(f, "\n\t__ESBMC_kill_monitor();\n\n");
 
-  /* Assert we're not in a bad trap. */
+  /* LTL2BA_Assert we're not in a bad trap. */
   fprintf(f, "\t__ESBMC_assert(!%s_bad_prefix_states[%s_statevar],"
 		  "\"LTL_BAD\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
 
-  /* Assert whether we're in a failing state */
+  /* LTL2BA_Assert whether we're in a failing state */
   fprintf(f, "\t__ESBMC_assert(!%s_stutter_accept_table[%s_sym_to_idx()][%s_statevar],"
 		  "\"LTL_FAILING\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
 
-  /* Assert whether we're in a succeeding state */
+  /* LTL2BA_Assert whether we're in a succeeding state */
   fprintf(f, "\t__ESBMC_assert(!%s_good_prefix_excluded_states[%s_statevar],"
 		  "\"LTL_SUCCEEDING\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);

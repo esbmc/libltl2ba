@@ -11,7 +11,7 @@
 
 #include "ltl2ba.h"
 
-static Node	*can = ZN;
+static Node	*can = LTL2BA_ZN;
 
 static char	dumpbuf[2048];
 
@@ -47,7 +47,7 @@ common1:		sdump(n->lft);
 static Symbol *
 DoDump(tl_Symtab symtab, Node *n)
 {
-	if (!n) return ZS;
+	if (!n) return LTL2BA_ZS;
 
 	if (n->ntyp == PREDICATE)
 		return n->sym;
@@ -94,23 +94,23 @@ Node *
 push_negation(tl_Symtab symtab, Node *n)
 {	Node *m;
 
-	Assert(n->ntyp == NOT, n->ntyp);
+	LTL2BA_Assert(n->ntyp == NOT, n->ntyp);
 
 	switch (n->lft->ntyp) {
 	case TRUE:
 		releasenode(0, n->lft);
-		n->lft = ZN;
+		n->lft = LTL2BA_ZN;
 		n->ntyp = FALSE;
 		break;
 	case FALSE:
 		releasenode(0, n->lft);
-		n->lft = ZN;
+		n->lft = LTL2BA_ZN;
 		n->ntyp = TRUE;
 		break;
 	case NOT:
 		m = n->lft->lft;
 		releasenode(0, n->lft);
-		n->lft = ZN;
+		n->lft = LTL2BA_ZN;
 		releasenode(0, n);
 		n = m;
 		break;
@@ -132,21 +132,21 @@ push_negation(tl_Symtab symtab, Node *n)
 		n->ntyp = AND;
 
 same:		m = n->lft->rgt;
-		n->lft->rgt = ZN;
+		n->lft->rgt = LTL2BA_ZN;
 
-		n->rgt = Not(m);
+		n->rgt = LTL2BA_Not(m);
 		n->lft->ntyp = NOT;
 		m = n->lft;
 		n->lft = push_negation(symtab, m);
 		break;
 	}
 
-	return rewrite(n);
+	return LTL2BA_rewrite(n);
 }
 
 static void addcan(tl_Symtab symtab, int tok, Node *n)
 {
-	Node	*m, *prev = ZN;
+	Node	*m, *prev = LTL2BA_ZN;
 	Node	**ptr;
 	Node	*N;
 	Symbol	*s, *t; int cmp;
@@ -179,7 +179,7 @@ static void addcan(tl_Symtab symtab, int tok, Node *n)
 	}
 
 	/* there are at least 2 elements in list */
-	prev = ZN;
+	prev = LTL2BA_ZN;
 	for (m = can; m->ntyp == tok && m->rgt; prev = m, m = m->rgt)
 	{
 		t = DoDump(symtab, m->lft);
@@ -216,14 +216,14 @@ marknode(int tok, Node *m)
 {
 	if (m->ntyp != tok)
 	{	releasenode(0, m->rgt);
-		m->rgt = ZN;
+		m->rgt = LTL2BA_ZN;
 	}
 	m->ntyp = -1;
 }
 
 Node * Canonical(tl_Symtab symtab, Node *n)
 {
-	Node *m, *p, *k1, *k2, *prev, *dflt = ZN;
+	Node *m, *p, *k1, *k2, *prev, *dflt = LTL2BA_ZN;
 	int tok;
 
 	if (!n) return NULL;
@@ -232,30 +232,30 @@ Node * Canonical(tl_Symtab symtab, Node *n)
 	if (tok != AND && tok != OR)
 		return n;
 
-	can = ZN;
+	can = LTL2BA_ZN;
 	addcan(symtab, tok, n);
 #if 1
-	Debug("\nA0: "); Dump(can);
-	Debug("\nA1: "); Dump(n); Debug("\n");
+	LTL2BA_Debug("\nA0: "); LTL2BA_Dump(can);
+	LTL2BA_Debug("\nA1: "); LTL2BA_Dump(n); LTL2BA_Debug("\n");
 #endif
 	releasenode(1, n);
 
 	/* mark redundant nodes */
 	if (tok == AND)
-	{	for (m = can; m; m = (m->ntyp == AND) ? m->rgt : ZN)
+	{	for (m = can; m; m = (m->ntyp == AND) ? m->rgt : LTL2BA_ZN)
 		{	k1 = (m->ntyp == AND) ? m->lft : m;
 			if (k1->ntyp == TRUE)
 			{	marknode(AND, m);
-				dflt = True;
+				dflt = LTL2BA_True;
 				continue;
 			}
 			if (k1->ntyp == FALSE)
 			{	releasenode(1, can);
-				can = False;
+				can = LTL2BA_False;
 				goto out;
 		}	}
-		for (m = can; m; m = (m->ntyp == AND) ? m->rgt : ZN)
-		for (p = can; p; p = (p->ntyp == AND) ? p->rgt : ZN)
+		for (m = can; m; m = (m->ntyp == AND) ? m->rgt : LTL2BA_ZN)
+		for (p = can; p; p = (p->ntyp == AND) ? p->rgt : LTL2BA_ZN)
 		{	if (p == m
 			||  p->ntyp == -1
 			||  m->ntyp == -1)
@@ -278,20 +278,20 @@ Node * Canonical(tl_Symtab symtab, Node *n)
 			}	/* q && (p U q) = q */
 	}	}
 	if (tok == OR)
-	{	for (m = can; m; m = (m->ntyp == OR) ? m->rgt : ZN)
+	{	for (m = can; m; m = (m->ntyp == OR) ? m->rgt : LTL2BA_ZN)
 		{	k1 = (m->ntyp == OR) ? m->lft : m;
 			if (k1->ntyp == FALSE)
 			{	marknode(OR, m);
-				dflt = False;
+				dflt = LTL2BA_False;
 				continue;
 			}
 			if (k1->ntyp == TRUE)
 			{	releasenode(1, can);
-				can = True;
+				can = LTL2BA_True;
 				goto out;
 		}	}
-		for (m = can; m; m = (m->ntyp == OR) ? m->rgt : ZN)
-		for (p = can; p; p = (p->ntyp == OR) ? p->rgt : ZN)
+		for (m = can; m; m = (m->ntyp == OR) ? m->rgt : LTL2BA_ZN)
+		for (p = can; p; p = (p->ntyp == OR) ? p->rgt : LTL2BA_ZN)
 		{	if (p == m
 			||  p->ntyp == -1
 			||  m->ntyp == -1)
@@ -314,7 +314,7 @@ Node * Canonical(tl_Symtab symtab, Node *n)
 				continue;
 			}	/* p || (F V p) = p */
 	}	}
-	for (m = can, prev = ZN; m; )	/* remove marked nodes */
+	for (m = can, prev = LTL2BA_ZN; m; )	/* remove marked nodes */
 	{	if (m->ntyp == -1)
 		{	k2 = m->rgt;
 			releasenode(0, m);
@@ -340,7 +340,7 @@ Node * Canonical(tl_Symtab symtab, Node *n)
 	}
 out:
 #if 1
-	Debug("A2: "); Dump(can); Debug("\n");
+	LTL2BA_Debug("A2: "); LTL2BA_Dump(can); LTL2BA_Debug("\n");
 #endif
 	if (!can)
 	{	if (!dflt)

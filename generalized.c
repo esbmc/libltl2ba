@@ -314,7 +314,7 @@ static void simplify_gscc(Generalized *g, int *final_set, int **bad_scc,
         if(t->to->incoming == s->incoming)
           merge_sets(scc_final[s->incoming], t->final, g->sz.node_size);
 
-  g->scc_size = SET_SIZE(st.scc_id + 1);
+  g->scc_size = LTL2BA_SET_SIZE(st.scc_id + 1);
   *bad_scc=make_set(-1, g->scc_size);
 
   for(i = 0; i < st.scc_id; i++)

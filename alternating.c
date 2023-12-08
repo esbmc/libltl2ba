@@ -330,7 +330,7 @@ static void simplify_astates(const Node **label, Alternating *alt,
 
   for(i = alt->node_id - 1; i > 0; i--) {
     if (!in_set(acc, i)) { /* frees unaccessible states */
-      label[i] = ZN;
+      label[i] = LTL2BA_ZN;
       free_atrans(alt->transition[i], 1);
       alt->transition[i] = (ATrans *)0;
       continue;
@@ -403,11 +403,11 @@ Alternating mk_alternating(const Node *p, FILE *tl_out, const tl_Cexprtab *cexpr
   int the_node_size = calculate_node_size(p) + 1; /* number of states in the automaton */
   const Node **label = tl_emalloc(the_node_size * sizeof(Node *));
   alt.transition = (ATrans **) tl_emalloc(the_node_size * sizeof(ATrans *));
-  alt.sz.node_size = SET_SIZE(the_node_size);
+  alt.sz.node_size = LTL2BA_SET_SIZE(the_node_size);
 
   int the_sym_size = calculate_sym_size(p); /* number of predicates */
   if(the_sym_size) alt.sym_table = tl_emalloc(the_sym_size * sizeof(char *));
-  alt.sz.sym_size = SET_SIZE(the_sym_size);
+  alt.sz.sym_size = LTL2BA_SET_SIZE(the_sym_size);
 
   alt.final_set = make_set(-1, alt.sz.node_size);
   alt.transition[0] = boolean(p, label, &alt); /* generates the alternating automaton */
