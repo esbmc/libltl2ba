@@ -27,20 +27,34 @@
 #       F-75251 Paris Cedex 05
 #       FRANCE
 
+# binaries
 CC ?= gcc
 AR ?= ar
+RM ?= rm
+LN ?= ln
+INSTALL ?= install
+REALPATH ?= realpath
 
+# install paths
+prefix ?= /usr/local
+libdir ?= $(prefix)/lib64
+bindir ?= $(prefix)/bin
+includedir ?= $(prefix)/include
+
+# compile flags
 CPPFLAGS = -MD
 CFLAGS = $(WARNS)
 WARNS  = -Wall -Wextra -Wno-unused
 
+# objects
 LTL2C =	parse.o lex.o buchi.o set.o \
 	mem.o rewrt.o cache.o alternating.o generalized.o
 
+# rules
 all: ltl2c libltl2ba.a
 
 ltl2c: ltl2ba
-	rm -f ltl2c && ln -s $< $@
+	$(RM) -f ltl2c && $(LN) -s $< $@
 
 libltl2ba.a: $(LTL2C)
 	$(AR) rcs $@ $^
@@ -50,9 +64,41 @@ ltl2ba: main.o libltl2ba.a
 
 $(LTL2C): Makefile
 
-clean:
-	rm -f ltl2c ltl2ba libltl2ba.a main.o main.d $(LTL2C) $(LTL2C:.o=.d)
+libltl2ba.pc:
+	printf "\
+# libltl2ba pkg-config source file\\n\
+\\n\
+prefix=%s\\n\
+exec_prefix=\$${prefix}\\n\
+libdir=%s\\n\
+includedir=%s\\n\
+\\n\
+Name: libltl2ba\\n\
+Description:\\n\
+Version: 2.0\\n\
+Libs: -L\$${libdir} -lltl2ba\\n\
+Cflags: -I\$${includedir}\\n\
+" \
+	"$$($(REALPATH) -m $(prefix))" \
+	"$$($(REALPATH) -m $(libdir))" \
+	"$$($(REALPATH) -m $(includedir))" > $@
 
-.PHONY: all clean
+install: ltl2c ltl2ba ltl2ba.h libltl2ba.a
+	$(INSTALL) -D -m 0644 -t $(DESTDIR)$(includedir) ltl2ba.h
+	$(INSTALL) -D -m 0644 -t $(DESTDIR)$(libdir) libltl2ba.a
+	$(INSTALL) -D -m 0755 -t $(DESTDIR)$(bindir) ltl2ba
+	$(RM) -f $(DESTDIR)$(bindir)/ltl2c && \
+	$(LN) -s ltl2ba $(DESTDIR)$(bindir)/ltl2c
+	$(RM) libltl2ba.pc && \
+	$(MAKE) libltl2ba.pc && \
+	$(INSTALL) -D -m 0644 -t $(DESTDIR)$(libdir)/pkgconfig libltl2ba.pc
+
+clean:
+	$(RM) -f ltl2c ltl2ba \
+		libltl2ba.a libltl2ba.pc \
+		main.o $(LTL2C) \
+		main.d $(LTL2C:.o=.d) \
+
+.PHONY: all clean install
 
 -include $(wildcard *.d)
