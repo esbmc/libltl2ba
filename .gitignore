@@ -1,3 +1,6 @@
 *.o
+*.d
 /ltl2c
+/ltl2ba
+/libltl2ba.a
 /releases

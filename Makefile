@@ -27,20 +27,32 @@
 #       F-75251 Paris Cedex 05
 #       FRANCE
 
-CC = gcc
+CC ?= gcc
+AR ?= ar
+
+CPPFLAGS = -MD
 CFLAGS = $(WARNS)
 WARNS  = -Wall -Wextra -Wno-unused
 
-LTL2C =	parse.o lex.o main.o buchi.o set.o \
+LTL2C =	parse.o lex.o buchi.o set.o \
 	mem.o rewrt.o cache.o alternating.o generalized.o
+
+all: ltl2c libltl2ba.a
 
 ltl2c: ltl2ba
 	rm -f ltl2c && ln -s $< $@
 
-ltl2ba:	$(LTL2C)
-	$(CC) $(CFLAGS) -o $@ $(LTL2C)
+libltl2ba.a: $(LTL2C)
+	$(AR) rcs $@ $^
 
-$(LTL2C): ltl2ba.h
+ltl2ba: main.o libltl2ba.a
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(LTL2C): Makefile
 
 clean:
-	rm -f ltl2c ltl2ba $(LTL2C)
+	rm -f ltl2c ltl2ba libltl2ba.a main.o main.d $(LTL2C) $(LTL2C:.o=.d)
+
+.PHONY: all clean
+
+-include $(wildcard *.d)
