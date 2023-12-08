@@ -235,7 +235,7 @@ int  included_set(int *, int *, int);
 int  in_set(int *, int);
 int  *list_set(int *, int);
 
-void print_sym_set(const char *const *sym_table, const tl_Cexprtab *cexpr, int *l, int size);
+void print_sym_set(FILE *f, const char *const *sym_table, const tl_Cexprtab *cexpr, int *l, int size);
 
 int timeval_subtract (struct timeval *, struct timeval *, struct timeval *);
 

@@ -522,9 +522,9 @@ static void print_buchi(const char *const *sym_table, const tl_Cexprtab *cexpr,
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
       fprintf(tl_out, "1");
-    print_sym_set(sym_table, cexpr, t->pos, sym_size);
+    print_sym_set(tl_out, sym_table, cexpr, t->pos, sym_size);
     if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(tl_out, " & ");
-    print_sym_set(sym_table, cexpr, t->neg, sym_size);
+    print_sym_set(tl_out, sym_table, cexpr, t->neg, sym_size);
     fprintf(tl_out, " -> ");
     if(t->to->id == -1)
       fprintf(tl_out, "init\n");

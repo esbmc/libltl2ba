@@ -550,9 +550,9 @@ static void reverse_print_generalized(FILE *f, const char *const *sym_table,
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
       fprintf(f, "1");
-    print_sym_set(sym_table, cexpr, t->pos, sym_size);
+    print_sym_set(f, sym_table, cexpr, t->pos, sym_size);
     if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(f, " & ");
-    print_sym_set(sym_table, cexpr, t->neg, sym_size);
+    print_sym_set(f, sym_table, cexpr, t->neg, sym_size);
     fprintf(f, " -> %i : ", t->to->id);
     print_set(f, t->final, node_size);
     fprintf(f, "\n");

@@ -176,19 +176,19 @@ void print_set(FILE *f, int *l, int size) /* prints the content of a set */
 }
 
 /* prints the content of a symbol set */
-void print_sym_set(const char *const *sym_table, const tl_Cexprtab *cexpr,
-                   int *l, int size)
+void print_sym_set(FILE *f, const char *const *sym_table,
+                   const tl_Cexprtab *cexpr, int *l, int size)
 {
   int i, j, cex, start = 1;;
   for(i = 0; i < size; i++)
     for(j = 0; j < mod; j++)
       if(l[i] & (1 << j)) {
-        if(!start) fprintf(tl_out, " & ");
+        if(!start) fprintf(f, " & ");
         if (sscanf(sym_table[mod * i + j],"_ltl2ba_cexpr_%d_status",&cex)==1)
         /* Yes, scanning for a match here is horrid DAN */
-          fprintf(tl_out, "{%s}", cexpr->cexpr_expr_table[cex]);
+          fprintf(f, "{%s}", cexpr->cexpr_expr_table[cex]);
         else
-          fprintf(tl_out, "%s", sym_table[mod * i + j]);
+          fprintf(f, "%s", sym_table[mod * i + j]);
         start = 0;
       }
 }
