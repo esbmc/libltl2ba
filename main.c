@@ -20,7 +20,7 @@ unsigned long	All_Mem = 0;
 static char	uform[4096];
 static int	hasuform=0, cnt=0;
 
-static enum {spin, c, dot, none} outmode = spin;
+static enum {spin, c, dot} outmode = spin;
 
 static const char *progname;
 
@@ -135,11 +135,9 @@ tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 	Buchi b = mk_buchi(&gen, stderr, flags, alt.sym_table, &cexpr);
 
 	switch (outmode) {
-	case none:	break;
 	case c: 	print_c_buchi(stdout, &b, alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix); break;
 	case dot: 	print_dot_buchi(stdout, &b, alt.sym_table, &cexpr); break;
-	case spin:
-	default:	print_spin_buchi(stdout, &b, alt.sym_table); break;
+	case spin:	print_spin_buchi(stdout, &b, alt.sym_table); break;
 	}
 
 	if (flags & TL_STATS)
