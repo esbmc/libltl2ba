@@ -11,8 +11,6 @@
 
 #include "ltl2ba.h"
 
-extern FILE	*tl_out;
-
 extern int tl_yylex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex);
 
 static Node	*tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags);

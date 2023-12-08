@@ -18,8 +18,6 @@ typedef struct Cache {
 	struct Cache *nxt;
 } Cache;
 
-extern FILE	*tl_out;
-
 static Cache	*stored = (Cache *) 0;
 static unsigned long	Caches, CacheHits;
 
