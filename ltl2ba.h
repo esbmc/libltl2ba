@@ -143,22 +143,30 @@ typedef enum {
 	TL_VERBOSE   = 1 << 6,
 } tl_Flags;
 
+struct set_sizes {
+	int sym_size;  /* SET_SIZE() of an upper bound on the number of predicates */
+	int node_size; /* SET_SIZE() of the number of states */
+};
+
 typedef struct {
   ATrans **transition;
   int *final_set;
   int node_id; /* really the number of nodes */
   int sym_id; /* number of symbols */
   const char **sym_table;
+  struct set_sizes sz;
 } Alternating;
 
 typedef struct {
   GState *gstates, **init;
   int init_size, gstate_id, *final, scc_size;
+  struct set_sizes sz;
 } Generalized;
 
 typedef struct {
   BState *bstates;
   int accept;
+  struct set_sizes sz;
 } Buchi;
 
 Node	*Canonical(tl_Symtab symtab, Node *);
@@ -210,9 +218,9 @@ void print_c_buchi(FILE *f, const Buchi *b, const char *const *sym_table,
 void print_dot_buchi(FILE *f, const Buchi *b, const char *const *sym_table, const tl_Cexprtab *cexpr);
 void print_spin_buchi(FILE *f, const Buchi *b, const char **sym_table);
 
-ATrans *dup_trans(const ATrans *);
-ATrans *merge_trans(const ATrans *, const ATrans *);
-void do_merge_trans(ATrans **, const ATrans *, const ATrans *);
+ATrans *dup_trans(const struct set_sizes *sz, const ATrans *);
+ATrans *merge_trans(const struct set_sizes *sz, const ATrans *, const ATrans *);
+void do_merge_trans(const struct set_sizes *sz, ATrans **, const ATrans *, const ATrans *);
 
 int  *new_set(int);
 int  *clear_set(int *, int);

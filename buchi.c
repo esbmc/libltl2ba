@@ -12,8 +12,6 @@
 |*              Structures and shared variables                     *|
 \********************************************************************/
 
-extern int sym_size;
-
 typedef struct BScc {
   struct BState *bstate;
   int rank;
@@ -75,10 +73,10 @@ static BState *remove_bstate(BState *s, BState *s1, BState *const bremoved)
   return prv;
 }
 
-static void copy_btrans(BTrans *from, BTrans *to) {
+static void copy_btrans(const struct set_sizes *sz, BTrans *from, BTrans *to) {
   to->to    = from->to;
-  copy_set(from->pos, to->pos, sym_size);
-  copy_set(from->neg, to->neg, sym_size);
+  copy_set(from->pos, to->pos, sz->sym_size);
+  copy_set(from->neg, to->neg, sz->sym_size);
 }
 
 /* simplifies the transitions */
@@ -95,16 +93,16 @@ static int simplify_btrans(Buchi *b, FILE *f, tl_Flags flags)
   for (s = b->bstates->nxt; s != b->bstates; s = s->nxt)
     for (t = s->trans->nxt; t != s->trans;) {
       t1 = s->trans->nxt;
-      copy_btrans(t, s->trans);
+      copy_btrans(&b->sz, t, s->trans);
       while((t == t1) || (t->to != t1->to) ||
-            !included_set(t1->pos, t->pos, sym_size) ||
-            !included_set(t1->neg, t->neg, sym_size))
+            !included_set(t1->pos, t->pos, b->sz.sym_size) ||
+            !included_set(t1->neg, t->neg, b->sz.sym_size))
         t1 = t1->nxt;
       if(t1 != s->trans) {
         BTrans *free = t->nxt;
         t->to    = free->to;
-        copy_set(free->pos, t->pos, sym_size);
-        copy_set(free->neg, t->neg, sym_size);
+        copy_set(free->pos, t->pos, b->sz.sym_size);
+        copy_set(free->neg, t->neg, b->sz.sym_size);
         t->nxt   = free->nxt;
         if(free == s->trans) s->trans = t;
         free_btrans(free, 0, 0);
@@ -126,11 +124,11 @@ static int simplify_btrans(Buchi *b, FILE *f, tl_Flags flags)
 }
 
 /* returns 1 if the transitions are identical */
-static int same_btrans(BTrans *s, BTrans *t)
+static int same_btrans(const struct set_sizes *sz, BTrans *s, BTrans *t)
 {
   return((s->to == t->to) &&
-	 same_sets(s->pos, t->pos, sym_size) &&
-	 same_sets(s->neg, t->neg, sym_size));
+	 same_sets(s->pos, t->pos, sz->sym_size) &&
+	 same_sets(s->neg, t->neg, sz->sym_size));
 }
 
 /* redirects transitions before removing a state from the automaton */
@@ -143,8 +141,8 @@ static void remove_btrans(Buchi *b, BState *to)
       if (t->to == to) { /* transition to a state with no transitions */
 	BTrans *free = t->nxt;
 	t->to = free->to;
-	copy_set(free->pos, t->pos, sym_size);
-	copy_set(free->neg, t->neg, sym_size);
+	copy_set(free->pos, t->pos, b->sz.sym_size);
+	copy_set(free->neg, t->neg, b->sz.sym_size);
 	t->nxt   = free->nxt;
 	if(free == s->trans) s->trans = t;
 	free_btrans(free, 0, 0);
@@ -163,8 +161,8 @@ static void retarget_all_btrans(Buchi *b, BState *const bremoved)
 	if(!t->to) { /* t->to has no transitions */
 	  BTrans *free = t->nxt;
 	  t->to = free->to;
-	  copy_set(free->pos, t->pos, sym_size);
-	  copy_set(free->neg, t->neg, sym_size);
+	  copy_set(free->pos, t->pos, b->sz.sym_size);
+	  copy_set(free->neg, t->neg, b->sz.sym_size);
 	  t->nxt   = free->nxt;
 	  if(free == s->trans) s->trans = t;
 	  free_btrans(free, 0, 0);
@@ -196,17 +194,17 @@ static int all_btrans_match(Buchi *buchi, BState *a, BState *b)
 
   for (s = a->trans->nxt; s != a->trans; s = s->nxt) {
                                 /* all transitions from a appear in b */
-    copy_btrans(s, b->trans);
+    copy_btrans(&buchi->sz, s, b->trans);
     t = b->trans->nxt;
-    while(!same_btrans(s, t))
+    while(!same_btrans(&buchi->sz, s, t))
       t = t->nxt;
     if(t == b->trans) return 0;
   }
   for (s = b->trans->nxt; s != b->trans; s = s->nxt) {
                                 /* all transitions from b appear in a */
-    copy_btrans(s, a->trans);
+    copy_btrans(&buchi->sz, s, a->trans);
     t = a->trans->nxt;
-    while(!same_btrans(s, t))
+    while(!same_btrans(&buchi->sz, s, t))
       t = t->nxt;
     if(t == a->trans) return 0;
   }
@@ -393,7 +391,7 @@ static BState *find_bstate(Buchi *b, GState **state, int final, BState *s,
   s->id = (*state)->id;
   s->incoming = 0;
   s->final = final;
-  s->trans = emalloc_btrans(sym_size); /* sentinel */
+  s->trans = emalloc_btrans(b->sz.sym_size); /* sentinel */
   s->trans->nxt = s->trans;
   s->nxt = bstack->nxt;
   bstack->nxt = s;
@@ -424,13 +422,13 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
       for(t1 = s->trans->nxt; t1 != s->trans;) {
 	if((flags & TL_SIMP_FLY) &&
 	   (to == t1->to) &&
-	   included_set(t->pos, t1->pos, sym_size) &&
-	   included_set(t->neg, t1->neg, sym_size)) { /* t1 is redondant */
+	   included_set(t->pos, t1->pos, b->sz.sym_size) &&
+	   included_set(t->neg, t1->neg, b->sz.sym_size)) { /* t1 is redondant */
 	  BTrans *free = t1->nxt;
 	  t1->to->incoming--;
 	  t1->to = free->to;
-	  copy_set(free->pos, t1->pos, sym_size);
-	  copy_set(free->neg, t1->neg, sym_size);
+	  copy_set(free->pos, t1->pos, b->sz.sym_size);
+	  copy_set(free->neg, t1->neg, b->sz.sym_size);
 	  t1->nxt   = free->nxt;
 	  if(free == s->trans) s->trans = t1;
 	  free_btrans(free, 0, 0);
@@ -438,18 +436,18 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
 	}
 	else if((flags & TL_SIMP_FLY) &&
 		(t1->to == to ) &&
-		included_set(t1->pos, t->pos, sym_size) &&
-		included_set(t1->neg, t->neg, sym_size)) /* t is redondant */
+		included_set(t1->pos, t->pos, b->sz.sym_size) &&
+		included_set(t1->neg, t->neg, b->sz.sym_size)) /* t is redondant */
 	  break;
 	else
 	  t1 = t1->nxt;
       }
       if(t1 == s->trans) {
-	BTrans *trans = emalloc_btrans(sym_size);
+	BTrans *trans = emalloc_btrans(b->sz.sym_size);
 	trans->to = to;
 	trans->to->incoming++;
-	copy_set(t->pos, trans->pos, sym_size);
-	copy_set(t->neg, trans->neg, sym_size);
+	copy_set(t->pos, trans->pos, b->sz.sym_size);
+	copy_set(t->neg, trans->neg, b->sz.sym_size);
 	trans->nxt = s->trans->nxt;
 	s->trans->nxt = trans;
 	state_trans++;
@@ -519,11 +517,11 @@ static void print_buchi(FILE *f, const char *const *sym_table,
   }
   fprintf(f, "\n");
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
-    if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
+    if (empty_set(t->pos, b->sz.sym_size) && empty_set(t->neg, b->sz.sym_size))
       fprintf(f, "1");
-    print_sym_set(f, sym_table, cexpr, t->pos, sym_size);
-    if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(f, " & ");
-    print_sym_set(f, sym_table, cexpr, t->neg, sym_size);
+    print_sym_set(f, sym_table, cexpr, t->pos, b->sz.sym_size);
+    if (!empty_set(t->pos, b->sz.sym_size) && !empty_set(t->neg, b->sz.sym_size)) fprintf(f, " & ");
+    print_sym_set(f, sym_table, cexpr, t->neg, b->sz.sym_size);
     fprintf(f, " -> ");
     if(t->to->id == -1)
       fprintf(f, "init\n");
@@ -584,12 +582,12 @@ void print_spin_buchi(FILE *f, const Buchi *b, const char **sym_table) {
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
       BTrans *t1;
       fprintf(f, "\t:: (");
-      spin_print_set(f, sym_table, t->pos, t->neg, sym_size);
+      spin_print_set(f, sym_table, t->pos, t->neg, b->sz.sym_size);
       for(t1 = t; t1->nxt != s->trans; )
 	if (t1->nxt->to->id == t->to->id &&
 	    t1->nxt->to->final == t->to->final) {
 	  fprintf(f, ") || (");
-	  spin_print_set(f, sym_table, t1->nxt->pos, t1->nxt->neg, sym_size);
+	  spin_print_set(f, sym_table, t1->nxt->pos, t1->nxt->neg, b->sz.sym_size);
 	  t1->nxt = t1->nxt->nxt;
 	}
 	else  t1 = t1->nxt;
@@ -663,12 +661,12 @@ void print_dot_buchi(FILE *f, const Buchi *b, const char *const *sym_table, cons
 		need_parens=1;
       print_dot_state_name(f, b, t->to);
 	  fprintf(f, " [label=\""),
-      dot_print_set(f, sym_table, cexpr, t->pos, t->neg, sym_size, need_parens);
+      dot_print_set(f, sym_table, cexpr, t->pos, t->neg, b->sz.sym_size, need_parens);
       for(t1 = t; t1->nxt != s->trans; )
 	    if (t1->nxt->to->id == t->to->id &&
 	        t1->nxt->to->final == t->to->final) {
 	      fprintf(f, "||");
-	      dot_print_set(f, sym_table, cexpr, t1->nxt->pos, t1->nxt->neg, sym_size, sym_size); /* TODO: need_parens == (sym_size != 0)? */
+	      dot_print_set(f, sym_table, cexpr, t1->nxt->pos, t1->nxt->neg, b->sz.sym_size, b->sz.sym_size); /* TODO: need_parens == (sym_size != 0)? */
 	      t1->nxt = t1->nxt->nxt;
 	    }
 	    else
@@ -691,7 +689,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
   BState *s = (BState *)tl_emalloc(sizeof(BState));
   GTrans *t;
   BTrans *t1;
-  Buchi b = { .accept = g->final[0] - 1 };
+  Buchi b = { .accept = g->final[0] - 1, .sz = g->sz, };
   struct rusage tr_debut, tr_fin;
   struct timeval t_diff;
   struct bcounts cnts;
@@ -715,7 +713,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
   s->incoming = 1;
   s->final = 0;
   s->gstate = 0;
-  s->trans = emalloc_btrans(sym_size); /* sentinel */
+  s->trans = emalloc_btrans(b.sz.sym_size); /* sentinel */
   s->trans->nxt = s->trans;
   for(i = 0; i < g->init_size; i++)
     if(g->init[i])
@@ -725,31 +723,31 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
 	for(t1 = s->trans->nxt; t1 != s->trans;) {
 	  if((flags & TL_SIMP_FLY) &&
 	     (to == t1->to) &&
-	     included_set(t->pos, t1->pos, sym_size) &&
-	     included_set(t->neg, t1->neg, sym_size)) { /* t1 is redondant */
+	     included_set(t->pos, t1->pos, b.sz.sym_size) &&
+	     included_set(t->neg, t1->neg, b.sz.sym_size)) { /* t1 is redondant */
 	    BTrans *free = t1->nxt;
 	    t1->to->incoming--;
 	    t1->to = free->to;
-	    copy_set(free->pos, t1->pos, sym_size);
-	    copy_set(free->neg, t1->neg, sym_size);
+	    copy_set(free->pos, t1->pos, b.sz.sym_size);
+	    copy_set(free->neg, t1->neg, b.sz.sym_size);
 	    t1->nxt   = free->nxt;
 	    if(free == s->trans) s->trans = t1;
 	    free_btrans(free, 0, 0);
 	  }
 	else if((flags & TL_SIMP_FLY) &&
 		(t1->to == to ) &&
-		included_set(t1->pos, t->pos, sym_size) &&
-		included_set(t1->neg, t->neg, sym_size)) /* t is redondant */
+		included_set(t1->pos, t->pos, b.sz.sym_size) &&
+		included_set(t1->neg, t->neg, b.sz.sym_size)) /* t is redondant */
 	  break;
 	  else
 	    t1 = t1->nxt;
 	}
 	if(t1 == s->trans) {
-	  BTrans *trans = emalloc_btrans(sym_size);
+	  BTrans *trans = emalloc_btrans(b.sz.sym_size);
 	  trans->to = to;
 	  trans->to->incoming++;
-	  copy_set(t->pos, trans->pos, sym_size);
-	  copy_set(t->neg, trans->neg, sym_size);
+	  copy_set(t->pos, trans->pos, b.sz.sym_size);
+	  copy_set(t->neg, trans->neg, b.sz.sym_size);
 	  trans->nxt = s->trans->nxt;
 	  s->trans->nxt = trans;
 	}
@@ -880,15 +878,15 @@ static void print_fsm_func_opener(FILE *f)
   return;
 }
 
-static void print_transition_guard(FILE *f, BTrans *t, BState *state,
-                                   const char *const *sym_table)
+static void print_transition_guard(FILE *f, const Buchi *b, BTrans *t,
+                                   BState *state, const char *const *sym_table)
 {
   BTrans *t1;
-  spin_print_set(f, sym_table, t->pos, t->neg, sym_size);
+  spin_print_set(f, sym_table, t->pos, t->neg, b->sz.sym_size);
   for(t1 = t->nxt; t1 != state->trans; t1=t1->nxt) {
     if (t1->to->id == t->to->id && t1->to->final == t->to->final){
       fprintf(f, ") || (");
-      spin_print_set(f, sym_table, t1->pos, t1->neg, sym_size);
+      spin_print_set(f, sym_table, t1->pos, t1->neg, b->sz.sym_size);
     }
   }
 }
@@ -928,7 +926,7 @@ static int print_c_buchi_body(FILE *f, const Buchi *b,
 
     fprintf(f, "\t\t\tstate_is_viable = (((");
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
-      print_transition_guard(f, t, s, sym_table);
+      print_transition_guard(f, b, t, s, sym_table);
       fprintf(f, ")) || ((");
     }
     fprintf(f, "false)));\n");
@@ -944,7 +942,7 @@ static int print_c_buchi_body(FILE *f, const Buchi *b,
       fprintf(f, "if (choice == %d) {\n", choice_count++);
 
       fprintf(f, "\t\t\t\t__ESBMC_assume(((");
-      print_transition_guard(f, t, s, sym_table);
+      print_transition_guard(f, b, t, s, sym_table);
       fprintf(f, ")));\n");
 
       fprintf(f, "\t\t\t\t%s_statevar = ", prefix);
@@ -1214,7 +1212,7 @@ static void print_behaviours(const Buchi *b, FILE *f,
       fprintf(f, "\n"); }
 
   fprintf(f,"\nStuttering:\n\n");
-  a=make_set(EMPTY_SET,sym_size);
+  a=make_set(EMPTY_SET,b->sz.sym_size);
   do {                                     /* Loop over alphabet */
     fprintf(f,"\n");
     for (i=0;i<state_count*state_count;i++)   /* Loop over states, clearing transition matrix for this character */
@@ -1237,7 +1235,7 @@ static void print_behaviours(const Buchi *b, FILE *f,
     }
 
     for (s = b->bstates->prv; s != b->bstates; s = s->prv) {   /* Loop over states */
-      (void)clear_set(working_set,sym_size);                    /* clear transition targets for this state and character */
+      (void)clear_set(working_set,b->sz.sym_size);                    /* clear transition targets for this state and character */
       for(t = s->trans->nxt; t != s -> trans; t = t->nxt) {       /* Loop over transitions */
 #if 0
         fprintf(f,"%d--[+",s->label);
@@ -1249,7 +1247,7 @@ static void print_behaviours(const Buchi *b, FILE *f,
                                    ((!t->pos || included_set(t->pos,a,sym_size))?"active":""):"suppressed");
 #endif
 
-        if ((!t->pos || included_set(t->pos,a,sym_size)) && (!t->neg || empty_intersect_sets(t->neg,a,sym_size))) {  /* Tests TRUE if this transition is enabled on this character of the alphabet */
+        if ((!t->pos || included_set(t->pos,a,b->sz.sym_size)) && (!t->neg || empty_intersect_sets(t->neg,a,b->sz.sym_size))) {  /* Tests TRUE if this transition is enabled on this character of the alphabet */
           add_set(working_set,t->to->label);                                  /* update working set of transition targets enabled for this character on this state */
           transition_matrix[(s->label)*state_count + (t->to->label)] = 1;     /* update per-character transition matrix */
           optimistic_transition[(s->label)*state_count + (t->to->label)] = 1; /* update optimistic (any character) transition matrix */
