@@ -20,7 +20,11 @@ unsigned long	All_Mem = 0;
 static char	uform[4096];
 static int	hasuform=0, cnt=0;
 
-static enum {spin, c, dot} outmode = spin;
+enum out {
+	OUT_SPIN,
+	OUT_C,
+	OUT_DOT
+};
 
 static const char *progname;
 
@@ -88,8 +92,8 @@ usage: %s [-flag] -f 'formula'\n\
 	alldone(code);
 }
 
-static void
-tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
+static void tl_main(char *formula, enum out outmode, tl_Flags flags,
+                    const char *c_sym_name_prefix)
 {
 	for (int i = 0; formula[i]; i++)
 		if (formula[i] == '\t'
@@ -135,17 +139,22 @@ tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 	Buchi b = mk_buchi(&gen, stderr, flags, alt.sym_table, &cexpr);
 
 	switch (outmode) {
-	case c: 	print_c_buchi(stdout, &b, alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix); break;
-	case dot: 	print_dot_buchi(stdout, &b, alt.sym_table, &cexpr); break;
-	case spin:	print_spin_buchi(stdout, &b, alt.sym_table); break;
+	case OUT_SPIN:
+		print_spin_buchi(stdout, &b, alt.sym_table);
+		break;
+	case OUT_C:
+		print_c_buchi(stdout, &b, alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix);
+		break;
+	case OUT_DOT:
+		print_dot_buchi(stdout, &b, alt.sym_table, &cexpr);
+		break;
 	}
 
 	if (flags & TL_STATS)
 		tl_endstats();
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int i;
 	int invert_formula = 0;
@@ -157,12 +166,13 @@ main(int argc, char *argv[])
 	               | TL_SIMP_FLY
 	               | TL_SIMP_SCC
 	               | TL_FJTOFJ;
+	enum out outmode = OUT_SPIN;
 	const char *c_sym_name_prefix = "_ltl2ba";
 	int display_cache = 0;
 
 	progname = argv[0] ? basename(argv[0]) : "";
 	if (!strcmp(progname, "ltl2c"))
-		outmode = c;
+		outmode = OUT_C;
 
 	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:PiC")) != -1;)
 		switch (opt) {
@@ -178,11 +188,11 @@ main(int argc, char *argv[])
 		case 's': flags |= TL_STATS; break;
 		case 'O':
 			if (strcmp("spin", optarg) == 0)
-				outmode=spin;
+				outmode = OUT_SPIN;
 			else if (strcmp("c", optarg) == 0)
-				outmode=c;
+				outmode = OUT_C;
 			else if (strcmp("dot", optarg) == 0)
-				outmode=dot;
+				outmode = OUT_DOT;
 			else
 				usage(1);
 			break;
@@ -228,7 +238,7 @@ main(int argc, char *argv[])
 		add_ltl = inv_formula;
 	}
 
-	tl_main(add_ltl, flags, c_sym_name_prefix);
+	tl_main(add_ltl, outmode, flags, c_sym_name_prefix);
 
 	free(formula);
 	free(inv_formula);
