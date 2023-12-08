@@ -119,9 +119,9 @@ tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 		return;
 
 	if (flags & TL_VERBOSE) {
-		fprintf(tl_out, "\t/* Normlzd: ");
-		dump(tl_out, p);
-		fprintf(tl_out, " */\n");
+		fprintf(stderr, "\t/* Normlzd: ");
+		dump(stderr, p);
+		fprintf(stderr, " */\n");
 	}
 
 	Alternating alt = mk_alternating(p, stderr, &cexpr, flags);
