@@ -49,9 +49,8 @@ run the program
 > ./ltl2ba -f 'formula'
 
 The formula is an LTL formula, and may contain propositional symbols,
-boolean operators, temporal operators, and parentheses.
-The syntax is a backwards-compatible extension of used is the one used in the
-'Spin' model-checker (see CHANGES below for operator precedence).
+boolean operators, temporal operators, and parentheses.  The syntax is a
+backwards-compatible extension of the one used in the 'Spin' model-checker.
 
 Propositonal Symbols:
         true, false
