@@ -38,7 +38,7 @@
 #define LTL2BA_Assert(x, y)	{ if (!(x)) { tl_explain(y); \
 			  fatal(": assertion failed\n"); } }
 
-#undef TL_EMALLOC_VERBOSE
+#undef LTL2BA_EMALLOC_VERBOSE
 
 typedef struct Symbol {
 char		*name;

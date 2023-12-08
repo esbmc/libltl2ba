@@ -55,7 +55,7 @@ tl_emalloc(int U)
 
 	if (u >= A_LARGE)
 	{	log(ALLOC, 0, 1);
-#if TL_EMALLOC_VERBOSE
+#if LTL2BA_EMALLOC_VERBOSE
 		fprintf(stderr, "tl_spin: memalloc %ld bytes\n", u);
 #endif
 		m = (union M *) emalloc((int) u*sizeof(union M));
