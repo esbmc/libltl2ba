@@ -12,8 +12,6 @@
 |*              Structures and shared variables                     *|
 \********************************************************************/
 
-extern FILE *tl_out;
-
 extern int node_size, sym_size;
 
 struct gcounts {
@@ -100,7 +98,7 @@ static int same_gtrans(GState *a, GTrans *s, GState *b, GTrans *t, int use_scc,
 }
 
 /* simplifies the transitions */
-static int simplify_gtrans(Generalized *g, tl_Flags flags, int *bad_scc)
+static int simplify_gtrans(Generalized *g, FILE *f, tl_Flags flags, int *bad_scc)
 {
   int changed = 0;
   GState *s;
@@ -141,9 +139,9 @@ static int simplify_gtrans(Generalized *g, tl_Flags flags, int *bad_scc)
   if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
-    fprintf(tl_out, "\nSimplification of the generalized Buchi automaton - transitions: %ld.%06lis",
+    fprintf(f, "\nSimplification of the generalized Buchi automaton - transitions: %ld.%06lis",
 		t_diff.tv_sec, t_diff.tv_usec);
-    fprintf(tl_out, "\n%i transitions removed\n", changed);
+    fprintf(f, "\n%i transitions removed\n", changed);
   }
 
   return changed;
@@ -206,7 +204,7 @@ static int all_gtrans_match(GState *a, GState *b, int use_scc, int *bad_scc)
 }
 
 /* eliminates redundant states */
-static int simplify_gstates(Generalized *g, tl_Flags flags, int *bad_scc,
+static int simplify_gstates(Generalized *g, FILE *f, tl_Flags flags, int *bad_scc,
                             GState *gremoved)
 {
   int changed = 0;
@@ -239,9 +237,9 @@ static int simplify_gstates(Generalized *g, tl_Flags flags, int *bad_scc,
   if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
-    fprintf(tl_out, "\nSimplification of the generalized Buchi automaton - states: %ld.%06lis",
+    fprintf(f, "\nSimplification of the generalized Buchi automaton - states: %ld.%06lis",
 		t_diff.tv_sec, t_diff.tv_usec);
-    fprintf(tl_out, "\n%i states removed\n", changed);
+    fprintf(f, "\n%i states removed\n", changed);
   }
 
   return changed;
@@ -536,45 +534,48 @@ static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
 \********************************************************************/
 
 /* dumps the generalized Buchi automaton */
-static void reverse_print_generalized(const char *const *sym_table,
+static void reverse_print_generalized(FILE *f, const char *const *sym_table,
                                       const tl_Cexprtab *cexpr, Generalized *g,
                                       GState *s)
 {
   GTrans *t;
   if(s == g->gstates) return;
 
-  reverse_print_generalized(sym_table, cexpr, g, s->nxt); /* begins with the last state */
+  /* begins with the last state */
+  reverse_print_generalized(f, sym_table, cexpr, g, s->nxt);
 
-  fprintf(tl_out, "state %i (", s->id);
-  print_set(tl_out, s->nodes_set, node_size);
-  fprintf(tl_out, ") : %i\n", s->incoming);
+  fprintf(f, "state %i (", s->id);
+  print_set(f, s->nodes_set, node_size);
+  fprintf(f, ") : %i\n", s->incoming);
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
-      fprintf(tl_out, "1");
+      fprintf(f, "1");
     print_sym_set(sym_table, cexpr, t->pos, sym_size);
-    if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(tl_out, " & ");
+    if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(f, " & ");
     print_sym_set(sym_table, cexpr, t->neg, sym_size);
-    fprintf(tl_out, " -> %i : ", t->to->id);
-    print_set(tl_out, t->final, node_size);
-    fprintf(tl_out, "\n");
+    fprintf(f, " -> %i : ", t->to->id);
+    print_set(f, t->final, node_size);
+    fprintf(f, "\n");
   }
 }
 
 /* prints intial states and calls 'reverse_print' */
-static void print_generalized(const char *const *sym_table,
+static void print_generalized(FILE *f, const char *const *sym_table,
                               const tl_Cexprtab *cexpr, Generalized *g)
 {
   int i;
-  fprintf(tl_out, "init :\n");
+  fprintf(f, "init :\n");
   for(i = 0; i < g->init_size; i++)
     if(g->init[i])
-      fprintf(tl_out, "%i\n", g->init[i]->id);
-  reverse_print_generalized(sym_table, cexpr, g, g->gstates->nxt);
+      fprintf(f, "%i\n", g->init[i]->id);
+  reverse_print_generalized(f, sym_table, cexpr, g, g->gstates->nxt);
 }
 
 /********************************************************************\
 |*                       Main method                                *|
 \********************************************************************/
+
+extern FILE *tl_out;
 
 Generalized mk_generalized(const Alternating *alt, tl_Flags flags,
                            const tl_Cexprtab *cexpr)
@@ -646,22 +647,22 @@ Generalized mk_generalized(const Alternating *alt, tl_Flags flags,
 
   if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nGeneralized Buchi automaton before simplification\n");
-    print_generalized(alt->sym_table, cexpr, &g);
+    print_generalized(tl_out, alt->sym_table, cexpr, &g);
   }
 
   if(flags & TL_SIMP_DIFF) {
     if (flags & TL_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
-    simplify_gtrans(&g, flags, bad_scc);
+    simplify_gtrans(&g, tl_out, flags, bad_scc);
     if (flags & TL_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
-    while(simplify_gstates(&g, flags, bad_scc, gremoved)) { /* simplifies as much as possible */
+    while(simplify_gstates(&g, tl_out, flags, bad_scc, gremoved)) { /* simplifies as much as possible */
       if (flags & TL_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
-      simplify_gtrans(&g, flags, bad_scc);
+      simplify_gtrans(&g, tl_out, flags, bad_scc);
       if (flags & TL_SIMP_SCC) simplify_gscc(&g, alt->final_set, &bad_scc, gremoved);
     }
 
     if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nGeneralized Buchi automaton after simplification\n");
-      print_generalized(alt->sym_table, cexpr, &g);
+      print_generalized(tl_out, alt->sym_table, cexpr, &g);
     }
   }
 
