@@ -364,7 +364,7 @@ static void print_alternating(FILE *f, const Node **label,
     if(!label[i])
       continue;
     fprintf(f, "state %i : ", i);
-    dump(label[i]);
+    dump(f, label[i]);
     fprintf(f, "\n");
     for(t = alt->transition[i]; t; t = t->nxt) {
       if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
@@ -384,10 +384,8 @@ static void print_alternating(FILE *f, const Node **label,
 |*                       Main method                                *|
 \********************************************************************/
 
-extern FILE *tl_out;
-
 /* generates an alternating automaton for p */
-Alternating mk_alternating(const Node *p, const tl_Cexprtab *cexpr,
+Alternating mk_alternating(const Node *p, FILE *tl_out, const tl_Cexprtab *cexpr,
                            tl_Flags flags)
 {
   struct counts cnts;
@@ -413,9 +411,6 @@ Alternating mk_alternating(const Node *p, const tl_Cexprtab *cexpr,
   alt.final_set = make_set(-1, node_size);
   alt.transition[0] = boolean(p, label, &alt); /* generates the alternating automaton */
 
-  FILE *f = tl_out;
-  tl_out = stderr;
-
   if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nAlternating automaton before simplification\n");
     print_alternating(tl_out, label, cexpr, &alt);
@@ -436,8 +431,6 @@ Alternating mk_alternating(const Node *p, const tl_Cexprtab *cexpr,
 		t_diff.tv_sec, t_diff.tv_usec);
     fprintf(tl_out, "\n%i states, %i transitions\n", cnts.astate_count, cnts.atrans_count);
   }
-
-  tl_out = f;
 
   tfree(label);
 

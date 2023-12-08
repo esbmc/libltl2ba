@@ -32,7 +32,7 @@
 
 #define Debug(x)	{ if (0) fprintf(stderr, x); }
 #define Debug2(x,y)	{ if (tl_verbose) fprintf(stderr, x,y); }
-#define Dump(x)		{ if (0) dump(x); }
+#define Dump(x)		{ if (0) dump(stderr, x); }
 #define Explain(x)	{ if (tl_verbose) tl_explain(x); }
 
 #define Assert(x, y)	{ if (!(x)) { tl_explain(y); \
@@ -190,7 +190,7 @@ BTrans  *emalloc_btrans();
 void    free_btrans(BTrans *, BTrans *, int);
 void	a_stats(void);
 void	cache_stats(void);
-void	dump(const Node *);
+void	dump(FILE *, const Node *);
 void	fatal(const char *);
 void	fsm_print(void);
 void	releasenode(int, Node *);
@@ -200,8 +200,8 @@ void	tl_UnGetchar(void);
 Node *	tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags);
 void	tl_yyerror(tl_Lexer *lex, char *);
 
-Alternating mk_alternating(const Node *, const tl_Cexprtab *cexpr, tl_Flags flags);
-Generalized mk_generalized(const Alternating *, tl_Flags flags, const tl_Cexprtab *cexpr);
+Alternating mk_alternating(const Node *, FILE *, const tl_Cexprtab *cexpr, tl_Flags flags);
+Generalized mk_generalized(const Alternating *, FILE *, tl_Flags flags, const tl_Cexprtab *cexpr);
 Buchi       mk_buchi(Generalized *g, tl_Flags, const char *const *sym_table, const tl_Cexprtab *cexpr);
 
 void print_c_buchi(const Buchi *b, const char *const *sym_table,

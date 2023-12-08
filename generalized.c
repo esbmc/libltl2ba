@@ -575,9 +575,7 @@ static void print_generalized(FILE *f, const char *const *sym_table,
 |*                       Main method                                *|
 \********************************************************************/
 
-extern FILE *tl_out;
-
-Generalized mk_generalized(const Alternating *alt, tl_Flags flags,
+Generalized mk_generalized(const Alternating *alt, FILE * tl_out, tl_Flags flags,
                            const tl_Cexprtab *cexpr)
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
@@ -632,9 +630,6 @@ Generalized mk_generalized(const Alternating *alt, tl_Flags flags,
 
   retarget_all_gtrans(&g, gremoved);
 
-  FILE *f = tl_out;
-  tl_out = stderr;
-
   if(flags & TL_STATS) {
     getrusage(RUSAGE_SELF, &tr_fin);
     timeval_subtract (&t_diff, &tr_fin.ru_utime, &tr_debut.ru_utime);
@@ -666,7 +661,6 @@ Generalized mk_generalized(const Alternating *alt, tl_Flags flags,
     }
   }
 
-  tl_out = f;
   return g;
 }
 

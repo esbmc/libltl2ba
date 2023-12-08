@@ -123,18 +123,15 @@ tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 		return;
 
 	if (flags & TL_VERBOSE) {
-		FILE *f = tl_out;
-		tl_out = stderr;
 		fprintf(tl_out, "\t/* Normlzd: ");
-		dump(p);
+		dump(tl_out, p);
 		fprintf(tl_out, " */\n");
-		tl_out = f;
 	}
 
-	Alternating alt = mk_alternating(p, &cexpr, flags);
+	Alternating alt = mk_alternating(p, stderr, &cexpr, flags);
 	releasenode(1, p);
 
-	Generalized gen = mk_generalized(&alt, flags, &cexpr);
+	Generalized gen = mk_generalized(&alt, stderr, flags, &cexpr);
 	// free the data from the alternating automaton
 	/* for(i = 0; i < alt->node_id; i++)
 		free_atrans(transition[i], 1); */
@@ -282,13 +279,13 @@ tl_endstats(void)
 }
 
 #define Binop(a)		\
-	fprintf(tl_out, "(");	\
-	dump(n->lft);		\
-	fprintf(tl_out, a);	\
-	dump(n->rgt);		\
-	fprintf(tl_out, ")")
+	fprintf(f, "(");	\
+	dump(f, n->lft);	\
+	fprintf(f, a);		\
+	dump(f, n->rgt);	\
+	fprintf(f, ")")
 
-void dump(const Node *n)
+void dump(FILE *f, const Node *n)
 {
 	if (!n)
 		return;
@@ -299,28 +296,28 @@ void dump(const Node *n)
 	case U_OPER:	Binop(" U ");  break;
 	case V_OPER:	Binop(" V ");  break;
 	case NEXT:
-		fprintf(tl_out, "X");
-		fprintf(tl_out, " (");
-		dump(n->lft);
-		fprintf(tl_out, ")");
+		fprintf(f, "X");
+		fprintf(f, " (");
+		dump(f, n->lft);
+		fprintf(f, ")");
 		break;
 	case NOT:
-		fprintf(tl_out, "!");
-		fprintf(tl_out, " (");
-		dump(n->lft);
-		fprintf(tl_out, ")");
+		fprintf(f, "!");
+		fprintf(f, " (");
+		dump(f, n->lft);
+		fprintf(f, ")");
 		break;
 	case FALSE:
-		fprintf(tl_out, "false");
+		fprintf(f, "false");
 		break;
 	case TRUE:
-		fprintf(tl_out, "true");
+		fprintf(f, "true");
 		break;
 	case PREDICATE:
-		fprintf(tl_out, "(%s)", n->sym->name);
+		fprintf(f, "(%s)", n->sym->name);
 		break;
 	case -1:
-		fprintf(tl_out, " D ");
+		fprintf(f, " D ");
 		break;
 	default:
 		fprintf(stderr,"Unknown token: ");

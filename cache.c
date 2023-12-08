@@ -32,15 +32,12 @@ void cache_dump(void)
 	int nr=0;
 
 	fprintf(stderr, "\nCACHE DUMP:\n");
-	FILE *f = tl_out;
-	tl_out = stderr;
 	for (d = stored; d; d = d->nxt, nr++)
 	{
 		if (d->same) continue;
-		fprintf(stderr, "B%3d: ", nr); dump(d->before); fprintf(stderr, "\n");
-		fprintf(stderr, "A%3d: ", nr); dump(d->after); fprintf(stderr, "\n");
+		fprintf(stderr, "B%3d: ", nr); dump(stderr, d->before); fprintf(stderr, "\n");
+		fprintf(stderr, "A%3d: ", nr); dump(stderr, d->after); fprintf(stderr, "\n");
 	}
-	tl_out = f;
 	fprintf(stderr, "============\n");
 }
 
