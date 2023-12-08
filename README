@@ -1,8 +1,8 @@
 1. ABOUT
 
-The libltl2ba software is a modification of LTL2BA-1.3 and incorporates the
-changes from LTL2C. It aims at making the functionality of both available in
-form of a library while maintaining compatibility with the original algorithms.
+The libltl2ba software is a modification of LTL2BA and incorporates the changes
+from LTL2C. It aims at making the functionality of both available in form of a
+library while maintaining compatibility with the original algorithms.
 
 For bug-reports and/or questions about libltl2ba, please contact Franz Brauße:
 <franz.brausse@manchester.ac.uk>
