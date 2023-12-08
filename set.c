@@ -8,8 +8,6 @@
 
 #include "ltl2ba.h"
 
-extern FILE *tl_out;
-
 static const int mod = 8 * sizeof(int);
 
 int *new_set(int size) /* creates a new set */
@@ -99,31 +97,32 @@ void rem_set(int *l, int n) /* removes an element from a set */
 }
 
 /* prints the content of a set for spin */
-void spin_print_set(const char *const *sym_table, int *pos, int *neg, int sym_size)
+void spin_print_set(FILE *f, const char *const *sym_table, int *pos, int *neg, int sym_size)
 {
   int i, j, start = 1;
   for(i = 0; i < sym_size; i++)
     for(j = 0; j < mod; j++) {
       if(pos && pos[i] & (1 << j)) {
 	if(!start)
-	  fprintf(tl_out, " && ");
-	fprintf(tl_out, "%s", sym_table[mod * i + j]);
+	  fprintf(f, " && ");
+	fprintf(f, "%s", sym_table[mod * i + j]);
 	start = 0;
       }
       if(neg && neg[i] & (1 << j)) {
 	if(!start)
-	  fprintf(tl_out, " && ");
-	fprintf(tl_out, "!%s", sym_table[mod * i + j]);
+	  fprintf(f, " && ");
+	fprintf(f, "!%s", sym_table[mod * i + j]);
 	start = 0;
       }
     }
   if(start)
-    fprintf(tl_out, "1");
+    fprintf(f, "1");
 }
 
 /* prints the content of a set for dot */
-void dot_print_set(const char *const *sym_table, const tl_Cexprtab *cexpr,
-                   int *pos, int *neg, int sym_size, int need_parens)
+void dot_print_set(FILE *f, const char *const *sym_table,
+                   const tl_Cexprtab *cexpr, int *pos, int *neg, int sym_size,
+                   int need_parens)
 {
   int i, j, start = 1;
   int count = 0, cex;
@@ -132,33 +131,33 @@ void dot_print_set(const char *const *sym_table, const tl_Cexprtab *cexpr,
 	  if(pos[i] & (1 << j)) count++;
 	  if(neg[i] & (1 << j)) count++;
   }
-  if (count>1 && need_parens) fprintf(tl_out,"(");
+  if (count>1 && need_parens) fprintf(f,"(");
   for(i = 0; i < sym_size; i++)
     for(j = 0; j < mod; j++) {
       if(pos[i] & (1 << j)) {
 	if(!start)
-	  fprintf(tl_out, "&&");
+	  fprintf(f, "&&");
 	if (sscanf(sym_table[mod * i + j],"_ltl2ba_cexpr_%d_status",&cex)==1)
 	/* Yes, scanning for a match here is horrid DAN */
-	  fprintf(tl_out, "{%s}", cexpr->cexpr_expr_table[cex]);
+	  fprintf(f, "{%s}", cexpr->cexpr_expr_table[cex]);
 	else
-	  fprintf(tl_out, "%s", sym_table[mod * i + j]);
+	  fprintf(f, "%s", sym_table[mod * i + j]);
 	start = 0;
       }
       if(neg[i] & (1 << j)) {
 	if(!start)
-	  fprintf(tl_out, "&&");
+	  fprintf(f, "&&");
 	if (sscanf(sym_table[mod * i + j],"_ltl2ba_cexpr_%d_status",&cex)==1)
 	/* And it's horrid here too DAN */
-	fprintf(tl_out, "!{%s}", cexpr->cexpr_expr_table[cex]);
+	fprintf(f, "!{%s}", cexpr->cexpr_expr_table[cex]);
 	else
-      fprintf(tl_out, "!%s", sym_table[mod * i + j]);
+      fprintf(f, "!%s", sym_table[mod * i + j]);
 	start = 0;
       }
     }
   if(start)
-    fprintf(tl_out, "true");
-  if (count>1 && need_parens) fprintf(tl_out,")");
+    fprintf(f, "true");
+  if (count>1 && need_parens) fprintf(f,")");
 }
 
 void print_set(FILE *f, int *l, int size) /* prints the content of a set */

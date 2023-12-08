@@ -585,12 +585,12 @@ void print_spin_buchi(const Buchi *b, const char **sym_table) {
     for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
       BTrans *t1;
       fprintf(tl_out, "\t:: (");
-      spin_print_set(sym_table, t->pos, t->neg, sym_size);
+      spin_print_set(tl_out, sym_table, t->pos, t->neg, sym_size);
       for(t1 = t; t1->nxt != s->trans; )
 	if (t1->nxt->to->id == t->to->id &&
 	    t1->nxt->to->final == t->to->final) {
 	  fprintf(tl_out, ") || (");
-	  spin_print_set(sym_table, t1->nxt->pos, t1->nxt->neg, sym_size);
+	  spin_print_set(tl_out, sym_table, t1->nxt->pos, t1->nxt->neg, sym_size);
 	  t1->nxt = t1->nxt->nxt;
 	}
 	else  t1 = t1->nxt;
@@ -664,12 +664,12 @@ void print_dot_buchi(const Buchi *b, const char *const *sym_table, const tl_Cexp
 		need_parens=1;
       print_dot_state_name(b, t->to);
 	  fprintf(tl_out, " [label=\""),
-      dot_print_set(sym_table, cexpr, t->pos, t->neg, sym_size, need_parens);
+      dot_print_set(tl_out, sym_table, cexpr, t->pos, t->neg, sym_size, need_parens);
       for(t1 = t; t1->nxt != s->trans; )
 	    if (t1->nxt->to->id == t->to->id &&
 	        t1->nxt->to->final == t->to->final) {
 	      fprintf(tl_out, "||");
-	      dot_print_set(sym_table, cexpr, t1->nxt->pos, t1->nxt->neg, sym_size, sym_size); /* TODO: need_parens == (sym_size != 0)? */
+	      dot_print_set(tl_out, sym_table, cexpr, t1->nxt->pos, t1->nxt->neg, sym_size, sym_size); /* TODO: need_parens == (sym_size != 0)? */
 	      t1->nxt = t1->nxt->nxt;
 	    }
 	    else
@@ -891,11 +891,11 @@ static void print_transition_guard(BTrans *t, BState *state,
                                    const char *const *sym_table)
 {
   BTrans *t1;
-  spin_print_set(sym_table, t->pos, t->neg, sym_size);
+  spin_print_set(tl_out, sym_table, t->pos, t->neg, sym_size);
   for(t1 = t->nxt; t1 != state->trans; t1=t1->nxt) {
     if (t1->to->id == t->to->id && t1->to->final == t->to->final){
       fprintf(tl_out, ") || (");
-      spin_print_set(sym_table, t1->pos, t1->neg, sym_size);
+      spin_print_set(tl_out, sym_table, t1->pos, t1->neg, sym_size);
     }
   }
 }
