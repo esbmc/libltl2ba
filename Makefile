@@ -106,7 +106,7 @@ uninstall:
 clean:
 	$(RM) -f ltl2c ltl2ba \
 		libltl2ba.a libltl2ba.pc \
-		main.o $(LTL2C)
+		main.o $(LTL2C) \
 		$(DEPS) \
 
 .PHONY: all clean install uninstall
