@@ -37,7 +37,6 @@
 
 #define LTL2BA_Assert(x, y)	{ if (!(x)) { tl_explain(y); \
 			  fatal(": assertion failed\n"); } }
-#define min(x,y)        ((x<y)?x:y)
 
 #undef TL_EMALLOC_VERBOSE
 
