@@ -544,7 +544,7 @@ void print_spin_buchi(const Buchi *b, const char **sym_table) {
   int accept_all = 0;
   if(b->bstates->nxt == b->bstates) { /* empty automaton */
     fprintf(tl_out, "never {    /* ");
-    put_uform();
+    put_uform(tl_out);
     fprintf(tl_out, " */\n");
     fprintf(tl_out, "T0_init:\n");
     fprintf(tl_out, "\tfalse;\n");
@@ -553,7 +553,7 @@ void print_spin_buchi(const Buchi *b, const char **sym_table) {
   }
   if(b->bstates->nxt->nxt == b->bstates && b->bstates->nxt->id == 0) { /* true */
     fprintf(tl_out, "never {    /* ");
-    put_uform();
+    put_uform(tl_out);
     fprintf(tl_out, " */\n");
     fprintf(tl_out, "accept_init:\n");
     fprintf(tl_out, "\tif\n");
@@ -564,7 +564,7 @@ void print_spin_buchi(const Buchi *b, const char **sym_table) {
   }
 
   fprintf(tl_out, "never { /* ");
-  put_uform();
+  put_uform(tl_out);
   fprintf(tl_out, " */\n");
   for(s = b->bstates->prv; s != b->bstates; s = s->prv) {
     if(s->id == 0) { /* accept_all at the end */
@@ -879,7 +879,7 @@ static void print_fsm_func_opener(void)
   fprintf(tl_out, "\t_Bool state_is_viable;\n\n");
 
   fprintf(tl_out, "\t/* Original formula:\n\t * ");
-  put_uform();
+  put_uform(tl_out);
   fprintf(tl_out, "\n\t */\n\n");
 
   fprintf(tl_out, "\tfor (iters = 0; iters < num_iters; iters++) {\n");

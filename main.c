@@ -55,10 +55,9 @@ tl_Getchar(void)
 	return -1;
 }
 
-void
-put_uform(void)
+void put_uform(FILE *f)
 {
-	fprintf(tl_out, "%s", uform);
+	fprintf(f, "%s", uform);
 }
 
 void
@@ -112,10 +111,7 @@ tl_main(char  *formula, tl_Flags flags, const char *c_sym_name_prefix)
 	if (flags & TL_VERBOSE)
 	{
 		fprintf(stderr, "formula: ");
-		FILE *f = tl_out;
-		tl_out = stderr;
-		put_uform();
-		tl_out = f;
+		put_uform(stderr);
 		fprintf(stderr, "\n");
 	}
 
