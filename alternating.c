@@ -12,8 +12,7 @@
 |*              Structures and shared variables                     *|
 \********************************************************************/
 
-extern FILE *tl_out;
-
+/* sym_size == SET_SIZE(alt.sym_id) after mk_alternating(&alt) */
 int node_size, sym_size;
 
 struct counts {
@@ -349,34 +348,33 @@ static void simplify_astates(const Node **label, Alternating *alt,
 \********************************************************************/
 
 /* dumps the alternating automaton */
-static void print_alternating(const Node **label, const tl_Cexprtab *cexpr,
-                              const Alternating *alt)
+static void print_alternating(FILE *f, const Node **label,
+                              const tl_Cexprtab *cexpr, const Alternating *alt)
 {
   int i;
   ATrans *t;
 
-  fprintf(tl_out, "init :\n");
+  fprintf(f, "init :\n");
   for(t = alt->transition[0]; t; t = t->nxt) {
-    print_set(t->to, node_size);
-    fprintf(tl_out, "\n");
+    print_set(f, t->to, node_size);
+    fprintf(f, "\n");
   }
 
   for(i = alt->node_id - 1; i > 0; i--) {
     if(!label[i])
       continue;
-    fprintf(tl_out, "state %i : ", i);
+    fprintf(f, "state %i : ", i);
     dump(label[i]);
-    fprintf(tl_out, "\n");
+    fprintf(f, "\n");
     for(t = alt->transition[i]; t; t = t->nxt) {
       if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
-	fprintf(tl_out, "1");
+	fprintf(f, "1");
       print_sym_set(alt->sym_table, cexpr, t->pos, sym_size);
-      if (!empty_set(t->pos,sym_size) && !empty_set(t->neg,sym_size)) fprintf(tl_out, " & ");
-      print_set(t->neg, 0 /* TODO: was 'scc_size', but that's only initialized
-                           * later for the generalized automaton */);
-      fprintf(tl_out, " -> ");
-      print_set(t->to, node_size);
-      fprintf(tl_out, "\n");
+      if (!empty_set(t->pos,sym_size) && !empty_set(t->neg,sym_size)) fprintf(f, " & ");
+      print_set(f, t->neg, sym_size);
+      fprintf(f, " -> ");
+      print_set(f, t->to, node_size);
+      fprintf(f, "\n");
     }
   }
 }
@@ -384,6 +382,8 @@ static void print_alternating(const Node **label, const tl_Cexprtab *cexpr,
 /********************************************************************\
 |*                       Main method                                *|
 \********************************************************************/
+
+extern FILE *tl_out;
 
 /* generates an alternating automaton for p */
 Alternating mk_alternating(const Node *p, const tl_Cexprtab *cexpr,
@@ -417,14 +417,14 @@ Alternating mk_alternating(const Node *p, const tl_Cexprtab *cexpr,
 
   if(flags & TL_VERBOSE) {
     fprintf(tl_out, "\nAlternating automaton before simplification\n");
-    print_alternating(label, cexpr, &alt);
+    print_alternating(tl_out, label, cexpr, &alt);
   }
 
   if(flags & TL_SIMP_DIFF) {
     simplify_astates(label, &alt, &cnts); /* keeps only accessible states */
     if(flags & TL_VERBOSE) {
       fprintf(tl_out, "\nAlternating automaton after simplification\n");
-      print_alternating(label, cexpr, &alt);
+      print_alternating(tl_out, label, cexpr, &alt);
     }
   }
 

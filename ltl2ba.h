@@ -226,7 +226,7 @@ void add_set(int *, int);
 void rem_set(int *, int);
 void spin_print_set(const char *const *sym_table, int *, int*, int sym_size);
 void dot_print_set(const char *const *sym_table, const tl_Cexprtab *cexpr, int *, int*, int sym_size, int);
-void print_set(int *, int);
+void print_set(FILE *, int *, int);
 int  empty_set(int *, int);
 int  empty_intersect_sets(int *, int *, int);
 int  same_set(int *l1, int *l2, int size);

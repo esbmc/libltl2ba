@@ -161,18 +161,18 @@ void dot_print_set(const char *const *sym_table, const tl_Cexprtab *cexpr,
   if (count>1 && need_parens) fprintf(tl_out,")");
 }
 
-void print_set(int *l, int size) /* prints the content of a set */
+void print_set(FILE *f, int *l, int size) /* prints the content of a set */
 {
   int i, j, start = 1;;
-  fprintf(tl_out, "{");
+  fprintf(f, "{");
   for(i = 0; i < size; i++)
     for(j = 0; j < mod; j++)
       if(l[i] & (1 << j)) {
-        if(!start) fprintf(tl_out, ",");
-        fprintf(tl_out, "%i", mod * i + j);
+        if(!start) fprintf(f, ",");
+        fprintf(f, "%i", mod * i + j);
         start = 0;
       }
-  fprintf(tl_out, "}");
+  fprintf(f, "}");
 }
 
 /* prints the content of a symbol set */

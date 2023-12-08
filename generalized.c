@@ -546,7 +546,7 @@ static void reverse_print_generalized(const char *const *sym_table,
   reverse_print_generalized(sym_table, cexpr, g, s->nxt); /* begins with the last state */
 
   fprintf(tl_out, "state %i (", s->id);
-  print_set(s->nodes_set, node_size);
+  print_set(tl_out, s->nodes_set, node_size);
   fprintf(tl_out, ") : %i\n", s->incoming);
   for(t = s->trans->nxt; t != s->trans; t = t->nxt) {
     if (empty_set(t->pos, sym_size) && empty_set(t->neg, sym_size))
@@ -555,7 +555,7 @@ static void reverse_print_generalized(const char *const *sym_table,
     if (!empty_set(t->pos, sym_size) && !empty_set(t->neg, sym_size)) fprintf(tl_out, " & ");
     print_sym_set(sym_table, cexpr, t->neg, sym_size);
     fprintf(tl_out, " -> %i : ", t->to->id);
-    print_set(t->final, node_size);
+    print_set(tl_out, t->final, node_size);
     fprintf(tl_out, "\n");
   }
 }

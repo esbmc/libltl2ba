@@ -1321,7 +1321,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
         if((s2->final == b->accept || s2 -> id == 0) && reach[(s2->label)*(state_count+1)])
           add_set(accepting_cycles,s2->label);
       fprintf(tl_out,"Accepting cycles: ");
-      print_set(accepting_cycles,state_size);
+      print_set(tl_out, accepting_cycles,state_size);
       int * accepting_states=make_set(EMPTY_SET,state_size);
       for (r=0;r<state_count;r++)
         for (c=0; c<state_count;c++) {
@@ -1329,7 +1329,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
           if(reach[r*state_count+c] && in_set(accepting_cycles,c))
             add_set(accepting_states,r); }
       fprintf(tl_out,"\nAccepting states: ");
-      print_set(accepting_states,state_size);
+      print_set(tl_out, accepting_states,state_size);
       fprintf(tl_out,"\n");
 
       as->stutter_accept_table[stut_accept_idx++] = accepting_states;
@@ -1360,7 +1360,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
       if((s2->final == b->accept || s2 -> id == 0) && optimistic_reach[(s2->label)*(state_count+1)])
         add_set(accepting_cycles,s2->label);
     fprintf(tl_out,"\nAccepting optimistic cycles: ");
-    print_set(accepting_cycles,state_size);
+    print_set(tl_out, accepting_cycles,state_size);
 
     int * accepting_states=make_set(EMPTY_SET,state_size);
     for (r=0;r<state_count;r++)
@@ -1369,7 +1369,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
         if(optimistic_reach[r*state_count+c] && in_set(accepting_cycles,c))
           add_set(accepting_states,r); }
     fprintf(tl_out,"\nAccepting optimistic states: ");
-    print_set(accepting_states,state_size);
+    print_set(tl_out, accepting_states,state_size);
     fprintf(tl_out,"\n");
     tfree(accepting_cycles);
 
@@ -1382,7 +1382,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
     fprintf(tl_out,"%2d: ",i);
     set_list = pessimistic_transition[i];
     while (set_list != (Slist*)0) {
-      print_set(set_list->set,state_size);
+      print_set(tl_out, set_list->set,state_size);
       set_list = set_list->nxt; }
     fprintf(tl_out,"\n"); }
 
@@ -1391,7 +1391,7 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
   for(i=0; i<state_count; i++) {
     fprintf(tl_out,"%2d: ",i);
     pessimistic_reachable[i] = pess_reach(pessimistic_transition, i, state_count, state_count, state_size);
-    print_set(pessimistic_reachable[i],state_size);
+    print_set(tl_out, pessimistic_reachable[i],state_size);
     fprintf(tl_out,"\n"); }
 
   int *accepting_pessimistic_cycles=make_set(EMPTY_SET,state_size);
@@ -1400,14 +1400,14 @@ static void print_behaviours(const Buchi *b, const char *const *sym_table,
     if((s2->final == b->accept || s2 -> id == 0) && in_set(pessimistic_reachable[s2->label],s2->label))
       add_set(accepting_pessimistic_cycles,s2->label);
   fprintf(tl_out,"\nAccepting pessimistic cycles: ");
-  print_set(accepting_pessimistic_cycles,state_size);
+  print_set(tl_out, accepting_pessimistic_cycles,state_size);
 
   int *accepting_pessimistic_states=make_set(EMPTY_SET,state_size);
   for (s2 = b->bstates->prv; s2 != b->bstates; s2 = s2->prv)
     if(!empty_intersect_sets(pessimistic_reachable[s2->label],accepting_pessimistic_cycles,state_size))
       add_set(accepting_pessimistic_states,s2->label);
   fprintf(tl_out,"\nAccepting pessimistic states: ");
-  print_set(accepting_pessimistic_states,state_size);
+  print_set(tl_out, accepting_pessimistic_states,state_size);
   as->pessimistic_accept_state_set = accepting_pessimistic_states;
   fprintf(tl_out,"\n");
 }
