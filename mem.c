@@ -28,13 +28,13 @@
 
 extern int sym_size, node_size;
 
-ATrans *atrans_list = (ATrans *)0;
-GTrans *gtrans_list = (GTrans *)0;
-BTrans *btrans_list = (BTrans *)0;
+static ATrans *atrans_list = (ATrans *)0;
+static GTrans *gtrans_list = (GTrans *)0;
+static BTrans *btrans_list = (BTrans *)0;
 
-int aallocs = 0, afrees = 0, apool = 0;
-int gallocs = 0, gfrees = 0, gpool = 0;
-int ballocs = 0, bfrees = 0, bpool = 0;
+static int aallocs = 0, afrees = 0, apool = 0;
+static int gallocs = 0, gfrees = 0, gpool = 0;
+static int ballocs = 0, bfrees = 0, bpool = 0;
 
 static unsigned long All_Mem = 0;
 
