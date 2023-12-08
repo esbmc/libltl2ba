@@ -7,11 +7,11 @@ form of a library while maintaining compatibility with the original algorithms.
 For bug-reports and/or questions about libltl2ba, please contact Franz Brauße:
 <franz.brausse@manchester.ac.uk>
 
-LTL2C has been written by Jeremy Morse. It is based on LTL2BA version 1.1 and
+LTL2C has been written by Jeremy Morse.  It is based on LTL2BA version 1.1 and
 adds output formats for dot and the ESBMC model checker.
 
-LTL2BA has originally been written by Denis Oddoux and modified by Paul Gastin.
-It is based on the translation algorithm presented at CAV '01:
+LTL2BA has originally been written by Denis Oddoux and was modified by Paul
+Gastin.  It is based on the translation algorithm presented at CAV '01:
 	P.Gastin and D.Oddoux
 	"Fast LTL to Büchi Automata Translation"
 	in 13th International Conference on Computer Aided Verification, CAV 2001,
@@ -160,10 +160,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
     operators (high to low): U and V, &&, ||, <->, -> (all are still
     left-associative, which may^W must change in the future)
   - Additional debugging information (-d) is output to stderr
-  - Many non-semantic changes to the internal API in order for ltl2c to become
-    usable as a library, too; this includes defining and exporting the data
-    structures corresponding to the 3 representations of automata used
+  - Many non-semantic changes to the internal API in order for libltl2ba to
+    become usable as a library, too; this includes defining and exporting the
+    data structures corresponding to the 3 representations of automata used
     internally as well as removing global state and renaming/moving some
     functions
   - Provide a symlink ltl2c to the ltl2ba binary, which defaults to the 'c'
-    output mode (see above)
+    output mode from LTL2C
