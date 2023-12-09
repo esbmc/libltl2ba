@@ -249,9 +249,8 @@ int main(int argc, char *argv[])
 /* Subtract the `struct timeval' values X and Y, storing the result X-Y in RESULT.
    Return 1 if the difference is negative, otherwise 0.  */
 
-int
-timeval_subtract (result, x, y)
-struct timeval *result, *x, *y;
+void
+timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
 {
 	if (x->tv_usec < y->tv_usec) {
 		x->tv_usec += 1000000;
@@ -261,9 +260,6 @@ struct timeval *result, *x, *y;
 	/* Compute the time remaining to wait. tv_usec is certainly positive. */
 	result->tv_sec = x->tv_sec - y->tv_sec;
 	result->tv_usec = x->tv_usec - y->tv_usec;
-
-	/* Return 1 if result is negative. */
-	return x->tv_sec < y->tv_sec;
 }
 
 static void
