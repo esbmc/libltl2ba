@@ -584,5 +584,8 @@ Node * tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags)
 {
 	tl_Lexer lex;
 	memset(&lex, 0, sizeof(lex));
-	return tl_formula(symtab, cexpr, &lex, flags);
+	Node *f = tl_formula(symtab, cexpr, &lex, flags);
+	if (lex.tl_yychar != ';')
+		tl_yyerror(&lex, "syntax error");
+	return f;
 }
