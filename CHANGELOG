@@ -1,4 +1,9 @@
 
+* - Parse U, V and -> as right-associative operators and forbid chaining <->
+    because there is no universally agreed upon interpretation of a <-> b <-> c.
+  - Parser checks that the entire formula was parsed (it silently allowed
+    'a X b' before, interpreting just 'a').
+
 * libltl2ba - Version 2.0 - December 2023
   Modified by Franz Brauße, University of Manchester, UK
   Copyright (c) 2023  Franz Brauße
