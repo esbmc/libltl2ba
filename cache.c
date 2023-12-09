@@ -106,6 +106,7 @@ tl_nn(int t, Node *ll, Node *rl)
 	n->ntyp = (short) t;
 	n->lft  = ll;
 	n->rgt  = rl;
+	n->nxt  = NULL;
 
 	return n;
 }

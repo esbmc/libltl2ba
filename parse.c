@@ -17,12 +17,20 @@ static Node	*tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_
 static Node	*tl_factor(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags);
 static Node	*tl_level(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags, int);
 
-static const int prec[][2] = {
-	{ U_OPER, V_OPER, },  /* left associative */
-	{ AND, },             /* left associative */
-	{ OR, },              /* left associative */
+static const int prec[5][2] = {
+	{ U_OPER, V_OPER, },
+	{ AND, },
+	{ OR, },
 	{ EQUIV, },
 	{ IMPLIES, },
+};
+
+static const enum { NONE, LEFT, RIGHT } assoc[5] = {
+	RIGHT,
+	LEFT,
+	LEFT,
+	NONE,
+	RIGHT,
 };
 
 static int
@@ -506,24 +514,57 @@ static Node *
 tl_level(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags, int nr)
 {
 	unsigned i;
-	Node *ptr = LTL2BA_ZN;
+	Node *ptr = LTL2BA_ZN, **tail = NULL;
 
 	if (nr < 0)
 		return tl_factor(symtab, cexpr, lex, flags);
 
 	ptr = tl_level(symtab, cexpr, lex, flags, nr-1);
+	Node *bin = LTL2BA_ZN;
+	tail = &bin;
 again:
 	for (i = 0; i < sizeof(prec[nr])/sizeof(*prec[nr]); i++)
 		if (lex->tl_yychar == prec[nr][i])
 		{
+			if (assoc[nr] == NONE && bin)
+				tl_yyerror(lex, "non-associative operator chained");
 			lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
-			ptr = tl_nn(prec[nr][i], ptr, tl_level(symtab, cexpr, lex, flags, nr-1));
-			if (flags & LTL2BA_SIMP_LOG)
-				ptr = bin_simpler(symtab, ptr);
-			else
-				ptr = bin_minimal(symtab, ptr);
+			Node *rgt = tl_level(symtab, cexpr, lex, flags, nr-1);
+			Node *n = tl_nn(prec[nr][i], LTL2BA_ZN, rgt);
+			switch (assoc[nr]) {
+			case NONE: // fall through
+			case LEFT:
+				*tail = n;
+				tail = &n->nxt;
+				break;
+			case RIGHT:
+				n->nxt = bin;
+				bin = n;
+				break;
+			}
 			goto again;
 		}
+
+	Node *res = ptr;
+	for (Node *head; (head = bin); res = head) {
+		bin = head->nxt;
+		head->nxt = NULL;
+
+		if (assoc[nr] == RIGHT)
+			head->lft = bin ? bin->rgt : ptr;
+		else
+			head->lft = res;
+
+		if (flags & LTL2BA_SIMP_LOG)
+			head = bin_simpler(symtab, head);
+		else
+			head = bin_minimal(symtab, head);
+
+		if (assoc[nr] == RIGHT && bin)
+			bin->rgt = head;
+	}
+	ptr = res;
+
 	if (!ptr) tl_yyerror(lex, "syntax error");
 #if 0
 	printf("level %d:	", nr);

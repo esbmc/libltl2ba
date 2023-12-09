@@ -70,9 +70,14 @@ Temporal operators:
         V       (release)
         X       (next)
 
-Use spaces between any symbols. The precedence of binary operators (high to low)
-is as follows: U and V, &&, ||, <->, -> (all are still left-associative, which
-may^W must change in the future).
+Use spaces between any symbols. Unary operators bind stronger that binary ones.
+Precedence (high to low) and associativity of binary operators is as follows:
+
+        U, V  : right
+        &&    : left
+        ||    : left
+        <->   : none
+        ->    : right
 
 The result is a 'never' claim in Promela that can be given to the Spin model
 checker to verify properties on a system.
