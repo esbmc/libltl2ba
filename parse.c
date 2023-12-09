@@ -88,14 +88,14 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		{	ptr = tl_nn(NEXT,
 				tl_nn(U_OPER,
 					ptr->lft->lft,
-					ptr->rgt->lft), LTL2BA_ZN);
+					ptr->rgt->lft), NULL);
 		        break;
 		}
 
 		/* NEW : F X p == X F p */
 		if (ptr->lft->ntyp == TRUE &&
 		    ptr->rgt->ntyp == NEXT) {
-		  ptr = tl_nn(NEXT, tl_nn(U_OPER, LTL2BA_True, ptr->rgt->lft), LTL2BA_ZN);
+		  ptr = tl_nn(NEXT, tl_nn(U_OPER, LTL2BA_True, ptr->rgt->lft), NULL);
 		  break;
 		}
 
@@ -111,7 +111,7 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 
 		/* NEW */
 		if (ptr->lft->ntyp != TRUE &&
-		    implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), LTL2BA_ZN)),
+		    implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), NULL)),
 			    ptr->lft))
 		{       ptr->lft = LTL2BA_True;
 		        break;
@@ -139,7 +139,7 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		/* NEW : G X p == X G p */
 		if (ptr->lft->ntyp == FALSE &&
 		    ptr->rgt->ntyp == NEXT) {
-		  ptr = tl_nn(NEXT, tl_nn(V_OPER, LTL2BA_False, ptr->rgt->lft), LTL2BA_ZN);
+		  ptr = tl_nn(NEXT, tl_nn(V_OPER, LTL2BA_False, ptr->rgt->lft), NULL);
 		  break;
 		}
 
@@ -163,7 +163,7 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		/* NEW */
 		if (ptr->lft->ntyp != FALSE &&
 		    implies(ptr->lft,
-			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), LTL2BA_ZN))))
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), NULL))))
 		{       ptr->lft = LTL2BA_False;
 		        break;
 		}
@@ -262,7 +262,7 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		{	ptr = tl_nn(NEXT,
 				tl_nn(AND,
 					ptr->rgt->lft,
-					ptr->lft->lft), LTL2BA_ZN);
+					ptr->lft->lft), NULL);
 			break;
 		}
 
@@ -307,9 +307,9 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 
 		/* NEW */
 		if (implies(ptr->lft,
-			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), LTL2BA_ZN)))
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), NULL)))
 		 || implies(ptr->rgt,
-			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), LTL2BA_ZN))))
+			    push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), NULL))))
 		{       ptr = LTL2BA_False;
 		        break;
 		}
@@ -390,9 +390,9 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 		  }
 
 		/* NEW */
-		if (implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), LTL2BA_ZN)),
+		if (implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->rgt), NULL)),
 			    ptr->lft)
-		 || implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), LTL2BA_ZN)),
+		 || implies(push_negation(symtab, tl_nn(NOT, dupnode(ptr->lft), NULL)),
 			    ptr->rgt))
 		{       ptr = LTL2BA_True;
 		        break;
@@ -418,7 +418,7 @@ bin_minimal(tl_Symtab symtab, Node *ptr)
 
 static Node *
 tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
-{	Node *ptr = LTL2BA_ZN;
+{	Node *ptr = NULL;
 
 	switch (lex->tl_yychar) {
 	case '(':
@@ -462,7 +462,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 		if ((ptr->ntyp == TRUE || ptr->ntyp == FALSE)&& (flags & LTL2BA_SIMP_LOG))
 			break;	/* X true = true , X false = false */
 
-		ptr = tl_nn(NEXT, ptr, LTL2BA_ZN);
+		ptr = tl_nn(NEXT, ptr, NULL);
 		goto simpl;
 
 	case EVENTUALLY:
@@ -514,14 +514,12 @@ static Node *
 tl_level(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags, int nr)
 {
 	unsigned i;
-	Node *ptr = LTL2BA_ZN, **tail = NULL;
+	Node *ptr = NULL, *bin = NULL, **tail = &bin;
 
 	if (nr < 0)
 		return tl_factor(symtab, cexpr, lex, flags);
 
 	ptr = tl_level(symtab, cexpr, lex, flags, nr-1);
-	Node *bin = LTL2BA_ZN;
-	tail = &bin;
 again:
 	for (i = 0; i < sizeof(prec[nr])/sizeof(*prec[nr]); i++)
 		if (lex->tl_yychar == prec[nr][i])
@@ -530,14 +528,16 @@ again:
 				tl_yyerror(lex, "non-associative operator chained");
 			lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
 			Node *rgt = tl_level(symtab, cexpr, lex, flags, nr-1);
-			Node *n = tl_nn(prec[nr][i], LTL2BA_ZN, rgt);
+			Node *n = tl_nn(prec[nr][i], NULL, rgt);
 			switch (assoc[nr]) {
 			case NONE: // fall through
 			case LEFT:
+				// append n to list
 				*tail = n;
 				tail = &n->nxt;
 				break;
 			case RIGHT:
+				// prepend n to list
 				n->nxt = bin;
 				bin = n;
 				break;

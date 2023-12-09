@@ -22,12 +22,10 @@
 #define LTL2BA_EMPTY_SET (-1)
 #define LTL2BA_SET_SIZE(elements) (elements/(8 * sizeof(int)) + 1)
 
-#define LTL2BA_ZN	(Node *)0
-#define LTL2BA_ZS	(Symbol *)0
 #define LTL2BA_Nhash	255
-#define LTL2BA_True	tl_nn(TRUE,  LTL2BA_ZN, LTL2BA_ZN)
-#define LTL2BA_False	tl_nn(FALSE, LTL2BA_ZN, LTL2BA_ZN)
-#define LTL2BA_Not(a)	push_negation(symtab, tl_nn(NOT, a, LTL2BA_ZN))
+#define LTL2BA_True	tl_nn(TRUE,  NULL, NULL)
+#define LTL2BA_False	tl_nn(FALSE, NULL, NULL)
+#define LTL2BA_Not(a)	push_negation(symtab, tl_nn(NOT, a, NULL))
 #define LTL2BA_rewrite(n)	canonical(symtab, right_linked(n))
 
 #define LTL2BA_Debug(x)	{ if (0) fprintf(stderr, x); }

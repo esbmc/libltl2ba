@@ -51,7 +51,7 @@ Node * in_cache(Node *n)
 			if (d->same && ismatch(n, d->before)) return n;
 			return dupnode(d->after);
 		}
-	return LTL2BA_ZN;
+	return NULL;
 }
 
 Node * cached(tl_Symtab symtab, Node *n)
@@ -92,9 +92,9 @@ releasenode(int all_levels, Node *n)
 
 	if (all_levels)
 	{	releasenode(1, n->lft);
-		n->lft = LTL2BA_ZN;
+		n->lft = NULL;
 		releasenode(1, n->rgt);
-		n->rgt = LTL2BA_ZN;
+		n->rgt = NULL;
 	}
 	tfree((void *) n);
 }

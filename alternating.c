@@ -330,7 +330,7 @@ static void simplify_astates(const Node **label, Alternating *alt,
 
   for(i = alt->node_id - 1; i > 0; i--) {
     if (!in_set(acc, i)) { /* frees unaccessible states */
-      label[i] = LTL2BA_ZN;
+      label[i] = NULL;
       free_atrans(alt->transition[i], 1);
       alt->transition[i] = (ATrans *)0;
       continue;
