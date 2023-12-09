@@ -181,7 +181,6 @@ Symbol	*tl_lookup(tl_Symtab symtab, const char *);
 char	*emalloc(int);
 
 int	anywhere(int, Node *, Node *);
-int	dump_cond(Node *, Node *, int);
 int	isequal(const Node *, const Node *);
 int	tl_Getchar(void);
 
@@ -197,7 +196,6 @@ void	a_stats(void);
 void	cache_stats(void);
 void	dump(FILE *, const Node *);
 void	fatal(const char *);
-void	fsm_print(void);
 void	releasenode(int, Node *);
 void	tfree(void *);
 void	tl_explain(int);
