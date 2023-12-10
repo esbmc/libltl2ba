@@ -221,6 +221,56 @@ marknode(int tok, Node *m)
 	m->ntyp = -1;
 }
 
+static int
+any_term(Node *srch, Node *in)
+{
+	if (!in) return 0;
+
+	if (in->ntyp == AND)
+		return	any_term(srch, in->lft) ||
+			any_term(srch, in->rgt);
+
+	return isequal(in, srch);
+}
+
+static int
+any_and(Node *srch, Node *in)
+{
+	if (!in) return 0;
+
+	if (srch->ntyp == AND)
+		return	any_and(srch->lft, in) &&
+			any_and(srch->rgt, in);
+
+	return any_term(srch, in);
+}
+
+static int
+any_lor(Node *srch, Node *in)
+{
+	if (!in) return 0;
+
+	if (in->ntyp == OR)
+		return	any_lor(srch, in->lft) ||
+			any_lor(srch, in->rgt);
+
+	return isequal(in, srch);
+}
+
+static int
+anywhere(int tok, Node *srch, Node *in)
+{
+	if (!in) return 0;
+
+	switch (tok) {
+	case AND:	return any_and(srch, in);
+	case  OR:	return any_lor(srch, in);
+	case   0:	return any_term(srch, in);
+	}
+	fatal("cannot happen, anywhere");
+	return 0;
+}
+
 Node * Canonical(Symtab symtab, Node *n)
 {
 	Node *m, *p, *k1, *k2, *prev, *dflt = NULL;

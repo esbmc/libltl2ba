@@ -164,7 +164,6 @@ ltl2ba_Node *  tl_nn(int, ltl2ba_Node *, ltl2ba_Node *);
 
 ltl2ba_Symbol *tl_lookup(ltl2ba_Symtab symtab, const char *);
 
-int     anywhere(int, ltl2ba_Node *, ltl2ba_Node *);
 int     isequal(const ltl2ba_Node *, const ltl2ba_Node *);
 
 void *         tl_emalloc(int);
