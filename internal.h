@@ -22,7 +22,7 @@
 		}                                                              \
 	}
 
-#undef LTL2BA_EMALLOC_VERBOSE
+#undef TL_EMALLOC_VERBOSE
 
 typedef ltl2ba_Symbol      Symbol;
 typedef ltl2ba_Node        Node;
