@@ -37,3 +37,17 @@ typedef ltl2ba_Cexprtab    tl_Cexprtab;
 typedef ltl2ba_Lexer       tl_Lexer;
 typedef ltl2ba_Flags       tl_Flags;
 typedef ltl2ba_set_sizes   set_sizes;
+
+#define ALWAYS     LTL2BA_ALWAYS
+#define AND        LTL2BA_AND
+#define EQUIV      LTL2BA_EQUIV
+#define EVENTUALLY LTL2BA_EVENTUALLY
+#define FALSE      LTL2BA_FALSE
+#define IMPLIES    LTL2BA_IMPLIES
+#define NOT        LTL2BA_NOT
+#define OR         LTL2BA_OR
+#define PREDICATE  LTL2BA_PREDICATE
+#define TRUE       LTL2BA_TRUE
+#define U_OPER     LTL2BA_U_OPER
+#define V_OPER     LTL2BA_V_OPER
+#define NEXT       LTL2BA_NEXT

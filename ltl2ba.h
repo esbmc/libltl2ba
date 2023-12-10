@@ -92,19 +92,19 @@ typedef struct ltl2ba_BState {
 } ltl2ba_BState;
 
 enum {
-	ALWAYS = 257,
-	AND,        /* 258 */
-	EQUIV,      /* 259 */
-	EVENTUALLY, /* 260 */
-	FALSE,      /* 261 */
-	IMPLIES,    /* 262 */
-	NOT,        /* 263 */
-	OR,         /* 264 */
-	PREDICATE,  /* 265 */
-	TRUE,       /* 266 */
-	U_OPER,     /* 267 */
-	V_OPER,     /* 268 */
-	NEXT,       /* 269 */
+	LTL2BA_ALWAYS = 257,
+	LTL2BA_AND,        /* 258 */
+	LTL2BA_EQUIV,      /* 259 */
+	LTL2BA_EVENTUALLY, /* 260 */
+	LTL2BA_FALSE,      /* 261 */
+	LTL2BA_IMPLIES,    /* 262 */
+	LTL2BA_NOT,        /* 263 */
+	LTL2BA_OR,         /* 264 */
+	LTL2BA_PREDICATE,  /* 265 */
+	LTL2BA_TRUE,       /* 266 */
+	LTL2BA_U_OPER,     /* 267 */
+	LTL2BA_V_OPER,     /* 268 */
+	LTL2BA_NEXT,       /* 269 */
 };
 
 typedef ltl2ba_Symbol *ltl2ba_Symtab[LTL2BA_Nhash + 1];
