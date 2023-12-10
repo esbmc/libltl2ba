@@ -13,13 +13,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 
 /* LTL2BA_EMPTY_SET is passed to make_set() to create empty */
 #define LTL2BA_EMPTY_SET   (-1)
 #define LTL2BA_SET_SIZE(n) (n / (8 * sizeof(int)) + 1)
-
-#define LTL2BA_Nhash      255
+#define LTL2BA_Nhash       255
 
 #ifdef __cplusplus
 extern "C" {
@@ -241,7 +239,6 @@ void  dump(FILE *, const ltl2ba_Node *);
 char *emalloc(int);
 void  fatal(const char *);
 void  put_uform(FILE *);
-void  timeval_subtract(struct timeval *, struct timeval *, struct timeval *);
 void  tl_explain(int);
 int   tl_Getchar(void);
 void  tl_UnGetchar(void);
