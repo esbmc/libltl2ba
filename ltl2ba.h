@@ -12,11 +12,8 @@
 #pragma once
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <sys/resource.h>
-#include <assert.h>
 
 /* LTL2BA_EMPTY_SET is passed to make_set() to create empty */
 #define LTL2BA_EMPTY_SET   (-1)

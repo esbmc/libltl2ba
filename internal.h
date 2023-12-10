@@ -1,6 +1,10 @@
 
 #include "ltl2ba.h"
 
+#include <assert.h>
+#include <string.h>
+#include <sys/resource.h>
+
 #define LTL2BA_True       tl_nn(TRUE, NULL, NULL)
 #define LTL2BA_False      tl_nn(FALSE, NULL, NULL)
 #define LTL2BA_Not(a)     push_negation(symtab, tl_nn(NOT, a, NULL))
