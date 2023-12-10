@@ -6,7 +6,7 @@
 /* Modified by Paul Gastin, LSV, France                                   */
 /* Copyright (c) 2007  Paul Gastin                                        */
 
-#include "ltl2ba.h"
+#include "internal.h"
 
 static const int mod = 8 * sizeof(int);
 

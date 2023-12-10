@@ -6,7 +6,7 @@
 /* Modified by Paul Gastin, LSV, France                                   */
 /* Copyright (c) 2007  Paul Gastin                                        */
 
-#include "ltl2ba.h"
+#include "internal.h"
 
 /********************************************************************\
 |*              Structures and shared variables                     *|
@@ -60,7 +60,7 @@ static int calculate_sym_size(const Node *p)
 }
 
 /* returns the copy of a transition */
-ATrans *dup_trans(const struct set_sizes *sz, const ATrans *trans)
+ATrans *dup_trans(const set_sizes *sz, const ATrans *trans)
 {
   ATrans *result;
   if(!trans) return NULL;
@@ -71,7 +71,7 @@ ATrans *dup_trans(const struct set_sizes *sz, const ATrans *trans)
   return result;
 }
 
-void do_merge_trans(const struct set_sizes *sz, ATrans **result,
+void do_merge_trans(const set_sizes *sz, ATrans **result,
                     const ATrans *trans1, const ATrans *trans2)
 { /* merges two transitions */
   if(!trans1 || !trans2) {
@@ -91,7 +91,7 @@ void do_merge_trans(const struct set_sizes *sz, ATrans **result,
 }
 
 /* merges two transitions */
-ATrans *merge_trans(const struct set_sizes *sz, const ATrans *trans1,
+ATrans *merge_trans(const set_sizes *sz, const ATrans *trans1,
                     const ATrans *trans2)
 {
   ATrans *result = emalloc_atrans(sz->sym_size, sz->node_size);

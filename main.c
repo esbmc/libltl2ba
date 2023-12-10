@@ -11,7 +11,7 @@
 
 #include <unistd.h>
 #include <libgen.h>	/* basename() */
-#include "ltl2ba.h"
+#include "internal.h"
 
 static int	tl_errs      = 0;
 

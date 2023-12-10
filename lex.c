@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "ltl2ba.h"
+#include "internal.h"
 
 #define Token(y)        lex->tl_yylval = tl_nn(y,NULL,NULL); return y
 

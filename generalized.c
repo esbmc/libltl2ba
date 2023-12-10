@@ -6,7 +6,7 @@
 /* Modified by Paul Gastin, LSV, France                                   */
 /* Copyright (c) 2007  Paul Gastin                                        */
 
-#include "ltl2ba.h"
+#include "internal.h"
 
 #undef min
 #define min(x,y)        ((x<y)?x:y)
@@ -20,7 +20,7 @@ struct gcounts {
 };
 
 typedef struct GScc {
-  struct GState *gstate;
+  GState *gstate;
   int rank;
   int theta;
   struct GScc *nxt;
@@ -63,7 +63,7 @@ static GState *remove_gstate(GState *s, GState *s1, GState *gremoved)
 }
 
 /* copies a transition */
-static void copy_gtrans(const struct set_sizes *sz, GTrans *from, GTrans *to)
+static void copy_gtrans(const set_sizes *sz, GTrans *from, GTrans *to)
 {
   to->to = from->to;
   copy_set(from->pos,   to->pos,   sz->sym_size);
@@ -71,7 +71,7 @@ static void copy_gtrans(const struct set_sizes *sz, GTrans *from, GTrans *to)
   copy_set(from->final, to->final, sz->node_size);
 }
 
-static int same_gtrans(const struct set_sizes *sz, GState *a, GTrans *s,
+static int same_gtrans(const set_sizes *sz, GState *a, GTrans *s,
                        GState *b, GTrans *t, int use_scc, int *bad_scc)
 { /* returns 1 if the transitions are identical */
   if((s->to != t->to) ||
@@ -334,7 +334,7 @@ static void simplify_gscc(Generalized *g, int *final_set, int **bad_scc,
 \********************************************************************/
 
 /*is the transition final for i ?*/
-static int is_final(const struct set_sizes *sz, int *from, ATrans *at, int i,
+static int is_final(const set_sizes *sz, int *from, ATrans *at, int i,
                     ATrans **transition, tl_Flags flags)
 {
   ATrans *t;

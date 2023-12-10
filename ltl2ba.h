@@ -23,92 +23,73 @@
 #define LTL2BA_SET_SIZE(n) (n / (8 * sizeof(int)) + 1)
 
 #define LTL2BA_Nhash      255
-#define LTL2BA_True       tl_nn(TRUE, NULL, NULL)
-#define LTL2BA_False      tl_nn(FALSE, NULL, NULL)
-#define LTL2BA_Not(a)     push_negation(symtab, tl_nn(NOT, a, NULL))
-#define LTL2BA_rewrite(n) canonical(symtab, right_linked(n))
-
-#define LTL2BA_Debug(x)    { if (0) fprintf(stderr, x); }
-#define LTL2BA_Debug2(x,y) { if (tl_verbose) fprintf(stderr, x,y); }
-#define LTL2BA_Dump(x)     { if (0) dump(stderr, x); }
-#define LTL2BA_Explain(x)  { if (tl_verbose) tl_explain(x); }
-
-#define LTL2BA_Assert(x, y)                                                    \
-	{                                                                      \
-		if (!(x)) {                                                    \
-			tl_explain(y);                                         \
-			fatal(": assertion failed\n");                         \
-		}                                                              \
-	}
-
-#undef LTL2BA_EMALLOC_VERBOSE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct Symbol {
+typedef struct ltl2ba_Symbol {
 	char *name;
-	struct Symbol *next; /* linked list, symbol table */
-} Symbol;
+	struct ltl2ba_Symbol *next; /* linked list, symbol table */
+} ltl2ba_Symbol;
 
-typedef struct Node {
-	short ntyp;         /* node type */
-	struct Symbol *sym;
-	struct Node *lft;   /* tree */
-	struct Node *rgt;   /* tree */
-	struct Node *nxt;   /* if linked list (only used by parser) */
-} Node;
+typedef struct ltl2ba_Node {
+	short ntyp;                /* node type */
+	struct ltl2ba_Symbol *sym;
+	struct ltl2ba_Node *lft;   /* tree */
+	struct ltl2ba_Node *rgt;   /* tree */
+	struct ltl2ba_Node *nxt;   /* if linked list (only used by parser) */
+} ltl2ba_Node;
 
-typedef struct ATrans {
+typedef struct ltl2ba_ATrans {
 	int *to;
 	int *pos;
 	int *neg;
-	struct ATrans *nxt;
-} ATrans;
+	struct ltl2ba_ATrans *nxt;
+} ltl2ba_ATrans;
 
-typedef struct AProd {
+typedef struct ltl2ba_AProd {
 	int astate;
-	struct ATrans *prod;
-	struct ATrans *trans;
-	struct AProd *nxt;
-	struct AProd *prv;
-} AProd;
+	struct ltl2ba_ATrans *prod;
+	struct ltl2ba_ATrans *trans;
+	struct ltl2ba_AProd *nxt;
+	struct ltl2ba_AProd *prv;
+} ltl2ba_AProd;
 
-typedef struct GTrans {
+typedef struct ltl2ba_GTrans {
 	int *pos;
 	int *neg;
-	struct GState *to;
+	struct ltl2ba_GState *to;
 	int *final;
-	struct GTrans *nxt;
-} GTrans;
+	struct ltl2ba_GTrans *nxt;
+} ltl2ba_GTrans;
 
-typedef struct GState {
+typedef struct ltl2ba_GState {
 	int id;
 	int incoming;
 	int *nodes_set;
-	struct GTrans *trans;
-	struct GState *nxt;
-	struct GState *prv;
-} GState;
+	struct ltl2ba_GTrans *trans;
+	struct ltl2ba_GState *nxt;
+	struct ltl2ba_GState *prv;
+} ltl2ba_GState;
 
-typedef struct BTrans {
-	struct BState *to;
+typedef struct ltl2ba_BTrans {
+	struct ltl2ba_BState *to;
 	int *pos;
 	int *neg;
-	struct BTrans *nxt;
-} BTrans;
+	struct ltl2ba_BTrans *nxt;
+} ltl2ba_BTrans;
 
-typedef struct BState {
-	struct GState *gstate;
+typedef struct ltl2ba_BState {
+	struct ltl2ba_GState *gstate;
 	int id;
 	int incoming;
 	int final;
-	struct BTrans *trans;
-	struct BState *nxt;
-	struct BState *prv;
+	struct ltl2ba_BTrans *trans;
+	struct ltl2ba_BState *nxt;
+	struct ltl2ba_BState *prv;
 	int label;  /* DAN */
-} BState;
+} ltl2ba_BState;
 
 enum {
 	ALWAYS = 257,
@@ -126,18 +107,18 @@ enum {
 	NEXT,       /* 269 */
 };
 
-typedef Symbol *tl_Symtab[LTL2BA_Nhash + 1];
+typedef ltl2ba_Symbol *ltl2ba_Symtab[LTL2BA_Nhash + 1];
 
 typedef struct {
 	int cexpr_idx;
 	char *cexpr_expr_table[256];
-} tl_Cexprtab;
+} ltl2ba_Cexprtab;
 
 typedef struct {
-	Node *tl_yylval;
+	ltl2ba_Node *tl_yylval;
 	int tl_yychar;
 	char yytext[2048];
-} tl_Lexer;
+} ltl2ba_Lexer;
 
 typedef enum {
 	LTL2BA_STATS     = 1 << 0, /* time and size stats */
@@ -147,90 +128,96 @@ typedef enum {
 	LTL2BA_SIMP_SCC  = 1 << 4, /* use scc simplification */
 	LTL2BA_FJTOFJ    = 1 << 5, /* 2eme fj */
 	LTL2BA_VERBOSE   = 1 << 6,
-} tl_Flags;
+} ltl2ba_Flags;
 
-struct set_sizes {
+typedef struct {
 	int sym_size;  /* LTL2BA_SET_SIZE() of an upper bound on the number of
 	                  predicates */
 	int node_size; /* LTL2BA_SET_SIZE() of the number of states */
-};
+} ltl2ba_set_sizes;
 
 typedef struct {
-	ATrans **transition;
+	ltl2ba_ATrans **transition;
 	int *final_set;
 	int node_id; /* really the number of nodes */
 	int sym_id;  /* number of symbols */
 	const char **sym_table;
-	struct set_sizes sz;
-} Alternating;
+	ltl2ba_set_sizes sz;
+} ltl2ba_Alternating;
 
 typedef struct {
-	GState *gstates, **init;
+	ltl2ba_GState *gstates, **init;
 	int init_size, gstate_id, *final, scc_size;
-	struct set_sizes sz; /* copy from Alternating automaton */
-} Generalized;
+	ltl2ba_set_sizes sz; /* copy from Alternating automaton */
+} ltl2ba_Generalized;
 
 typedef struct {
-	BState *bstates;
+	ltl2ba_BState *bstates;
 	int accept;
-	struct set_sizes sz; /* copy from Generalized automaton */
-} Buchi;
+	ltl2ba_set_sizes sz; /* copy from Generalized automaton */
+} ltl2ba_Buchi;
 
-Node *  Canonical(tl_Symtab symtab, Node *);
-Node *  canonical(tl_Symtab symtab, Node *);
-Node *  cached(tl_Symtab symtab, Node *);
-Node *  dupnode(const Node *);
-Node *  getnode(const Node *);
-Node *  in_cache(Node *);
-Node *  push_negation(tl_Symtab symtab, Node *);
-Node *  right_linked(Node *);
-Node *  tl_nn(int, Node *, Node *);
+ltl2ba_Node *  Canonical(ltl2ba_Symtab symtab, ltl2ba_Node *);
+ltl2ba_Node *  canonical(ltl2ba_Symtab symtab, ltl2ba_Node *);
+ltl2ba_Node *  cached(ltl2ba_Symtab symtab, ltl2ba_Node *);
+ltl2ba_Node *  dupnode(const ltl2ba_Node *);
+ltl2ba_Node *  getnode(const ltl2ba_Node *);
+ltl2ba_Node *  in_cache(ltl2ba_Node *);
+ltl2ba_Node *  push_negation(ltl2ba_Symtab symtab, ltl2ba_Node *);
+ltl2ba_Node *  right_linked(ltl2ba_Node *);
+ltl2ba_Node *  tl_nn(int, ltl2ba_Node *, ltl2ba_Node *);
 
-Symbol *tl_lookup(tl_Symtab symtab, const char *);
+ltl2ba_Symbol *tl_lookup(ltl2ba_Symtab symtab, const char *);
 
 char *  emalloc(int);
 
-int     anywhere(int, Node *, Node *);
-int     isequal(const Node *, const Node *);
+int     anywhere(int, ltl2ba_Node *, ltl2ba_Node *);
+int     isequal(const ltl2ba_Node *, const ltl2ba_Node *);
 int     tl_Getchar(void);
 
-void *  tl_emalloc(int);
-ATrans *emalloc_atrans(int sym_size, int node_size);
-void    free_atrans(ATrans *, int);
-void    free_all_atrans();
-GTrans *emalloc_gtrans(int sym_size, int node_size);
-void    free_gtrans(GTrans *, GTrans *, int);
-BTrans *emalloc_btrans(int sym_size);
-void    free_btrans(BTrans *, BTrans *, int);
-void    a_stats(void);
-void    cache_stats(void);
-void    dump(FILE *, const Node *);
-void    fatal(const char *);
-void    releasenode(int, Node *);
-void    tfree(void *);
-void    tl_explain(int);
-void    tl_UnGetchar(void);
-Node *  tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags);
-void    tl_yyerror(tl_Lexer *lex, char *);
+void *         tl_emalloc(int);
+ltl2ba_ATrans *emalloc_atrans(int sym_size, int node_size);
+void           free_atrans(ltl2ba_ATrans *, int);
+void           free_all_atrans();
+ltl2ba_GTrans *emalloc_gtrans(int sym_size, int node_size);
+void           free_gtrans(ltl2ba_GTrans *, ltl2ba_GTrans *, int);
+ltl2ba_BTrans *emalloc_btrans(int sym_size);
+void           free_btrans(ltl2ba_BTrans *, ltl2ba_BTrans *, int);
+void           a_stats(void);
+void           cache_stats(void);
+void           dump(FILE *, const ltl2ba_Node *);
+void           fatal(const char *);
+void           releasenode(int, ltl2ba_Node *);
+void           tfree(void *);
+void           tl_explain(int);
+void           tl_UnGetchar(void);
+ltl2ba_Node *  tl_parse(ltl2ba_Symtab symtab, ltl2ba_Cexprtab *cexpr,
+                        ltl2ba_Flags flags);
+void           tl_yyerror(ltl2ba_Lexer *lex, char *);
 
-Alternating mk_alternating(const Node *, FILE *, const tl_Cexprtab *cexpr,
-                           tl_Flags flags);
-Generalized mk_generalized(const Alternating *, FILE *, tl_Flags flags,
-                           const tl_Cexprtab *cexpr);
-Buchi       mk_buchi(Generalized *g, FILE *, tl_Flags,
-                     const char *const *sym_table, const tl_Cexprtab *cexpr);
+ltl2ba_Alternating mk_alternating(const ltl2ba_Node *, FILE *,
+                                  const ltl2ba_Cexprtab *cexpr,
+                                  ltl2ba_Flags flags);
+ltl2ba_Generalized mk_generalized(const ltl2ba_Alternating *, FILE *,
+                                  ltl2ba_Flags flags,
+                                  const ltl2ba_Cexprtab *cexpr);
+ltl2ba_Buchi mk_buchi(ltl2ba_Generalized *g, FILE *, ltl2ba_Flags,
+                      const char *const *sym_table,
+                      const ltl2ba_Cexprtab *cexpr);
 
-void print_c_buchi(FILE *f, const Buchi *b, const char *const *sym_table,
-                   const tl_Cexprtab *cexpr, int sym_id,
+void print_c_buchi(FILE *f, const ltl2ba_Buchi *b, const char *const *sym_table,
+                   const ltl2ba_Cexprtab *cexpr, int sym_id,
                    const char *c_sym_name_prefix);
-void print_dot_buchi(FILE *f, const Buchi *b, const char *const *sym_table,
-                     const tl_Cexprtab *cexpr);
-void print_spin_buchi(FILE *f, const Buchi *b, const char **sym_table);
+void print_dot_buchi(FILE *f, const ltl2ba_Buchi *b,
+                     const char *const *sym_table,
+                     const ltl2ba_Cexprtab *cexpr);
+void print_spin_buchi(FILE *f, const ltl2ba_Buchi *b, const char **sym_table);
 
-ATrans *dup_trans(const struct set_sizes *sz, const ATrans *);
-ATrans *merge_trans(const struct set_sizes *sz, const ATrans *, const ATrans *);
-void    do_merge_trans(const struct set_sizes *sz, ATrans **, const ATrans *,
-                       const ATrans *);
+ltl2ba_ATrans *dup_trans(const ltl2ba_set_sizes *sz, const ltl2ba_ATrans *);
+ltl2ba_ATrans *merge_trans(const ltl2ba_set_sizes *sz, const ltl2ba_ATrans *,
+                           const ltl2ba_ATrans *);
+void do_merge_trans(const ltl2ba_set_sizes *sz, ltl2ba_ATrans **,
+                    const ltl2ba_ATrans *, const ltl2ba_ATrans *);
 
 int *new_set(int);
 int *clear_set(int *, int);
@@ -245,7 +232,8 @@ void rem_set(int *, int);
 void spin_print_set(FILE *, const char *const *sym_table, int *, int *,
                     int sym_size);
 void dot_print_set(FILE *, const char *const *sym_table,
-                   const tl_Cexprtab *cexpr, int *, int *, int sym_size, int);
+                   const ltl2ba_Cexprtab *cexpr, int *, int *, int sym_size,
+                   int);
 void print_set(FILE *, int *, int);
 int  empty_set(int *, int);
 int  empty_intersect_sets(int *, int *, int);
@@ -256,7 +244,7 @@ int  in_set(int *, int);
 int *list_set(int *, int);
 
 void print_sym_set(FILE *f, const char *const *sym_table,
-                   const tl_Cexprtab *cexpr, int *l, int size);
+                   const ltl2ba_Cexprtab *cexpr, int *l, int size);
 void timeval_subtract(struct timeval *, struct timeval *, struct timeval *);
 void put_uform(FILE *);
 void cache_dump(void);

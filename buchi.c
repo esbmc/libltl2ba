@@ -6,7 +6,7 @@
 /* Modified by Paul Gastin, LSV, France                                   */
 /* Copyright (c) 2007  Paul Gastin                                        */
 
-#include "ltl2ba.h"
+#include "internal.h"
 
 #undef min
 #define min(x,y)        ((x<y)?x:y)
@@ -16,7 +16,7 @@
 \********************************************************************/
 
 typedef struct BScc {
-  struct BState *bstate;
+  BState *bstate;
   int rank;
   int theta;
   struct BScc *nxt;
@@ -76,7 +76,7 @@ static BState *remove_bstate(BState *s, BState *s1, BState *const bremoved)
   return prv;
 }
 
-static void copy_btrans(const struct set_sizes *sz, BTrans *from, BTrans *to) {
+static void copy_btrans(const set_sizes *sz, BTrans *from, BTrans *to) {
   to->to    = from->to;
   copy_set(from->pos, to->pos, sz->sym_size);
   copy_set(from->neg, to->neg, sz->sym_size);
@@ -127,7 +127,7 @@ static int simplify_btrans(Buchi *b, FILE *f, tl_Flags flags)
 }
 
 /* returns 1 if the transitions are identical */
-static int same_btrans(const struct set_sizes *sz, BTrans *s, BTrans *t)
+static int same_btrans(const set_sizes *sz, BTrans *s, BTrans *t)
 {
   return((s->to == t->to) &&
 	 same_sets(s->pos, t->pos, sz->sym_size) &&
