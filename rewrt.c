@@ -94,7 +94,7 @@ Node *
 push_negation(Symtab symtab, Node *n)
 {	Node *m;
 
-	LTL2BA_Assert(n->ntyp == NOT, n->ntyp);
+	Assert(n->ntyp == NOT, n->ntyp);
 
 	switch (n->lft->ntyp) {
 	case TRUE:
@@ -134,14 +134,14 @@ push_negation(Symtab symtab, Node *n)
 same:		m = n->lft->rgt;
 		n->lft->rgt = NULL;
 
-		n->rgt = LTL2BA_Not(m);
+		n->rgt = Not(m);
 		n->lft->ntyp = NOT;
 		m = n->lft;
 		n->lft = push_negation(symtab, m);
 		break;
 	}
 
-	return LTL2BA_rewrite(n);
+	return rewrite(n);
 }
 
 static void addcan(Symtab symtab, int tok, Node *n)
@@ -235,8 +235,8 @@ Node * Canonical(Symtab symtab, Node *n)
 	can = NULL;
 	addcan(symtab, tok, n);
 #if 1
-	LTL2BA_Debug("\nA0: "); LTL2BA_Dump(can);
-	LTL2BA_Debug("\nA1: "); LTL2BA_Dump(n); LTL2BA_Debug("\n");
+	Debug("\nA0: "); Dump(can);
+	Debug("\nA1: "); Dump(n); Debug("\n");
 #endif
 	releasenode(1, n);
 
@@ -246,12 +246,12 @@ Node * Canonical(Symtab symtab, Node *n)
 		{	k1 = (m->ntyp == AND) ? m->lft : m;
 			if (k1->ntyp == TRUE)
 			{	marknode(AND, m);
-				dflt = LTL2BA_True;
+				dflt = True;
 				continue;
 			}
 			if (k1->ntyp == FALSE)
 			{	releasenode(1, can);
-				can = LTL2BA_False;
+				can = False;
 				goto out;
 		}	}
 		for (m = can; m; m = (m->ntyp == AND) ? m->rgt : NULL)
@@ -282,12 +282,12 @@ Node * Canonical(Symtab symtab, Node *n)
 		{	k1 = (m->ntyp == OR) ? m->lft : m;
 			if (k1->ntyp == FALSE)
 			{	marknode(OR, m);
-				dflt = LTL2BA_False;
+				dflt = False;
 				continue;
 			}
 			if (k1->ntyp == TRUE)
 			{	releasenode(1, can);
-				can = LTL2BA_True;
+				can = True;
 				goto out;
 		}	}
 		for (m = can; m; m = (m->ntyp == OR) ? m->rgt : NULL)
@@ -340,7 +340,7 @@ Node * Canonical(Symtab symtab, Node *n)
 	}
 out:
 #if 1
-	LTL2BA_Debug("A2: "); LTL2BA_Dump(can); LTL2BA_Debug("\n");
+	Debug("A2: "); Dump(can); Debug("\n");
 #endif
 	if (!can)
 	{	if (!dflt)

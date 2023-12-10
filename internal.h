@@ -6,15 +6,15 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#define LTL2BA_True       tl_nn(TRUE, NULL, NULL)
-#define LTL2BA_False      tl_nn(FALSE, NULL, NULL)
-#define LTL2BA_Not(a)     push_negation(symtab, tl_nn(NOT, a, NULL))
-#define LTL2BA_rewrite(n) canonical(symtab, right_linked(n))
+#define True       tl_nn(TRUE, NULL, NULL)
+#define False      tl_nn(FALSE, NULL, NULL)
+#define Not(a)     push_negation(symtab, tl_nn(NOT, a, NULL))
+#define rewrite(n) canonical(symtab, right_linked(n))
 
-#define LTL2BA_Debug(x)    { if (0) fprintf(stderr, x); }
-#define LTL2BA_Dump(x)     { if (0) dump(stderr, x); }
+#define Debug(x)    { if (0) fprintf(stderr, x); }
+#define Dump(x)     { if (0) dump(stderr, x); }
 
-#define LTL2BA_Assert(x, y)                                                    \
+#define Assert(x, y)                                                           \
 	{                                                                      \
 		if (!(x)) {                                                    \
 			tl_explain(y);                                         \

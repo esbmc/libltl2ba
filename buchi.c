@@ -1464,17 +1464,17 @@ static void print_c_epilog(FILE *f, const char *c_sym_name_prefix)
   fprintf(f, "void\nltl2ba_finish_monitor(pthread_t t)\n{\n");
   fprintf(f, "\n\t__ESBMC_kill_monitor();\n\n");
 
-  /* LTL2BA_Assert we're not in a bad trap. */
+  /* Assert we're not in a bad trap. */
   fprintf(f, "\t__ESBMC_assert(!%s_bad_prefix_states[%s_statevar],"
 		  "\"LTL_BAD\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
 
-  /* LTL2BA_Assert whether we're in a failing state */
+  /* Assert whether we're in a failing state */
   fprintf(f, "\t__ESBMC_assert(!%s_stutter_accept_table[%s_sym_to_idx()][%s_statevar],"
 		  "\"LTL_FAILING\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
 
-  /* LTL2BA_Assert whether we're in a succeeding state */
+  /* Assert whether we're in a succeeding state */
   fprintf(f, "\t__ESBMC_assert(!%s_good_prefix_excluded_states[%s_statevar],"
 		  "\"LTL_SUCCEEDING\");\n\n", c_sym_name_prefix, c_sym_name_prefix,
 		  c_sym_name_prefix);
