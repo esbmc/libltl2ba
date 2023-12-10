@@ -166,11 +166,8 @@ ltl2ba_Node *  tl_nn(int, ltl2ba_Node *, ltl2ba_Node *);
 
 ltl2ba_Symbol *tl_lookup(ltl2ba_Symtab symtab, const char *);
 
-char *  emalloc(int);
-
 int     anywhere(int, ltl2ba_Node *, ltl2ba_Node *);
 int     isequal(const ltl2ba_Node *, const ltl2ba_Node *);
-int     tl_Getchar(void);
 
 void *         tl_emalloc(int);
 ltl2ba_ATrans *emalloc_atrans(int sym_size, int node_size);
@@ -182,15 +179,10 @@ ltl2ba_BTrans *emalloc_btrans(int sym_size);
 void           free_btrans(ltl2ba_BTrans *, ltl2ba_BTrans *, int);
 void           a_stats(void);
 void           cache_stats(void);
-void           dump(FILE *, const ltl2ba_Node *);
-void           fatal(const char *);
 void           releasenode(int, ltl2ba_Node *);
 void           tfree(void *);
-void           tl_explain(int);
-void           tl_UnGetchar(void);
 ltl2ba_Node *  tl_parse(ltl2ba_Symtab symtab, ltl2ba_Cexprtab *cexpr,
                         ltl2ba_Flags flags);
-void           tl_yyerror(ltl2ba_Lexer *lex, char *);
 
 ltl2ba_Alternating mk_alternating(const ltl2ba_Node *, FILE *,
                                   const ltl2ba_Cexprtab *cexpr,
@@ -242,9 +234,18 @@ int *list_set(int *, int);
 
 void print_sym_set(FILE *f, const char *const *sym_table,
                    const ltl2ba_Cexprtab *cexpr, int *l, int size);
-void timeval_subtract(struct timeval *, struct timeval *, struct timeval *);
-void put_uform(FILE *);
 void cache_dump(void);
+
+/* implemented by driver (e.g. main.c) */
+void  dump(FILE *, const ltl2ba_Node *);
+char *emalloc(int);
+void  fatal(const char *);
+void  put_uform(FILE *);
+void  timeval_subtract(struct timeval *, struct timeval *, struct timeval *);
+void  tl_explain(int);
+int   tl_Getchar(void);
+void  tl_UnGetchar(void);
+void  tl_yyerror(ltl2ba_Lexer *lex, char *);
 
 #ifdef __cplusplus
 }
