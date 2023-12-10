@@ -43,6 +43,10 @@
 
 #undef LTL2BA_EMALLOC_VERBOSE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct Symbol {
 	char *name;
 	struct Symbol *next; /* linked list, symbol table */
@@ -256,3 +260,7 @@ void print_sym_set(FILE *f, const char *const *sym_table,
 void timeval_subtract(struct timeval *, struct timeval *, struct timeval *);
 void put_uform(FILE *);
 void cache_dump(void);
+
+#ifdef __cplusplus
+}
+#endif
