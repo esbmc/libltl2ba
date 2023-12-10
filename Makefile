@@ -55,6 +55,13 @@ DEPS = $(LTL2C:.o=.d) main.d
 # rules
 all: ltl2c libltl2ba.a
 
+debug: CFLAGS += -g
+debug: all
+
+release: CPPFLAGS += -DNDEBUG
+release: CFLAGS += -O2
+release: all
+
 ltl2c: ltl2ba
 	$(RM) -f ltl2c && $(LN) -s $< $@
 
@@ -109,6 +116,6 @@ clean:
 		main.o $(LTL2C) \
 		$(DEPS) \
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install uninstall debug release
 
 -include $(DEPS)
