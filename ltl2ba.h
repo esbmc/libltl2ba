@@ -167,13 +167,13 @@ typedef struct {
 typedef struct {
 	GState *gstates, **init;
 	int init_size, gstate_id, *final, scc_size;
-	struct set_sizes sz;
+	struct set_sizes sz; /* copy from Alternating automaton */
 } Generalized;
 
 typedef struct {
 	BState *bstates;
 	int accept;
-	struct set_sizes sz;
+	struct set_sizes sz; /* copy from Generalized automaton */
 } Buchi;
 
 Node *  Canonical(tl_Symtab symtab, Node *);
