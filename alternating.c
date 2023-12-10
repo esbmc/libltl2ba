@@ -350,7 +350,7 @@ static void simplify_astates(const Node **label, Alternating *alt,
 
 /* dumps the alternating automaton */
 static void print_alternating(FILE *f, const Node **label,
-                              const tl_Cexprtab *cexpr, const Alternating *alt)
+                              const Cexprtab *cexpr, const Alternating *alt)
 {
   int i;
   ATrans *t;
@@ -386,8 +386,8 @@ static void print_alternating(FILE *f, const Node **label,
 \********************************************************************/
 
 /* generates an alternating automaton for p */
-Alternating mk_alternating(const Node *p, FILE *tl_out, const tl_Cexprtab *cexpr,
-                           tl_Flags flags)
+Alternating mk_alternating(const Node *p, FILE *tl_out, const Cexprtab *cexpr,
+                           Flags flags)
 {
   struct counts cnts;
   memset(&cnts, 0, sizeof(cnts));

@@ -54,7 +54,7 @@ Node * in_cache(Node *n)
 	return NULL;
 }
 
-Node * cached(tl_Symtab symtab, Node *n)
+Node * cached(Symtab symtab, Node *n)
 {
 	Cache *d;
 	Node *m;

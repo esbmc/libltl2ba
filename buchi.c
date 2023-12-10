@@ -83,7 +83,7 @@ static void copy_btrans(const set_sizes *sz, BTrans *from, BTrans *to) {
 }
 
 /* simplifies the transitions */
-static int simplify_btrans(Buchi *b, FILE *f, tl_Flags flags)
+static int simplify_btrans(Buchi *b, FILE *f, Flags flags)
 {
   BState *s;
   BTrans *t, *t1;
@@ -215,7 +215,7 @@ static int all_btrans_match(Buchi *buchi, BState *a, BState *b)
 }
 
 /* eliminates redundant states */
-static int simplify_bstates(Buchi *b, FILE *f, tl_Flags flags, int *gstate_id,
+static int simplify_bstates(Buchi *b, FILE *f, Flags flags, int *gstate_id,
                             BState *const bremoved)
 {
   BState *s, *s1, *s2;
@@ -409,7 +409,7 @@ static int next_final(Buchi *b, int *set, int fin, const int *final) /* computes
 }
 
 /* creates all the transitions from a state */
-static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
+static void make_btrans(Buchi *b, BState *s, const int *final, Flags flags,
                         struct bcounts *c, BState *const bstack,
                         BState *const bremoved)
 {
@@ -500,7 +500,7 @@ static void make_btrans(Buchi *b, BState *s, const int *final, tl_Flags flags,
 
 /* dumps the Buchi automaton */
 static void print_buchi(FILE *f, const char *const *sym_table,
-                        const tl_Cexprtab *cexpr, const Buchi *b, BState *s,
+                        const Cexprtab *cexpr, const Buchi *b, BState *s,
                         int scc_size)
 {
   BTrans *t;
@@ -622,7 +622,7 @@ static void print_dot_state_name(FILE *f, const Buchi *b, BState *s) {
   }
 }
 
-void print_dot_buchi(FILE *f, const Buchi *b, const char *const *sym_table, const tl_Cexprtab *cexpr) {
+void print_dot_buchi(FILE *f, const Buchi *b, const char *const *sym_table, const Cexprtab *cexpr) {
   BTrans *t;
   BState *s;
   int accept_all = 0, init_count = 0;
@@ -686,7 +686,7 @@ void print_dot_buchi(FILE *f, const Buchi *b, const char *const *sym_table, cons
 \********************************************************************/
 
 /* generates a Buchi automaton from the generalized Buchi automaton */
-Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_table, const tl_Cexprtab *cexpr)
+Buchi mk_buchi(Generalized *g, FILE *f, Flags flags, const char *const *sym_table, const Cexprtab *cexpr)
 {
   int i;
   BState *s = (BState *)tl_emalloc(sizeof(BState));
@@ -804,7 +804,7 @@ Buchi mk_buchi(Generalized *g, FILE *f, tl_Flags flags, const char *const *sym_t
 }
 
 
-static void print_c_headers(FILE *f, const tl_Cexprtab *cexpr,
+static void print_c_headers(FILE *f, const Cexprtab *cexpr,
                             const char *c_sym_name_prefix)
 {
   int i;
@@ -1116,7 +1116,7 @@ static int * pess_reach(Slist **tr, int st, int depth, int state_count, int stat
 
 static void print_behaviours(const Buchi *b, FILE *f,
                              const char *const *sym_table,
-                             const tl_Cexprtab *cexpr, int sym_id,
+                             const Cexprtab *cexpr, int sym_id,
                              struct accept_sets *as)
 {
   BState *s;
@@ -1483,7 +1483,7 @@ static void print_c_epilog(FILE *f, const char *c_sym_name_prefix)
 }
 
 void print_c_buchi(FILE *f, const Buchi *b, const char *const *sym_table,
-                   const tl_Cexprtab *cexpr, int sym_id,
+                   const Cexprtab *cexpr, int sym_id,
                    const char *c_sym_name_prefix)
 {
   BTrans *t, *t1;

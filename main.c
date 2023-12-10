@@ -89,7 +89,7 @@ usage: %s [-flag] -f 'formula'\n\
 	alldone(code);
 }
 
-static void tl_main(char *formula, enum out outmode, tl_Flags flags,
+static void tl_main(char *formula, enum out outmode, Flags flags,
                     const char *c_sym_name_prefix)
 {
 	for (int i = 0; formula[i]; i++)
@@ -101,9 +101,9 @@ static void tl_main(char *formula, enum out outmode, tl_Flags flags,
 	strcpy(uform, formula);
 	hasuform = strlen(uform);
 
-	tl_Symtab symtab;
+	Symtab symtab;
 	memset(&symtab, 0, sizeof(symtab));
-	tl_Cexprtab cexpr;
+	Cexprtab cexpr;
 	memset(&cexpr, 0, sizeof(cexpr));
 
 	Node *p = tl_parse(symtab, &cexpr, flags);
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	char *ltl_file = NULL;
 	char *add_ltl  = NULL;
 	char *formula  = NULL, *inv_formula = NULL;
-	tl_Flags flags = LTL2BA_SIMP_LOG
+	Flags flags    = LTL2BA_SIMP_LOG
 	               | LTL2BA_SIMP_DIFF
 	               | LTL2BA_SIMP_FLY
 	               | LTL2BA_SIMP_SCC
@@ -345,7 +345,7 @@ non_fatal(int tl_yychar, const char *s1)
 }
 
 void
-tl_yyerror(tl_Lexer *lex, char *s1)
+tl_yyerror(Lexer *lex, char *s1)
 {
 	non_fatal(lex->tl_yychar, s1);
 	alldone(1);

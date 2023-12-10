@@ -100,7 +100,7 @@ static int same_gtrans(const set_sizes *sz, GState *a, GTrans *s,
 }
 
 /* simplifies the transitions */
-static int simplify_gtrans(Generalized *g, FILE *f, tl_Flags flags, int *bad_scc)
+static int simplify_gtrans(Generalized *g, FILE *f, Flags flags, int *bad_scc)
 {
   int changed = 0;
   GState *s;
@@ -208,7 +208,7 @@ static int all_gtrans_match(const Generalized *g, GState *a, GState *b,
 }
 
 /* eliminates redundant states */
-static int simplify_gstates(Generalized *g, FILE *f, tl_Flags flags, int *bad_scc,
+static int simplify_gstates(Generalized *g, FILE *f, Flags flags, int *bad_scc,
                             GState *gremoved)
 {
   int changed = 0;
@@ -335,7 +335,7 @@ static void simplify_gscc(Generalized *g, int *final_set, int **bad_scc,
 
 /*is the transition final for i ?*/
 static int is_final(const set_sizes *sz, int *from, ATrans *at, int i,
-                    ATrans **transition, tl_Flags flags)
+                    ATrans **transition, Flags flags)
 {
   ATrans *t;
   int in_to;
@@ -392,7 +392,7 @@ static GState *find_gstate(Generalized *g, int *set, GState *s, GState *gstack,
 
 /* creates all the transitions from a state */
 static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
-                        tl_Flags flags, int *fin, struct gcounts *c,
+                        Flags flags, int *fin, struct gcounts *c,
                         int *bad_scc, GState *gstack, GState *gremoved)
 {
   int i, *list, state_trans = 0, trans_exist = 1;
@@ -540,7 +540,7 @@ static void make_gtrans(Generalized *g, GState *s, ATrans **transition,
 
 /* dumps the generalized Buchi automaton */
 static void reverse_print_generalized(FILE *f, const char *const *sym_table,
-                                      const tl_Cexprtab *cexpr, Generalized *g,
+                                      const Cexprtab *cexpr, Generalized *g,
                                       GState *s)
 {
   GTrans *t;
@@ -566,7 +566,7 @@ static void reverse_print_generalized(FILE *f, const char *const *sym_table,
 
 /* prints intial states and calls 'reverse_print' */
 static void print_generalized(FILE *f, const char *const *sym_table,
-                              const tl_Cexprtab *cexpr, Generalized *g)
+                              const Cexprtab *cexpr, Generalized *g)
 {
   int i;
   fprintf(f, "init :\n");
@@ -580,8 +580,8 @@ static void print_generalized(FILE *f, const char *const *sym_table,
 |*                       Main method                                *|
 \********************************************************************/
 
-Generalized mk_generalized(const Alternating *alt, FILE * tl_out, tl_Flags flags,
-                           const tl_Cexprtab *cexpr)
+Generalized mk_generalized(const Alternating *alt, FILE * tl_out, Flags flags,
+                           const Cexprtab *cexpr)
 { /* generates a generalized Buchi automaton from the alternating automaton */
   ATrans *t;
   GState *s, *gstack = NULL, *gremoved = NULL;

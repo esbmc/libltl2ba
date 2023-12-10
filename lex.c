@@ -35,7 +35,7 @@ static int hash(const char *s)
 }
 
 static void
-getword(tl_Lexer *lex, int first, int (*tst)(int))
+getword(Lexer *lex, int first, int (*tst)(int))
 {	int i=0; char c;
 
 	lex->yytext[i++]= (char ) first;
@@ -46,7 +46,7 @@ getword(tl_Lexer *lex, int first, int (*tst)(int))
 }
 
 static int
-follow(tl_Lexer *lex, int tok, int ifyes, int ifno)
+follow(Lexer *lex, int tok, int ifyes, int ifno)
 {	int c;
 	char buf[32];
 
@@ -60,7 +60,7 @@ follow(tl_Lexer *lex, int tok, int ifyes, int ifno)
 }
 
 static int
-tl_lex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
+tl_lex(Symtab symtab, Cexprtab *cexpr, Lexer *lex)
 {	int c;
 
 	do {
@@ -175,7 +175,7 @@ tl_lex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 }
 
 int
-tl_yylex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
+tl_yylex(Symtab symtab, Cexprtab *cexpr, Lexer *lex)
 {	int c = tl_lex(symtab, cexpr, lex);
 #if 0
 	printf("c = %d\n", c);
@@ -183,7 +183,7 @@ tl_yylex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex)
 	return c;
 }
 
-Symbol * tl_lookup(tl_Symtab symtab, const char *s)
+Symbol * tl_lookup(Symtab symtab, const char *s)
 {
 	Symbol *sp;
 	int h = hash(s);

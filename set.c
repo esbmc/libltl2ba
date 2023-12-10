@@ -121,7 +121,7 @@ void spin_print_set(FILE *f, const char *const *sym_table, int *pos, int *neg, i
 
 /* prints the content of a set for dot */
 void dot_print_set(FILE *f, const char *const *sym_table,
-                   const tl_Cexprtab *cexpr, int *pos, int *neg, int sym_size,
+                   const Cexprtab *cexpr, int *pos, int *neg, int sym_size,
                    int need_parens)
 {
   int i, j, start = 1;
@@ -176,7 +176,7 @@ void print_set(FILE *f, int *l, int size) /* prints the content of a set */
 
 /* prints the content of a symbol set */
 void print_sym_set(FILE *f, const char *const *sym_table,
-                   const tl_Cexprtab *cexpr, int *l, int size)
+                   const Cexprtab *cexpr, int *l, int size)
 {
   int i, j, cex, start = 1;;
   fprintf(f, "{");

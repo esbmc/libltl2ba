@@ -45,7 +45,7 @@ common1:		sdump(n->lft);
 }
 
 static Symbol *
-DoDump(tl_Symtab symtab, Node *n)
+DoDump(Symtab symtab, Node *n)
 {
 	if (!n) return NULL;
 
@@ -77,7 +77,7 @@ right_linked(Node *n)
 }
 
 Node *
-canonical(tl_Symtab symtab, Node *n)
+canonical(Symtab symtab, Node *n)
 {	Node *m;	/* assumes input is right_linked */
 
 	if (!n) return n;
@@ -91,7 +91,7 @@ canonical(tl_Symtab symtab, Node *n)
 }
 
 Node *
-push_negation(tl_Symtab symtab, Node *n)
+push_negation(Symtab symtab, Node *n)
 {	Node *m;
 
 	LTL2BA_Assert(n->ntyp == NOT, n->ntyp);
@@ -144,7 +144,7 @@ same:		m = n->lft->rgt;
 	return LTL2BA_rewrite(n);
 }
 
-static void addcan(tl_Symtab symtab, int tok, Node *n)
+static void addcan(Symtab symtab, int tok, Node *n)
 {
 	Node	*m, *prev = NULL;
 	Node	**ptr;
@@ -221,7 +221,7 @@ marknode(int tok, Node *m)
 	m->ntyp = -1;
 }
 
-Node * Canonical(tl_Symtab symtab, Node *n)
+Node * Canonical(Symtab symtab, Node *n)
 {
 	Node *m, *p, *k1, *k2, *prev, *dflt = NULL;
 	int tok;

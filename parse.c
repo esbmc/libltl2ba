@@ -11,11 +11,11 @@
 
 #include "internal.h"
 
-extern int tl_yylex(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex);
+extern int tl_yylex(Symtab symtab, Cexprtab *cexpr, Lexer *lex);
 
-static Node	*tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags);
-static Node	*tl_factor(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags);
-static Node	*tl_level(tl_Symtab, tl_Cexprtab *cexpr, tl_Lexer *, tl_Flags, int);
+static Node	*tl_formula(Symtab symtab, Cexprtab *cexpr, Lexer *lex, Flags);
+static Node	*tl_factor(Symtab, Cexprtab *cexpr, Lexer *, Flags);
+static Node	*tl_level(Symtab, Cexprtab *cexpr, Lexer *, Flags, int);
 
 static const int prec[5][2] = {
 	{ U_OPER, V_OPER, },
@@ -53,7 +53,7 @@ implies(Node *a, Node *b)
 }
 
 static Node *
-bin_simpler(tl_Symtab symtab, Node *ptr)
+bin_simpler(Symtab symtab, Node *ptr)
 {	Node *a, *b;
 
 	if (ptr)
@@ -403,7 +403,7 @@ bin_simpler(tl_Symtab symtab, Node *ptr)
 }
 
 static Node *
-bin_minimal(tl_Symtab symtab, Node *ptr)
+bin_minimal(Symtab symtab, Node *ptr)
 {       if (ptr)
 	switch (ptr->ntyp) {
 	case IMPLIES:
@@ -417,7 +417,7 @@ bin_minimal(tl_Symtab symtab, Node *ptr)
 }
 
 static Node *
-tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
+tl_factor(Symtab symtab, Cexprtab *cexpr, Lexer *lex, Flags flags)
 {	Node *ptr = NULL;
 
 	switch (lex->tl_yychar) {
@@ -511,7 +511,7 @@ tl_factor(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
 }
 
 static Node *
-tl_level(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags, int nr)
+tl_level(Symtab symtab, Cexprtab *cexpr, Lexer *lex, Flags flags, int nr)
 {
 	unsigned i;
 	Node *ptr = NULL, *bin = NULL, **tail = &bin;
@@ -574,15 +574,15 @@ again:
 	return ptr;
 }
 
-static Node * tl_formula(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Lexer *lex, tl_Flags flags)
+static Node * tl_formula(Symtab symtab, Cexprtab *cexpr, Lexer *lex, Flags flags)
 {
 	lex->tl_yychar = tl_yylex(symtab, cexpr, lex);
 	return tl_level(symtab, cexpr, lex, flags, sizeof(prec)/sizeof(*prec)-1); /* 5 precedence levels: 4 to 0 */
 }
 
-Node * tl_parse(tl_Symtab symtab, tl_Cexprtab *cexpr, tl_Flags flags)
+Node * tl_parse(Symtab symtab, Cexprtab *cexpr, Flags flags)
 {
-	tl_Lexer lex;
+	Lexer lex;
 	memset(&lex, 0, sizeof(lex));
 	Node *f = tl_formula(symtab, cexpr, &lex, flags);
 	if (lex.tl_yychar != ';')

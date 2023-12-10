@@ -35,10 +35,10 @@ typedef ltl2ba_BState      BState;
 typedef ltl2ba_Alternating Alternating;
 typedef ltl2ba_Generalized Generalized;
 typedef ltl2ba_Buchi       Buchi;
-typedef ltl2ba_Symtab      tl_Symtab;
-typedef ltl2ba_Cexprtab    tl_Cexprtab;
-typedef ltl2ba_Lexer       tl_Lexer;
-typedef ltl2ba_Flags       tl_Flags;
+typedef ltl2ba_Symtab      Symtab;
+typedef ltl2ba_Cexprtab    Cexprtab;
+typedef ltl2ba_Lexer       Lexer;
+typedef ltl2ba_Flags       Flags;
 typedef ltl2ba_set_sizes   set_sizes;
 
 #define ALWAYS     LTL2BA_ALWAYS
