@@ -12,9 +12,7 @@
 #define LTL2BA_rewrite(n) canonical(symtab, right_linked(n))
 
 #define LTL2BA_Debug(x)    { if (0) fprintf(stderr, x); }
-#define LTL2BA_Debug2(x,y) { if (tl_verbose) fprintf(stderr, x,y); }
 #define LTL2BA_Dump(x)     { if (0) dump(stderr, x); }
-#define LTL2BA_Explain(x)  { if (tl_verbose) tl_explain(x); }
 
 #define LTL2BA_Assert(x, y)                                                    \
 	{                                                                      \
