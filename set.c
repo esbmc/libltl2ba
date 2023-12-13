@@ -47,13 +47,6 @@ int *dup_set(int *l, int size) /* duplicates a set */
   return m;
 }
 
-void merge_sets(int *l1, int *l2, int size) /* puts the union of the two sets in l1 */
-{
-  int i;
-  for(i = 0; i < size; i++)
-    l1[i] = l1[i] | l2[i];
-}
-
 void do_merge_sets(int *l, int *l1, int *l2, int size) /* makes the union of two sets */
 {
   int i;

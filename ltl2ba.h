@@ -211,7 +211,6 @@ int *clear_set(int *, int);
 int *make_set(int, int);
 void copy_set(int *, int *, int);
 int *dup_set(int *, int);
-void merge_sets(int *, int *, int);
 void do_merge_sets(int *, int *, int *, int);
 int *intersect_sets(int *, int *, int);
 void add_set(int *, int);

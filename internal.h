@@ -69,3 +69,9 @@ timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
 	result->tv_sec = x->tv_sec - y->tv_sec;
 	result->tv_usec = x->tv_usec - y->tv_usec;
 }
+
+/* puts the union of the two sets in l1 */
+static inline void merge_sets(int *l1, int *l2, int size)
+{
+	do_merge_sets(l1, l1, l2, size);
+}
