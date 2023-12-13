@@ -11,8 +11,6 @@
 
 #include "internal.h"
 
-static Node	*can = NULL;
-
 static void
 sdump(Node *n, char *dumpbuf)
 {
@@ -143,7 +141,7 @@ same:		m = n->lft->rgt;
 	return rewrite(n);
 }
 
-static void addcan(Symtab symtab, int tok, Node *n)
+static void addcan(Symtab symtab, int tok, Node *n, Node **pcan)
 {
 	Node	*m, *prev = NULL;
 	Node	**ptr;
@@ -154,8 +152,8 @@ static void addcan(Symtab symtab, int tok, Node *n)
 
 	if (n->ntyp == tok)
 	{
-		addcan(symtab, tok, n->rgt);
-		addcan(symtab, tok, n->lft);
+		addcan(symtab, tok, n->rgt, pcan);
+		addcan(symtab, tok, n->lft, pcan);
 		return;
 	}
 #if 0
@@ -164,22 +162,22 @@ static void addcan(Symtab symtab, int tok, Node *n)
 		return;
 #endif
 	N = dupnode(n);
-	if (!can)
+	if (!*pcan)
 	{
-		can = N;
+		*pcan = N;
 		return;
 	}
 
 	s = DoDump(symtab, N);
-	if (can->ntyp != tok)	/* only one element in list so far */
+	if ((*pcan)->ntyp != tok)	/* only one element in list so far */
 	{
-		ptr = &can;
+		ptr = pcan;
 		goto insert;
 	}
 
 	/* there are at least 2 elements in list */
 	prev = NULL;
-	for (m = can; m->ntyp == tok && m->rgt; prev = m, m = m->rgt)
+	for (m = *pcan; m->ntyp == tok && m->rgt; prev = m, m = m->rgt)
 	{
 		t = DoDump(symtab, m->lft);
 		cmp = strcmp(s->name, t->name);
@@ -189,7 +187,7 @@ static void addcan(Symtab symtab, int tok, Node *n)
 		{
 			if (!prev)
 			{
-				can = tl_nn(tok, N, can);
+				*pcan = tl_nn(tok, N, *pcan);
 				return;
 			} else
 			{
@@ -281,8 +279,8 @@ Node * Canonical(Symtab symtab, Node *n)
 	if (tok != AND && tok != OR)
 		return n;
 
-	can = NULL;
-	addcan(symtab, tok, n);
+	Node *can = NULL;
+	addcan(symtab, tok, n, &can);
 #if 1
 	Debug("\nA0: "); Dump(can);
 	Debug("\nA1: "); Dump(n); Debug("\n");
