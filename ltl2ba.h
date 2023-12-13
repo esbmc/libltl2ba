@@ -163,7 +163,11 @@ ltl2ba_Node *  tl_nn(int, ltl2ba_Node *, ltl2ba_Node *);
 
 ltl2ba_Symbol *tl_lookup(ltl2ba_Symtab symtab, const char *);
 
-int     isequal(const ltl2ba_Node *, const ltl2ba_Node *);
+int            isequal(const ltl2ba_Node *, const ltl2ba_Node *);
+
+void           a_stats(void);
+void           cache_stats(void);
+void           cache_dump(void);
 
 void *         tl_emalloc(int);
 ltl2ba_ATrans *emalloc_atrans(int sym_size, int node_size);
@@ -173,10 +177,9 @@ ltl2ba_GTrans *emalloc_gtrans(int sym_size, int node_size);
 void           free_gtrans(ltl2ba_GTrans *, ltl2ba_GTrans *, int);
 ltl2ba_BTrans *emalloc_btrans(int sym_size);
 void           free_btrans(ltl2ba_BTrans *, ltl2ba_BTrans *, int);
-void           a_stats(void);
-void           cache_stats(void);
 void           releasenode(int, ltl2ba_Node *);
 void           tfree(void *);
+
 ltl2ba_Node *  tl_parse(ltl2ba_Symtab symtab, ltl2ba_Cexprtab *cexpr,
                         ltl2ba_Flags flags);
 
@@ -228,7 +231,6 @@ int *list_set(int *, int);
 
 void print_sym_set(FILE *f, const char *const *sym_table,
                    const ltl2ba_Cexprtab *cexpr, int *l, int size);
-void cache_dump(void);
 
 /* implemented by driver (e.g. main.c) */
 void  dump(FILE *, const ltl2ba_Node *);
