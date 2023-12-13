@@ -77,14 +77,6 @@ int empty_intersect_sets(int *l1, int *l2, int size) /* tests intersection of tw
   return !test;
 }
 
-int same_set(int *l1, int *l2, int size) /* tests equality of two sets */
-{
-  int i, test = 0;
-  for(i = 0; i < size; i++)
-    test |= l1[i] != l2[i];
-  return !test;
-}
-
 
 void add_set(int *l, int n) /* adds an element to a set */
 {

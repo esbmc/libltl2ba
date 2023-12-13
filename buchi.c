@@ -1279,7 +1279,7 @@ static void print_behaviours(const Buchi *b, FILE *f,
             while(set_list2) {
               set_list = set_list2;
               while(set_list->nxt) {
-                if(same_set(set_list->nxt->set,set_list2->set,state_size)) {
+                if(same_sets(set_list->nxt->set,set_list2->set,state_size)) {
                   Slist * drop = set_list->nxt;
                   set_list->nxt = drop -> nxt;
                   tfree(drop -> set);
