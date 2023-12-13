@@ -13,10 +13,8 @@
 
 static Node	*can = NULL;
 
-static char	dumpbuf[2048];
-
 static void
-sdump(Node *n)
+sdump(Node *n, char *dumpbuf)
 {
 	switch (n->ntyp) {
 	case PREDICATE:	strcat(dumpbuf, n->sym->name);
@@ -28,8 +26,8 @@ sdump(Node *n)
 	case OR:	strcat(dumpbuf, "|");
 			goto common2;
 	case AND:	strcat(dumpbuf, "&");
-common2:		sdump(n->rgt);
-common1:		sdump(n->lft);
+common2:		sdump(n->rgt, dumpbuf);
+common1:		sdump(n->lft, dumpbuf);
 			break;
 	case NEXT:	strcat(dumpbuf, "X");
 			goto common1;
@@ -52,8 +50,9 @@ DoDump(Symtab symtab, Node *n)
 	if (n->ntyp == PREDICATE)
 		return n->sym;
 
+	char dumpbuf[2048];
 	dumpbuf[0] = '\0';
-	sdump(n);
+	sdump(n, dumpbuf);
 	return tl_lookup(symtab, dumpbuf);
 }
 
