@@ -111,7 +111,7 @@ tl_nn(int t, Node *ll, Node *rl)
 	return n;
 }
 
-Node * getnode(const Node *p)
+static Node * getnode(const Node *p)
 {
 	Node *n;
 

@@ -156,7 +156,6 @@ ltl2ba_Node *  Canonical(ltl2ba_Symtab symtab, ltl2ba_Node *);
 ltl2ba_Node *  canonical(ltl2ba_Symtab symtab, ltl2ba_Node *);
 ltl2ba_Node *  cached(ltl2ba_Symtab symtab, ltl2ba_Node *);
 ltl2ba_Node *  dupnode(const ltl2ba_Node *);
-ltl2ba_Node *  getnode(const ltl2ba_Node *);
 ltl2ba_Node *  in_cache(ltl2ba_Node *);
 ltl2ba_Node *  push_negation(ltl2ba_Symtab symtab, ltl2ba_Node *);
 ltl2ba_Node *  right_linked(ltl2ba_Node *);
