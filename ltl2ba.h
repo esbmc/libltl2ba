@@ -198,7 +198,6 @@ void print_dot_buchi(FILE *f, const ltl2ba_Buchi *b,
                      const ltl2ba_Cexprtab *cexpr);
 void print_spin_buchi(FILE *f, const ltl2ba_Buchi *b, const char **sym_table);
 
-ltl2ba_ATrans *dup_trans(const ltl2ba_set_sizes *sz, const ltl2ba_ATrans *);
 ltl2ba_ATrans *merge_trans(const ltl2ba_set_sizes *sz, const ltl2ba_ATrans *,
                            const ltl2ba_ATrans *);
 void do_merge_trans(const ltl2ba_set_sizes *sz, ltl2ba_ATrans **,

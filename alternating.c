@@ -60,7 +60,7 @@ static int calculate_sym_size(const Node *p)
 }
 
 /* returns the copy of a transition */
-ATrans *dup_trans(const set_sizes *sz, const ATrans *trans)
+static ATrans *dup_trans(const set_sizes *sz, const ATrans *trans)
 {
   ATrans *result;
   if(!trans) return NULL;
