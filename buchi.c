@@ -822,9 +822,9 @@ static void print_c_headers(FILE *f, const Cexprtab *cexpr,
   fprintf(f, "void __ESBMC_really_atomic_end();\n");
   fprintf(f, "void __ESBMC_atomic_begin();\n");
   fprintf(f, "void __ESBMC_atomic_end();\n");
-  fprintf(f, "void __ESBMC_assume(bool prop);\n");
+  fprintf(f, "void __ESBMC_assume(_Bool prop);\n");
   fprintf(f, "void __ESBMC_kill_monitor();\n");
-  fprintf(f, "int nondet_uint();\n\n");
+  fprintf(f, "unsigned int nondet_uint();\n\n");
 
   /* Pump out the C expressions we'll be using */
   for (i = 0; i < cexpr->cexpr_idx; i++) {
