@@ -1,5 +1,5 @@
 
-#include "ltl2ba.h"
+#include <ltl2ba.h>
 
 #include <assert.h>
 #include <string.h>

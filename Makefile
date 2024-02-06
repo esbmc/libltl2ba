@@ -42,15 +42,17 @@ bindir ?= $(prefix)/bin
 includedir ?= $(prefix)/include
 
 # compile flags
-CPPFLAGS = -MD
+CPPFLAGS = -MD -Iinc
 CFLAGS = $(WARNS)
 WARNS  = -Wall -Wextra -Wno-unused
 
 # objects
-LTL2C =	parse.o lex.o buchi.o set.o \
-	mem.o rewrt.o cache.o alternating.o generalized.o
+LTL2C = $(addprefix src/,\
+	parse.o lex.o buchi.o set.o \
+	mem.o rewrt.o cache.o alternating.o generalized.o \
+)
 
-DEPS = $(LTL2C:.o=.d) main.d
+DEPS = $(LTL2C:.o=.d) src/main.d
 
 # rules
 all: ltl2c libltl2ba.a
@@ -68,7 +70,7 @@ ltl2c: ltl2ba
 libltl2ba.a: $(LTL2C)
 	$(AR) rcs $@ $^
 
-ltl2ba: main.o libltl2ba.a
+ltl2ba: src/main.o libltl2ba.a
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(LTL2C): Makefile
@@ -92,8 +94,8 @@ Cflags: -I\$${includedir}\\n\
 	"$$($(REALPATH) -m $(libdir))" \
 	"$$($(REALPATH) -m $(includedir))" > $@
 
-install: ltl2c ltl2ba ltl2ba.h libltl2ba.a
-	$(INSTALL) -D -m 0644 -t $(DESTDIR)$(includedir) ltl2ba.h
+install: ltl2c ltl2ba inc/ltl2ba.h libltl2ba.a
+	$(INSTALL) -D -m 0644 -t $(DESTDIR)$(includedir) inc/ltl2ba.h
 	$(INSTALL) -D -m 0644 -t $(DESTDIR)$(libdir) libltl2ba.a
 	$(INSTALL) -D -m 0755 -t $(DESTDIR)$(bindir) ltl2ba
 	$(RM) -f $(DESTDIR)$(bindir)/ltl2c && \
@@ -113,7 +115,7 @@ uninstall:
 clean:
 	$(RM) -f ltl2c ltl2ba \
 		libltl2ba.a libltl2ba.pc \
-		main.o $(LTL2C) \
+		src/main.o $(LTL2C) \
 		$(DEPS) \
 
 .PHONY: all clean install uninstall debug release
