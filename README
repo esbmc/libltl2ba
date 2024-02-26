@@ -70,7 +70,7 @@ Temporal operators:
         V       (release)
         X       (next)
 
-Use spaces between any symbols. Unary operators bind stronger that binary ones.
+Use spaces between any symbols. Unary operators bind stronger than binary ones.
 Precedence (high to low) and associativity of binary operators is as follows:
 
         U, V  : right
