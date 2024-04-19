@@ -198,7 +198,8 @@ ltl2ba_Buchi mk_buchi(ltl2ba_Generalized *g, FILE *, ltl2ba_Flags,
 
 void print_c_buchi(FILE *f, const ltl2ba_Buchi *b, const char *const *sym_table,
                    const ltl2ba_Cexprtab *cexpr, int sym_id,
-                   const char *c_sym_name_prefix);
+                   const char *c_sym_name_prefix, const char *extern_header,
+                   const char *cmdline);
 void print_dot_buchi(FILE *f, const ltl2ba_Buchi *b,
                      const char *const *sym_table,
                      const ltl2ba_Cexprtab *cexpr);

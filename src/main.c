@@ -85,12 +85,16 @@ usage: %s [-flag] -f 'formula'\n\
  -a            disable trick in (A)ccepting conditions\n\
  -O mode       output mode; one of spin, c or dot\n\
  -C            dump cache info at the end\n\
+ -H C_HEADER   optional #include identifier of a header with extern symbol\n\
+               declarations for C output, either in \"quotes\" or in <brackets>\n\
 ", progname, (int)strlen(progname), "");
 	alldone(code);
 }
 
+static char *cmdline;
+
 static void tl_main(char *formula, enum out outmode, Flags flags,
-                    const char *c_sym_name_prefix)
+                    const char *c_sym_name_prefix, const char *extern_c_header)
 {
 	for (int i = 0; formula[i]; i++)
 		if (formula[i] == '\t'
@@ -140,7 +144,8 @@ static void tl_main(char *formula, enum out outmode, Flags flags,
 		print_spin_buchi(stdout, &b, alt.sym_table);
 		break;
 	case OUT_C:
-		print_c_buchi(stdout, &b, alt.sym_table, &cexpr, alt.sym_id, c_sym_name_prefix);
+		print_c_buchi(stdout, &b, alt.sym_table, &cexpr, alt.sym_id,
+		              c_sym_name_prefix, extern_c_header, cmdline);
 		break;
 	case OUT_DOT:
 		print_dot_buchi(stdout, &b, alt.sym_table, &cexpr);
@@ -149,6 +154,11 @@ static void tl_main(char *formula, enum out outmode, Flags flags,
 
 	if (flags & LTL2BA_STATS)
 		tl_endstats();
+}
+
+static void free_cmdline(void)
+{
+	free(cmdline);
 }
 
 int main(int argc, char *argv[])
@@ -165,13 +175,29 @@ int main(int argc, char *argv[])
 	               | LTL2BA_FJTOFJ;
 	enum out outmode = OUT_SPIN;
 	const char *c_sym_name_prefix = "_ltl2ba";
+	const char *extern_c_header = NULL;
 	int display_cache = 0;
+
+	atexit(free_cmdline);
+
+	size_t cmdline_sz = 1;
+	cmdline = calloc(1, cmdline_sz);
+	for (int i = 0; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!arg)
+			arg = "(null)";
+		size_t m = (i ? 1 : 0) + strlen(arg);
+		cmdline = realloc(cmdline, cmdline_sz += m);
+		if (i)
+			strcat(cmdline, " ");
+		strcat(cmdline, arg);
+	}
 
 	progname = argv[0] ? basename(argv[0]) : "";
 	if (!strcmp(progname, "ltl2c"))
 		outmode = OUT_C;
 
-	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:PiC")) != -1;)
+	for (int opt; (opt = getopt(argc, argv, ":hF:f:acopldsO:PiCH:")) != -1;)
 		switch (opt) {
 		case 'h': usage(0); break;
 		case 'F': ltl_file = optarg; break;
@@ -196,6 +222,7 @@ int main(int argc, char *argv[])
 		case 'P': c_sym_name_prefix = optarg; break;
 		case 'i': invert_formula = 1; break;
 		case 'C': display_cache = 1; break;
+		case 'H': extern_c_header = optarg; break;
 		case ':':
 		case '?': usage(1); break;
 		}
@@ -235,7 +262,7 @@ int main(int argc, char *argv[])
 		add_ltl = inv_formula;
 	}
 
-	tl_main(add_ltl, outmode, flags, c_sym_name_prefix);
+	tl_main(add_ltl, outmode, flags, c_sym_name_prefix, extern_c_header);
 
 	free(formula);
 	free(inv_formula);
