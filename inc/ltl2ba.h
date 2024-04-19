@@ -17,8 +17,6 @@
 #define LTL2BA_VERSION_MAJOR 2
 #define LTL2BA_VERSION_MINOR 1
 
-const char * ltl2ba_version(void);
-
 /* LTL2BA_EMPTY_SET is passed to make_set() to create empty */
 #define LTL2BA_EMPTY_SET   (-1)
 #define LTL2BA_SET_SIZE(n) (n / (8 * sizeof(int)) + 1)
@@ -27,6 +25,8 @@ const char * ltl2ba_version(void);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+const char * ltl2ba_version(void);
 
 typedef struct ltl2ba_Symbol {
 	char *name;
