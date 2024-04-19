@@ -54,6 +54,10 @@ LTL2C = $(addprefix src/,\
 
 DEPS = $(LTL2C:.o=.d) src/main.d
 
+VERS := $(shell \
+	printf '#include "inc/ltl2ba.h"\nLTL2BA_VERSION_MAJOR LTL2BA_VERSION_MINOR' | \
+	$(CC) -x c -E - | tail -n1 | tr ' ' .)
+
 # rules
 all: ltl2c libltl2ba.a
 
@@ -86,13 +90,14 @@ includedir=%s\\n\
 \\n\
 Name: libltl2ba\\n\
 Description:\\n\
-Version: 2.0\\n\
+Version: %s\\n\
 Libs: -L\$${libdir} -lltl2ba\\n\
 Cflags: -I\$${includedir}\\n\
 " \
 	"$$($(REALPATH) -m $(prefix))" \
 	"$$($(REALPATH) -m $(libdir))" \
-	"$$($(REALPATH) -m $(includedir))" > $@
+	"$$($(REALPATH) -m $(includedir))" \
+	"$(VERS)" > $@
 
 install: ltl2c ltl2ba inc/ltl2ba.h libltl2ba.a
 	$(INSTALL) -D -m 0644 -t $(DESTDIR)$(includedir) inc/ltl2ba.h
