@@ -1,6 +1,11 @@
 
-* - Add ltl2ba_version() + macros to query link/compile-time version of library.
-  - Adapt C output for current level of support of ESBMC.
+* libltl2ba - Version 2.1 - April 2024
+  Modified by Franz Brauße, University of Manchester, UK
+  Copyright (c) 2023  Franz Brauße
+  Available at https://github.com/fbrausse/libltl2ba
+
+  - Add ltl2ba_version() + macros to query link/compile-time version of library.
+  - Adapt C output for level of support of upcoming ESBMC release v7.6.
   - Parse U, V and -> as right-associative operators and forbid chaining <->
     because there is no universally agreed upon interpretation of a <-> b <-> c.
   - Parser checks that the entire formula was parsed (it silently allowed
