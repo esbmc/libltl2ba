@@ -145,6 +145,29 @@ void dot_print_set(FILE *f, const char *const *sym_table,
   if (count>1 && need_parens) fprintf(f,")");
 }
 
+/* prints the content of a set for C */
+void c_print_set(FILE *f, const char *const *sym_table, int *pos, int *neg, int sym_size)
+{
+  int i, j, start = 1;
+  for(i = 0; i < sym_size; i++)
+    for(j = 0; j < mod; j++) {
+      if(pos && pos[i] & (1 << j)) {
+	if(!start)
+	  fprintf(f, " && ");
+	fprintf(f, "%s()", sym_table[mod * i + j]);
+	start = 0;
+      }
+      if(neg && neg[i] & (1 << j)) {
+	if(!start)
+	  fprintf(f, " && ");
+	fprintf(f, "!%s()", sym_table[mod * i + j]);
+	start = 0;
+      }
+    }
+  if(start)
+    fprintf(f, "1");
+}
+
 void print_set(FILE *f, int *l, int size) /* prints the content of a set */
 {
   int i, j, start = 1;;

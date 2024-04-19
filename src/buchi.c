@@ -887,31 +887,6 @@ static void print_fsm_func_opener(FILE *f)
   return;
 }
 
-/* prints the content of a set for C */
-static void c_print_set(FILE *f, const char *const *sym_table, int *pos, int *neg, int sym_size)
-{
-  static const int mod = 8 * sizeof(int); /* keep in sync with set.c */
-
-  int i, j, start = 1;
-  for(i = 0; i < sym_size; i++)
-    for(j = 0; j < mod; j++) {
-      if(pos && pos[i] & (1 << j)) {
-	if(!start)
-	  fprintf(f, " && ");
-	fprintf(f, "%s()", sym_table[mod * i + j]);
-	start = 0;
-      }
-      if(neg && neg[i] & (1 << j)) {
-	if(!start)
-	  fprintf(f, " && ");
-	fprintf(f, "!%s()", sym_table[mod * i + j]);
-	start = 0;
-      }
-    }
-  if(start)
-    fprintf(f, "1");
-}
-
 static void print_transition_guard(FILE *f, const Buchi *b, BTrans *t,
                                    BState *state, const char *const *sym_table)
 {

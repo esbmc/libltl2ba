@@ -225,7 +225,9 @@ void spin_print_set(FILE *, const char *const *sym_table, int *, int *,
                     int sym_size);
 void dot_print_set(FILE *, const char *const *sym_table,
                    const ltl2ba_Cexprtab *cexpr, int *, int *, int sym_size,
-                   int);
+                   int need_parens);
+void c_print_set(FILE *f, const char *const *sym_table, int *pos, int *neg,
+                 int sym_size);
 void print_set(FILE *, int *, int);
 int  empty_set(int *, int);
 int  empty_intersect_sets(int *, int *, int);
