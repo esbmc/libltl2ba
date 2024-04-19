@@ -48,7 +48,7 @@ WARNS  = -Wall -Wextra -Wno-unused
 
 # objects
 LTL2C = $(addprefix src/,\
-	parse.o lex.o buchi.o set.o \
+	lib.o parse.o lex.o buchi.o set.o \
 	mem.o rewrt.o cache.o alternating.o generalized.o \
 )
 
