@@ -1,5 +1,7 @@
 
-* - Parse U, V and -> as right-associative operators and forbid chaining <->
+* - Add ltl2ba_version() + macros to query link/compile-time version of library.
+  - Adapt C output for current level of support of ESBMC.
+  - Parse U, V and -> as right-associative operators and forbid chaining <->
     because there is no universally agreed upon interpretation of a <-> b <-> c.
   - Parser checks that the entire formula was parsed (it silently allowed
     'a X b' before, interpreting just 'a').
