@@ -55,7 +55,7 @@ LTL2C = $(addprefix src/,\
 DEPS = $(LTL2C:.o=.d) src/main.d
 
 VERS := $(shell \
-	printf '#include "inc/ltl2ba.h"\nLTL2BA_VERSION_MAJOR LTL2BA_VERSION_MINOR' | \
+	printf '\#include "inc/ltl2ba.h"\nLTL2BA_VERSION_MAJOR LTL2BA_VERSION_MINOR' | \
 	$(CC) -x c -E - | tail -n1 | tr ' ' .)
 
 # rules
