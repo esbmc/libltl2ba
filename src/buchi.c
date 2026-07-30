@@ -982,7 +982,7 @@ static int print_c_buchi_body(FILE *f, const Buchi *b,
 static void print_c_buchi_body_tail(FILE *f)
 {
   fprintf(f, "\
-		/* __ESBMC_switch_from_monitor(); */\n\
+		__ESBMC_switch_from_monitor();\n\
 	}\n\
 \n\
 	__ESBMC_assert(num_iters == iters, \"Unwind bound on ltl2ba_fsm insufficient\");\n\
@@ -1018,7 +1018,7 @@ pthread_t ltl2ba_start_monitor(void)\n\
 	pthread_create(&t, NULL, ltl2ba_thread, NULL);\n\
 	__ESBMC_register_monitor(t);\n\
 	__ESBMC_atomic_end();\n\
-	/* __ESBMC_switch_to_monitor(); */\n\
+	__ESBMC_switch_to_monitor();\n\
 	return t;\n\
 }\n\
 \n\
